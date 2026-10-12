@@ -1,0 +1,91 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const data = require('../mockup/data.js');
+const metrics = require('../mockup/metrics.js');
+const timers = require('../mockup/timers.js');
+const context = data.context(data.catalog[0]);
+
+// GYM-010: expected outcomes derive from the spec's sample records and formulas.
+test('GYM-010: sample progression separates matched reps, matched weight, and workload', () => {
+  assert.deepEqual(metrics.series(data.history, context, 'reps', 60).map(p => p.value), [9, 10, 11, 12]);
+  assert.deepEqual(metrics.series(data.history, context, 'weight', 60).map(p => p.value), [50, 60, 60, 65]);
+  assert.deepEqual(metrics.series(data.history, context, 'volume', 60).map(p => p.value), [1520, 1630, 1740, 1850]);
+  assert.equal(metrics.countSets(data.history, context), 12);
+});
+
+test('GYM-010: different machine/setup/unit/effort/technique never silently merges', () => {
+  for (const key of ['machine', 'setup', 'unit', 'convention', 'rom', 'rir', 'exerciseId']) {
+    const altered = { ...data.history[0], [key]: `different-${key}` };
+    assert.equal(metrics.series([altered], context, 'volume', 60).length, 0);
+  }
+  assert.deepEqual(metrics.series(data.history, { ...context, rir: undefined }, 'reps', 60), []);
+});
+
+test('GYM-010, GYM-014: warmups, unfinished and invalid sets do not inflate statistics', () => {
+  const record = { ...context, date: '2026-10-12', sets: [
+    { reps: 10, weight: 60, done: true, warmup: false },
+    { reps: 100, weight: 100, done: true, warmup: true },
+    { reps: 20, weight: 80, done: false, warmup: false },
+    { reps: -2, weight: 60, done: true, warmup: false },
+    { reps: 2.5, weight: 60, done: true, warmup: false },
+    { reps: 10, weight: Infinity, done: true, warmup: false }
+  ] };
+  assert.equal(metrics.series([record], context, 'volume', 60)[0].value, 600);
+  assert.equal(metrics.series([record], context, 'reps', 60)[0].value, 10);
+  assert.equal(metrics.series([record], context, 'weight', 60)[0].value, 60);
+  assert.equal(metrics.countSets([record], context), 1);
+});
+
+test('GYM-010: missing comparators show null gaps and dates stay chronological', () => {
+  const record = { ...context, date: '2026-10-12', sets: [{ reps: 8, weight: 55, done: true }] };
+  assert.equal(metrics.series([record], context, 'reps', 60)[0].value, null);
+  assert.equal(metrics.series([record], context, 'weight', 60)[0].value, null);
+  assert.deepEqual(metrics.series([...data.history].reverse(), context, 'reps', 60).map(p => p.date), ['2026-09-14', '2026-09-21', '2026-09-28', '2026-10-05']);
+});
+
+// GYM-012: injected timestamps verify elapsed time without real sleeps.
+test('GYM-012: execution counts elapsed time, pauses, resumes and resets', () => {
+  const state = timers.create();
+  timers.start(state, 'execution', 1000);
+  assert.equal(timers.read(state, 'execution', 6500), 5);
+  timers.pause(state, 'execution', 6500);
+  assert.equal(timers.read(state, 'execution', 100000), 5);
+  timers.start(state, 'execution', 100000);
+  assert.equal(timers.read(state, 'execution', 102500), 8);
+  timers.reset(state, 'execution');
+  assert.equal(timers.read(state, 'execution', 200000), 0);
+  assert.equal(state.execution.startedAt, null);
+});
+
+test('GYM-012: recovery catches up after background delay, stops at zero, and restarts', () => {
+  const state = timers.create(90);
+  timers.start(state, 'recovery', 1000);
+  assert.equal(timers.read(state, 'recovery', 32000), 59);
+  assert.equal(timers.read(state, 'recovery', 200000), 0);
+  assert.equal(state.recovery.startedAt, null);
+  timers.start(state, 'recovery', 201000);
+  assert.equal(timers.read(state, 'recovery', 201000), 90);
+});
+
+test('GYM-012: modes and separate exercise timers remain independent', () => {
+  const first = timers.create(30);
+  const second = timers.create();
+  timers.start(first, 'execution', 0);
+  timers.start(first, 'recovery', 1000);
+  timers.pause(first, 'execution', 5000);
+  assert.equal(timers.read(first, 'execution', 10000), 5);
+  assert.equal(timers.read(first, 'recovery', 10000), 21);
+  assert.equal(timers.read(second, 'execution', 10000), 0);
+  assert.equal(timers.read(second, 'recovery', 10000), 90);
+});
+
+test('GYM-012: recovery duration validates bounds and cannot change while running', () => {
+  const state = timers.create();
+  for (const bad of [0, -1, 1.5, 3601, NaN, Infinity]) assert.equal(timers.setDuration(state, bad), false);
+  assert.equal(timers.setDuration(state, 1), true);
+  timers.start(state, 'recovery', 0);
+  assert.equal(timers.setDuration(state, 20), false);
+  timers.pause(state, 'recovery', 500);
+  assert.equal(timers.setDuration(state, 3600), true);
+  assert.equal(timers.read(state, 'recovery', 2000), 3600);
+});

@@ -1,0 +1,13 @@
+# Android UI conventions — GYM-015
+
+Checked against official guidance on 12 October 2026. This browser mockup approximates Material 3; it is not a native Android implementation or a claim of complete platform compliance.
+
+Android defines Material 3 around color, typography, shapes, and standard components. A coherent branded theme can customize these together. The current evergreen/lime theme follows this approach. [Android: Material 3 in Compose](https://developer.android.com/develop/ui/compose/designsystems/material3)
+
+Use filled or tonal actions for timer start/resume and adding warm-ups, lower-emphasis actions for reset and video, joined segmented controls for timer/metric choices, and consistent rounded card/dialog containers. The mockup uses a theme scale of 8, 12, 16, and 28 CSS pixels plus fully rounded action buttons. These are selected theme values, not a claim that every component must have one universal radius. [Android: Material components](https://developer.android.com/design/ui/mobile/guides/components/material-overview)
+
+Program and Progress are bottom navigation destinations, with persistent labels, 24-pixel icons, a rounded selected indicator, and an 80-pixel bar outside the scroll area. Keep the top app identity and bottom navigation visible while the content scrolls. Using two destinations follows the user's requested scope; the mockup adds no filler destinations. [Android: Navigation bar](https://developer.android.com/develop/ui/compose/components/navigation-bar)
+
+Interactive targets have a minimum of 48 × 48 CSS pixels for this phone-sized preview, including completion buttons, timer controls, and selectors. Native Android implementation must measure in dp and use platform accessibility semantics. The preview's CSS pixels are a design approximation rather than a physical-size guarantee on arbitrary browsers. [Android: Touch target size](https://support.google.com/accessibility/android/answer/7101858)
+
+The future Android app should use native Material components and verify screen-reader behavior, display/font scaling, insets, and system Back. These checks are deferred with Android implementation. The mockup already provides focus states, labels, programmatic selected/pressed states, textual warm-up labels, and a native browser dialog.

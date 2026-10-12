@@ -1,18 +1,40 @@
-# Gym assistant
+# gym assystant
 
-An exploratory mockup for an Android gym-session app. Android implementation has **not started**; scope must be decided first.
+An exploratory mockup for an Android training-program app. Android implementation has **not started**; scope is being refined through this prototype.
 
-Open `mockup/index.html` in your browser, or serve this directory:
+Open `mockup/index.html` in a browser, or run:
 
 ```sh
 python3 -m http.server 8080
 ```
 
-Then visit http://localhost:8080/mockup/ . On a phone, use the computer's LAN address and the same port.
+Visit http://localhost:8080/mockup/ . On a phone, use the computer's LAN address and the same port.
 
-Explore the sample session, select an exercise, edit seat notes and set weights/reps, and toggle completed sets. The video panel is explicitly a placeholder; real exercise video playback is deferred. Changes reset on reload. The mockup uses no build step or runtime dependencies. Optional Google Fonts require internet access; system fonts are the fallback.
+Choose a session in the sample program, then an exercise. Log reps and weight in the shared working/warm-up set list, edit seat notes, and try the execution stopwatch and recovery countdown. The Program / Progress navigation stays at the bottom. Progress shows explicitly fictional history and excludes current edits. Video access is a secondary placeholder. Everything resets on reload.
 
-- [Draft specification](docs/spec.md): requirements, acceptance criteria, assumptions, and excluded scope.
-- [Bidirectional traceability](docs/traceability.md): requirement-to-code and code-to-requirement mappings, plus manual checks.
+The preview uses Material 3 conventions for shapes, selection, bottom navigation, and touch targets. It is a browser prototype, not a native Android app. No build step or runtime package dependencies are needed. Google Fonts are optional; system fonts are the fallback.
 
-Every functional change must first be represented in the specification and then reflected in traceability. Prototype coverage is distinct from production delivery.
+- [Specification](docs/spec.md): stable requirement IDs and acceptance criteria.
+- [Traceability](docs/traceability.md): spec ↔ source ↔ verification.
+- [Progression literature](docs/progression-research.md): performance versus workload, formulas and evidence limitations.
+- [Branding and psychological literature](docs/branding-research.md): “Your pace. Your progress.” and evidence for motivation.
+- [Android UI guidance](docs/android-ui.md): sources and preview component conventions.
+
+Every feature change must update the specification before code and update traceability alongside it. Research proposals remain separate from delivered scope.
+
+## Verification
+
+Logic checks require Node and no dependencies:
+
+```sh
+node tests/logic.test.cjs
+```
+
+For browser interaction/layout checks, install development dependencies, then use a local Chromium or install Playwright's browser:
+
+```sh
+npm ci
+CHROMIUM_PATH=/usr/bin/chromium npm run test:browser
+```
+
+Alternatively, run `npx playwright install chromium` and `npm run test:browser`. Browser checks write screenshots to the system temporary directory under `gym-assystant-previews`; set `PREVIEW_DIR` to change it. These checks validate the mockup, not real training content or Android background behavior.

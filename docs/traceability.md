@@ -1,27 +1,47 @@
 # Bidirectional traceability
 
-All Android delivery is **not started**. Links below refer only to the disposable mockup. Search the code for a requirement ID to trace an implementation back to [the specification](spec.md).
+Revision 2. All Android delivery is **not started**. “Covered” below means the disposable mockup meets the acceptance criteria in [spec.md](spec.md), not that the Android product is implemented. Search a requirement ID in source comments or `data-req` attributes to trace code back to scope.
 
-| Requirement | Mockup code anchors | Manual acceptance check | Mockup delivery |
+| Requirement | Source anchors / artifact | Verification | Mockup state |
 | --- | --- | --- | --- |
-| GYM-001 | `mockup/app.js`: `sampleExercises`, `renderSession`, `selectExercise`; `mockup/index.html`: `session` | Select each exercise; verify its name and distinct data; go back. | Implemented in mockup |
-| GYM-002 | `mockup/app.js`: `openVideo`; `mockup/index.html`: `videoDialog`, `watchVideo` | Open video panel from each exercise; verify matching name and placeholder label; close it. | Placeholder only; playback deferred |
-| GYM-003 | `mockup/app.js`: `seatInput` handler, `renderExercise`; `mockup/index.html`: `seatInput` | Edit a seat note, switch exercises, return; verify note remains isolated. | Implemented in mockup |
-| GYM-004 | `mockup/app.js`: `updateSet`, `renderExercise`; `mockup/index.html`: `sets` | Change reps and weight; reject negative numbers and fractional reps; navigate away and back. | Implemented in mockup |
-| GYM-005 | `mockup/app.js`: `toggleSet`, `renderSession`, `renderExercise` | Mark and unmark sets; verify counts in detail and session views. | Implemented in mockup; proposed scope |
-| GYM-006 | `mockup/index.html`: shell and prototype disclosure; `mockup/style.css`; `mockup/app.js`: dialog and navigation handlers | Check phone and desktop widths, keyboard navigation, dialog dismissal; reload to reset samples. | Implemented in mockup |
+| GYM-001 | `app.js`: `renderSession`, `selectExercise`, back handlers; `index.html`: session/exercise | Browser: session/exercise selection, return to matching session | Covered |
+| GYM-002 | `app.js`: `openVideo`; `index.html`: `watchVideo`, `videoDialog`; CSS: `.video-link` | Browser: button after set log, exercise-specific title, Escape dismissal | Secondary placeholder; actual playback deferred |
+| GYM-003 | `app.js`: `seatInput`, `renderExercise`; `data.js`: exercise instances | Browser: edits retained; other exercises/sessions isolated | Covered |
+| GYM-004 | `app.js`: `setRow`, `updateSet`; `index.html`: `sets`; CSS: rep emphasis | Browser: rep/weight edits, negative/fractional/empty rejection, navigation retention | Covered |
+| GYM-005 | `app.js`: `toggleSet`, `completed`, `renderSession`, `renderSets` | Browser: working-set count changes, warm-up completion does not inflate it | Covered; production behavior proposed |
+| GYM-006 | `index.html`: shell/disclosures/dialog; `style.css`; `app.js`: `showView` | Browser: 320/390/430px, focus/navigation, reload reset, no page errors | Covered |
+| GYM-007 | `index.html`: browser title, wordmarks | Browser: title and visible branding | Covered |
+| GYM-008 | `data.js`: program/session/prescription; `app.js`: `renderProgram`, session selection; `index.html`: program/bottom navigation | Browser: three session templates, distinct ordering and rep targets | Covered; editing deferred |
+| GYM-009 | `index.html`: exercise order; CSS: set widths/font sizes | Browser: reps first, set log before secondary video; screenshot review | Covered |
+| GYM-010 | `metrics.js`: `series`, `countSets`; `data.js`: historical records/context; `app.js`: `renderProgress`; `index.html`: progress | Logic: exact expected metrics, comparison filters, gaps, warm-up exclusion; browser: selectors/current edits excluded | Fictional historical statistics covered; real persistence deferred |
+| GYM-011 | [progression-research.md](progression-research.md) | Literature review: eight original studies/reviews with limitations and proposed/included metrics | Research delivered |
+| GYM-012 | `timers.js`: timer state/actions; `app.js`: `renderTimer`, interval/actions; `index.html`: timer panel | Logic: pause/resume/reset, expiry/background catch-up, independence, bounds; browser: both timer modes/completion | Covered; native background/alerts deferred |
+| GYM-013 | [branding-research.md](branding-research.md); wordmarks/copy in `index.html`, theme in `style.css`, timer copy in `app.js` | Five psychological sources; screenshot/copy review | Brand direction delivered and applied |
+| GYM-014 | `app.js`: `setRow`, `renderSets`, add/remove/update/toggle warmups; CSS: labeled warm-up rows; `metrics.js`: exclusion | Browser: shared list, labels, retained reps/weight, add/remove, count isolation; logic: warmups excluded | Covered |
+| GYM-015 | [android-ui.md](android-ui.md); CSS theme/target/nav/selector rules; `index.html`: bottom nav; `app.js`: `showView` | Official Android sources; browser: navigation stays at bottom, interactive targets ≥48px | Material-style browser approximation; native UI deferred |
+
+Source filenames above are under `mockup/`. Meaningful automated checks live in [logic.test.cjs](../tests/logic.test.cjs) and [browser.cjs](../tests/browser.cjs). `package.json` and its lockfile support those checks only; the mockup itself has no build or runtime package dependency.
 
 ## Reverse inventory
 
-- Sample session cards and back navigation → GYM-001.
-- Machine illustration, video button, and video placeholder dialog → GYM-002.
-- Seat note field → GYM-003.
-- Set table, numeric input validation, and unit label → GYM-004.
-- Done buttons and completion counts → GYM-005.
-- Responsive shell, typography, prototype disclosure, focus states, and dialog behavior → GYM-006.
+| Code/UI area | Requirements |
+| --- | --- |
+| Program data, three session cards, targets, ordered exercises, back navigation | GYM-001, GYM-008 |
+| Video text button and placeholder dialog | GYM-002, GYM-006 |
+| Setup input and per-occurrence note state | GYM-003 |
+| Shared set list, prominent reps, kg validation, done controls/counts | GYM-004, GYM-005, GYM-009 |
+| Warm-up labels/tint, add/remove controls, separate data semantics | GYM-014 |
+| Metric selector, fictional histories, chart, counts, context/gaps | GYM-010 |
+| Execution/recovery selectors, clock state, duration, start/pause/reset/completion | GYM-012 |
+| Wordmark, promise, copy, palette and typography | GYM-007, GYM-013 |
+| Responsive shell, disclosures, keyboard focus and dialog dismissal | GYM-006 |
+| Bottom navigation, common shape tokens, action hierarchy, target dimensions | GYM-008, GYM-010, GYM-015 |
+| Research briefs and evidence boundaries | GYM-011, GYM-013, GYM-015 |
 
-No other functional features are included. The machine illustration is schematic decoration, not a technique guide.
+No e1RM, RIR-entry, adherence, scheduling, history saving, notifications, streaks, program editor, or recommendations have been added. Research proposals do not count as UI requirements.
 
 ## Verification record
 
-2026-10-12: JavaScript syntax check passed. Chromium interaction checks passed for exercise navigation, seat-note isolation, reps/weight retention, rejection of negative and fractional reps, completion toggling/counts, exercise-specific video dialog and Escape dismissal, reload reset, and absence of horizontal overflow at 390px. Desktop screenshot reviewed at 1280px. These checks validate the mockup only; they do not validate exercise content or Android behavior.
+Revision 1, 2026-10-12: the original session-only mockup passed syntax and browser checks. That record does not validate the revised program workflow.
+
+Revision 2, 2026-10-12: eight logic tests passed for numerical metrics, matched contexts, missing data, warm-up exclusion, and timer semantics. The Chromium browser check passed for program/session navigation, working and warm-up logging, validation, timers, secondary video, progress selection, state isolation, 320/390/430px layouts, persistent bottom navigation, minimum touch targets, and reload reset. Program, exercise, progress, and desktop screenshots were reviewed. These checks validate the browser mockup only.

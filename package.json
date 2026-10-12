@@ -1,0 +1,11 @@
+{
+  "name": "gym-assystant-mockup",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Disposable training-program mockup; Android implementation deferred",
+  "scripts": {
+    "test": "node --test tests/logic.test.cjs",
+    "test:browser": "node tests/browser.cjs"
+  },
+  "devDependencies": { "playwright": "1.64.0" }
+}

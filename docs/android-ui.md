@@ -2,7 +2,7 @@
 
 Checked against official guidance on 12 October 2026. This browser mockup approximates Material 3; it is not a native Android implementation or a claim of complete platform compliance.
 
-Android defines Material 3 around color, typography, shapes, and standard components. A coherent branded theme can customize these together. The current evergreen/lime theme follows this approach. [Android: Material 3 in Compose](https://developer.android.com/develop/ui/compose/designsystems/material3)
+Android defines Material 3 around color, typography, shapes, and standard components. A coherent branded theme can customize these together. The current sunrise-amber/deep-teal theme follows this approach. [Android: Material 3 in Compose](https://developer.android.com/develop/ui/compose/designsystems/material3)
 
 Use filled or tonal actions for timer start/resume and adding warm-ups, lower-emphasis actions for reset and video, joined segmented controls for timer/metric choices, and consistent rounded card/dialog containers. The mockup uses a theme scale of 8, 12, 16, and 28 CSS pixels plus fully rounded action buttons. These are selected theme values, not a claim that every component must have one universal radius. [Android: Material components](https://developer.android.com/design/ui/mobile/guides/components/material-overview)
 

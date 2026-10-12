@@ -16,12 +16,41 @@ This focused review searched PubMed and original research repositories for self-
 
 ## Chosen identity
 
-- **Name:** gym assystant. A lowercase wordmark with a small lime dot keeps the existing requested name friendly and legible.
+- **Name:** gym assystant. A lowercase wordmark with a small amber dot keeps the existing requested name friendly and legible.
 - **Promise:** Your pace. Your progress.
 - **Personality:** capable, warm, direct. Helpful language, concise instructions, factual feedback.
-- **Palette:** evergreen `#203c32` for text and primary structure; warm chalk `#faf9f3` for surfaces; spring lime `#d0ee82` for selected controls and completion; muted sage `#e9efe4` for quiet panels. These are aesthetic decisions, not scientifically proven motivators. Text contrast and focus visibility take priority over decorative color.
+- **Palette:** sunrise amber `#ffbf69` for start actions and selected navigation; deep teal `#143f46` for text and structure; ivory `#fffaf2` for the main surface; pale aqua `#e6f1f0` for timer and progress panels. Completed sets use teal `#24665f` with white checkmarks, and warm-ups use a soft apricot tint. The color-emotion literature informs this direction; the exact values are design choices, not experimentally validated exercise motivators. See the palette rationale below.
 - **Typography:** Manrope headings and DM Sans body/numerals, with local system-font fallbacks. Prominent reps and tabular timer digits support quick reading. External font loading is optional.
 - **Shape:** soft corners, generous spacing, restrained upward arrows. No animated urgency, physique photography, or ideal-body comparison.
+
+## Palette rationale — updated color research
+
+The goal is to make entering a workout feel welcoming and the next action clear. A warmer accent replaces the earlier lime/sage direction, while calm surfaces keep dense rep logging readable. The app's supportive language and user control remain the more directly supported motivational mechanisms.
+
+| Source | Relevant finding | Application and limit |
+| --- | --- | --- |
+| [Jonauskaite & Mohr, 2025 — systematic review of color and emotion](https://link.springer.com/article/10.3758/s13423-024-02615-z) | Reviewed 132 articles with 42,266 participants across 64 countries. Yellow/orange tended to correspond with positive high-arousal emotions; blue/green/blue-green with positive low-arousal emotions. Lightness and saturation also mattered. | Warm amber emphasizes a welcoming next action; pale teal supports quiet logging/recovery. Most studies measured abstract associations, not induced emotion or gym attendance. These UI applications are design inferences. |
+| [Jonauskaite et al., 2020 — associations across 30 nations](https://pubmed.ncbi.nlm.nih.gov/32900287/) | In 4,598 participants, color-emotion patterns showed shared features and variation related to geography/language. Yellow and orange were associated with joy; orange also with amusement. | Use a warm, positive accent while treating personal preference as relevant. A category association does not validate a particular hex code or predict an individual's response. |
+| [Elliot, 2015 — color-in-context review](https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2015.00368/full) | Color effects depend on context; methodological limitations restrict strong applied conclusions. Hue, lightness, chroma, and viewing conditions are intertwined. | Apply color consistently with the action's meaning and test the whole interface. Avoid claims that one color inherently produces motivation, trust, or increased performance. |
+
+Supplementary search on 12 October 2026 used “color emotion systematic review”, “Jonauskaite yellow orange joy”, and “color psychology context exercise motivation”. The focused search did not establish that changing an exercise app's palette increases gym attendance. No attendance effect size or causal claim is assigned to this palette.
+
+| Role | Color | UI use |
+| --- | --- | --- |
+| Action accent | Sunrise amber `#ffbf69` | Timer start/resume, selected bottom destination, program accent |
+| Main content | Deep teal `#143f46` | Headings, numbers, active segmented choices, program card |
+| Main surface | Ivory `#fffaf2` | Screen background and dialog |
+| Quiet surface | Pale aqua `#e6f1f0` | Timer, progress card, prescription |
+| Completed action | Teal `#24665f` + white | Done working/warm-up sets; always accompanied by check and pressed state |
+| Warm-up context | Apricot `#fff0db` | Warm-up label and rep field, with explicit text label |
+| Supporting text | Slate teal `#51676a` | Helper copy and secondary video access |
+| Focus | Burnt amber `#9b480f` | Visible keyboard focus and small brand dot |
+
+Use warm accents sparingly around actions, a light base, and teal for readable numbers. Completion uses its own semantic role instead of sharing the action accent. Warm-up and completion are still identifiable by text and state, not color alone. Android component shapes and minimum target sizes are preserved.
+
+### Palette verification
+
+Calculated sRGB contrast for the applied role pairs: main text on ivory 11.05:1; helper text on ivory 5.78:1 and pale aqua 5.20:1; deep teal on amber 7.06:1; white on completed-set teal 6.69:1; control outlines on pale aqua 3.02:1. These calculations check the specified pairs, not full accessibility conformance. The existing browser checks passed and refreshed mobile/desktop screenshots were visually reviewed.
 
 ## Applied voice
 

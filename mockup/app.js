@@ -36,15 +36,17 @@ function showView(id, focusId) {
   if (focusId) byId(focusId).focus();
   document.querySelector('.screen-area').scrollTop = 0;
 }
-// GYM-008, GYM-016: today banner, weekly calendar, and upcoming agenda.
+// GYM-008, GYM-016: selected-date banner, fitted week, and upcoming agenda.
 function renderProgram() {
   todayDate = GymCalendar.today();
   renderCalendar();
 }
-function renderCalendar() {
-  const todayIndex = plannedIndex(todayDate);
-  const todaySession = todayIndex === null ? null : GymData.program.sessions[todayIndex];
-  byId('todayCard').innerHTML = `<p class="eyebrow">TODAY · ${fullDate(todayDate)}</p><h3>${todaySession?.name ?? 'No session planned'}</h3><p>${todaySession ? todaySession.focus : 'Your next planned session is listed below.'}</p>${todaySession ? '<button id="openTodaySession" class="calendar-start">View today’s session <span aria-hidden="true">↗</span></button>' : ''}`;
+function renderCalendar(keepEditorOpen = false) {
+  const selectedIndex = plannedIndex(selectedDate);
+  const planned = selectedIndex === null ? null : GymData.program.sessions[selectedIndex];
+  const dateLabel = `${selectedDate === todayDate ? 'TODAY · ' : ''}${fullDate(selectedDate)}`;
+  byId('sessionCard').innerHTML = `<p id="selectedDateLabel" class="eyebrow" aria-live="polite">${dateLabel}</p><h3>${planned?.name ?? 'No session planned'}</h3><p>${planned ? planned.focus : 'Use Edit plan to assign a session.'}</p><details id="planEditor" class="plan-editor" ${keepEditorOpen ? 'open' : ''}><summary>Edit plan</summary><label class="select-label" for="plannedSession">Session for this date</label><select id="plannedSession"><option value="none">No session planned</option>${GymData.program.sessions.map((item, index) => `<option value="${index}">${item.name} · ${item.focus.toLowerCase()}</option>`).join('')}</select></details>${planned ? `<button id="openSelectedSession" class="calendar-start">${selectedDate > todayDate ? 'Preview session' : 'View session'} <span aria-hidden="true">↗</span></button>` : ''}`;
+  byId('plannedSession').value = selectedIndex === null ? 'none' : String(selectedIndex);
   const dates = GymCalendar.week(displayedWeek);
   byId('weekLabel').textContent = `${GymCalendar.label(dates[0], { day: 'numeric', month: 'short' })} – ${GymCalendar.label(dates[6], { day: 'numeric', month: 'short', year: 'numeric' })}`;
   byId('calendarDays').innerHTML = dates.map(date => {
@@ -52,16 +54,10 @@ function renderCalendar() {
     const name = index === null ? 'No session planned' : GymData.program.sessions[index].name;
     return `<button class="calendar-day ${date === todayDate ? 'is-today' : ''}" data-date="${date}" aria-label="${fullDate(date)}${date === todayDate ? ', today' : ''}: ${name}" aria-pressed="${date === selectedDate}"><span>${date === todayDate ? 'Today' : GymCalendar.label(date, { weekday: 'short' })}</span><strong>${GymCalendar.label(date, { day: 'numeric' })}</strong><small>${index === null ? '—' : String.fromCharCode(65 + index)}</small></button>`;
   }).join('');
-  byId('selectedDateLabel').textContent = `${selectedDate === todayDate ? 'TODAY · ' : ''}${fullDate(selectedDate)}`;
-  const selectedIndex = plannedIndex(selectedDate);
-  byId('plannedSession').value = selectedIndex === null ? 'none' : String(selectedIndex);
-  byId('openPlannedSession').hidden = selectedIndex === null;
-  byId('openPlannedSession').textContent = selectedDate > todayDate ? 'Preview session' : 'Open session';
   const upcoming = GymCalendar.upcoming(todayDate, GymData.schedule, dateOverrides);
   byId('upcomingSessions').innerHTML = upcoming.length ? upcoming.map(item => `<button class="exercise-card upcoming-card" data-planned-date="${item.date}"><span class="agenda-date"><strong>${GymCalendar.label(item.date, { day: 'numeric' })}</strong><small>${GymCalendar.label(item.date, { month: 'short' })}</small></span><span><strong>${GymData.program.sessions[item.sessionIndex].name}</strong><small>${GymCalendar.label(item.date, { weekday: 'long', day: 'numeric', month: 'short' })}</small></span><span class="chevron" aria-hidden="true">↗</span></button>`).join('') : '<p class="empty-calendar">No sessions planned in the next 28 days.</p>';
 }
 function openSession(index, date) {
-  byId('planningDialog').close();
   sessionDate = date;
   currentSession = getSession(index, date);
   renderSession();
@@ -192,18 +188,18 @@ byId('calendarDays').addEventListener('click', event => {
   if (!day) return;
   selectedDate = day.dataset.date;
   renderCalendar();
-  byId('planningDialog').showModal();
+  byId('calendarDays').querySelector(`[data-date="${selectedDate}"]`).focus();
+});
+byId('sessionCard').addEventListener('change', event => {
+  if (event.target.id !== 'plannedSession') return;
+  dateOverrides[selectedDate] = event.target.value === 'none' ? null : Number(event.target.value);
+  renderCalendar(true);
   byId('plannedSession').focus();
 });
-byId('plannedSession').addEventListener('change', event => {
-  dateOverrides[selectedDate] = event.target.value === 'none' ? null : Number(event.target.value);
-  renderCalendar();
-});
-byId('openPlannedSession').addEventListener('click', () => { const index = plannedIndex(selectedDate); if (index !== null) openSession(index, selectedDate); });
-byId('todayCard').addEventListener('click', event => {
-  if (!event.target.closest('#openTodaySession')) return;
-  const index = plannedIndex(todayDate);
-  if (index !== null) openSession(index, todayDate);
+byId('sessionCard').addEventListener('click', event => {
+  if (!event.target.closest('#openSelectedSession')) return;
+  const index = plannedIndex(selectedDate);
+  if (index !== null) openSession(index, selectedDate);
 });
 byId('upcomingSessions').addEventListener('click', event => {
   const card = event.target.closest('[data-planned-date]');
@@ -211,8 +207,8 @@ byId('upcomingSessions').addEventListener('click', event => {
   selectedDate = card.dataset.plannedDate;
   displayedWeek = GymCalendar.week(selectedDate)[0];
   renderCalendar();
-  byId('planningDialog').showModal();
-  byId('plannedSession').focus();
+  if (byId('openSelectedSession')) byId('openSelectedSession').focus();
+  document.querySelector('.screen-area').scrollTop = 0;
 });
 ['previousWeek', 'nextWeek'].forEach(id => byId(id).addEventListener('click', () => {
   displayedWeek = GymCalendar.addDays(displayedWeek, id === 'previousWeek' ? -7 : 7);
@@ -242,12 +238,6 @@ function stopSession() {
 }
 byId('stopSession').addEventListener('click', stopSession);
 byId('stopExerciseSession').addEventListener('click', stopSession);
-// GYM-006, GYM-016: native planning dialog supports Escape and explicit dismissal.
-byId('closePlanning').addEventListener('click', () => byId('planningDialog').close());
-byId('planningDialog').addEventListener('click', event => {
-  const bounds = event.currentTarget.getBoundingClientRect();
-  if (event.target === event.currentTarget && (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom)) event.currentTarget.close();
-});
 // GYM-010
 byId('progressNav').addEventListener('click', () => { renderProgress(); showView('progress', 'progressNav'); });
 byId('progressExercise').innerHTML = GymData.catalog.map((item, index) => `<option value="${index}">${item.name}</option>`).join('');

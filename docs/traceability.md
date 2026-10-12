@@ -19,7 +19,7 @@ Revision 3. All Android delivery is **not started**. “Covered” below means t
 | GYM-013 | [branding-research.md](branding-research.md); wordmarks/copy in `index.html`, theme in `style.css`, timer copy in `app.js` | Five exercise/motivation sources plus three color/emotion sources; screenshot/copy and color-contrast review | Brand direction delivered and applied |
 | GYM-014 | `app.js`: `setRow`, `renderSets`, add/remove/update/toggle warmups; CSS: labeled warm-up rows; `metrics.js`: exclusion | Browser: shared list, labels, retained reps/weight, add/remove, count isolation; logic: warmups excluded | Covered |
 | GYM-015 | [android-ui.md](android-ui.md); CSS theme/target/nav/selector rules; `index.html`: bottom nav; `app.js`: `showView` | Official Android sources; browser: navigation stays at bottom, interactive targets ≥48px | Material-style browser approximation; native UI deferred |
-| GYM-016 | `calendar.js`: `today`, `week`, `plan`, `upcoming`; `data.js`: sample schedule; `app.js`: `renderCalendar`, `getSession`, date/open handlers; `index.html`: today/week/agenda, `planningDialog` | Logic: civil dates, week boundaries, one-date overrides, upcoming/empty state; browser: today/future assignments and isolated dated logs | Interactive calendar covered; recurrence editor and persistence deferred |
+| GYM-016 | `calendar.js`: `today`, `week`, `plan`, `upcoming`; `data.js`: sample schedule; `app.js`: `renderCalendar`, `getSession`, date/open handlers; `index.html`: `sessionCard`, week/agenda; `app.js`: inline `planEditor` | Logic: civil dates, week boundaries, one-date overrides, upcoming/empty state; browser: date taps update the top card without a popup; all seven dates fit; inline assignments and isolated dated logs | Interactive calendar covered; recurrence editor and persistence deferred |
 | GYM-017 | `app.js`: `renderSession`, `startSession` handler, `stopSession`, per-date lifecycle state; `index.html`: session start action | Browser: Start/Continue select unfinished exercise; Stop pauses all occurrence timers and preserves entries; Resume retains them; stopped timers are disabled; dates and reload isolate/reset state | Covered in mockup |
 
 Source filenames above are under `mockup/`. Meaningful automated checks live in [logic.test.cjs](../tests/logic.test.cjs) and [browser.cjs](../tests/browser.cjs). `package.json` and its lockfile support those checks only; the mockup itself has no build or runtime package dependency.
@@ -38,7 +38,7 @@ Source filenames above are under `mockup/`. Meaningful automated checks live in 
 | Wordmark, promise, copy, palette and typography | GYM-007, GYM-013 |
 | Responsive shell, disclosures, keyboard focus and dialog dismissal | GYM-006 |
 | Bottom navigation, common shape tokens, action hierarchy, target dimensions | GYM-008, GYM-010, GYM-015 |
-| Today card, week strip, date assignment and upcoming agenda; per-date session/timer state | GYM-016 |
+| Selected-date card, fitted week, inline date assignment and upcoming agenda; per-date session/timer state | GYM-016 |
 | Session Start/Continue/Stop/Resume actions and isolated lifecycle state | GYM-017 |
 | Research briefs and evidence boundaries | GYM-011, GYM-013, GYM-015 |
 
@@ -53,3 +53,5 @@ Revision 2, 2026-10-12: eight logic tests passed for numerical metrics, matched 
 Palette update, 2026-10-12: GYM-013 now uses sunrise amber, deep teal, and ivory, informed by the 2025 systematic review and two supporting color studies/reviews. Checked text pairs exceed 4.5:1 and essential outline/chart pairs exceed 3:1. Existing Chromium checks passed; all four preview screenshots were refreshed. No functional scope was added.
 
 Revision 3, 2026-10-12: 12 logic tests passed, including week/year/leap-day/DST calculations, date overrides, and upcoming/empty agenda rules. The Chromium check passed for today/future planning, dialog assignment, date-isolated logs, Start/Continue/Stop/Resume, pausing all exercise timers, retained entries, stopped timer controls, navigation, and reload reset. Mobile layouts and touch targets were checked; program, session, exercise, progress, and desktop previews were refreshed and reviewed.
+
+Calendar selection update, 2026-10-12: Chromium checks passed for direct top-card updates without a calendar popup, selected-date session navigation, inline assignment, empty days, Today/week/agenda navigation, and a seven-day row fully visible without scrolling at 320/360/390/430px. Standard controls retain 48px targets; narrow calendar cells follow the documented width exception. Previews were refreshed and reviewed.

@@ -158,18 +158,18 @@ button:active { filter: brightness(.94); }
 input, select { min-height: 48px; }
 input::placeholder { color: var(--on-surface-variant); opacity: 1; }
 /* GYM-016: today's plan, selectable week, date assignment, and future agenda. */
-.today-card { background: var(--primary); color: var(--on-primary); padding: 20px; border-radius: var(--shape-medium); margin-bottom: 22px; }
-.today-card .eyebrow { color: var(--accent); font-size: 9px; letter-spacing: 1.2px; }
-.today-card h3 { font-size: 26px; letter-spacing: -.7px; }
-.today-card p:not(.eyebrow) { color: #d8e9e8; font-size: 12px; margin: 8px 0 16px; }
+.session-card { position: relative; background: var(--primary); color: var(--on-primary); padding: 20px; border-radius: var(--shape-medium); margin-bottom: 22px; }
+.session-card .eyebrow { padding-right: 72px; color: var(--accent); font-size: 9px; letter-spacing: 1.2px; }
+.session-card h3 { font-size: 26px; letter-spacing: -.7px; }
+.session-card p:not(.eyebrow) { color: #d8e9e8; font-size: 12px; margin: 8px 0 16px; }
 .calendar-start, #startSession { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 48px; border: 0; border-radius: var(--shape-full); padding: 12px 18px; background: var(--accent); color: var(--on-surface); font-size: 12px; font-weight: 700; }
 .calendar-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .calendar-today { min-height: 48px; border: 0; border-radius: var(--shape-full); padding: 8px 16px; background: transparent; color: var(--primary); font-size: 12px; font-weight: 600; }
 .week-controls { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 10px; }
 .week-controls strong { font-size: 12px; text-align: center; }
 .calendar-arrow { width: 48px; height: 48px; padding: 0; border: 1px solid var(--outline); border-radius: 50%; background: transparent; color: var(--primary); font-size: 25px; }
-.calendar-days { display: flex; gap: 6px; max-width: 100%; overflow-x: auto; padding: 3px 0 10px; scrollbar-width: thin; scroll-snap-type: x proximity; }
-.calendar-day { display: flex; flex: 0 0 48px; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 82px; border: 1px solid var(--outline-variant); border-radius: var(--shape-medium); background: var(--surface-container); padding: 7px 3px; scroll-snap-align: start; }
+.calendar-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; width: calc(100% + 24px); margin-inline: -12px; padding: 3px 0 10px; overflow: hidden; }
+.calendar-day { display: flex; min-width: 0; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 82px; border: 1px solid var(--outline-variant); border-radius: var(--shape-medium); background: var(--surface-container); padding: 7px 3px; }
 .calendar-day span { font-size: 10px; }
 .calendar-day strong { font-size: 18px; font-variant-numeric: tabular-nums; }
 .calendar-day small { font-size: 11px; font-weight: 700; }
@@ -177,11 +177,6 @@ input::placeholder { color: var(--on-surface-variant); opacity: 1; }
 .calendar-day.is-today { outline: 2px solid var(--focus); outline-offset: -3px; }
 .calendar-day.is-today span { font-weight: 700; }
 .calendar-legend { display: flex; justify-content: space-between; gap: 10px; color: var(--on-surface-variant); font-size: 9px; margin: 4px 0 18px; }
-.date-plan { background: var(--surface-container); border-radius: var(--shape-medium); padding: 16px; }
-.date-plan .eyebrow { font-size: 9px; letter-spacing: 1px; }
-.date-plan select { background: var(--surface-bright); font-size: 12px; }
-.calendar-open { margin-top: 12px; width: 100%; min-height: 48px; border: 0; border-radius: var(--shape-full); padding: 12px; background: var(--primary); color: var(--on-primary); font-size: 12px; font-weight: 600; }
-.date-plan .field-help { margin-bottom: 0; font-size: 10px; }
 .agenda-date { display: flex; flex-shrink: 0; width: 44px; min-height: 49px; flex-direction: column; align-items: center; justify-content: center; border-radius: var(--shape-medium); background: var(--surface-container); }
 .agenda-date strong { font-size: 17px; margin-bottom: 1px; }
 .agenda-date small { font-size: 10px; }
@@ -189,10 +184,15 @@ input::placeholder { color: var(--on-surface-variant); opacity: 1; }
 
 /* GYM-017: explicit session start action before exercises. */
 .session-start { margin-bottom: 22px; }
-#planningDialog .date-plan { background: transparent; padding: 0; }
 /* GYM-017: lifecycle actions are accessible from session and exercise screens. */
 .session-actions { display: flex; align-items: center; gap: 10px; }
 .session-actions #startSession { width: auto; flex: 1; }
 .session-stop { min-height: 48px; min-width: 96px; border: 1px solid var(--outline); border-radius: var(--shape-full); padding: 10px 16px; background: transparent; color: var(--primary); font-size: 12px; font-weight: 600; }
 .exercise-navigation { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
 .exercise-navigation .back { margin-bottom: 0; }
+
+/* GYM-016: optional date assignment expands inside the existing banner. */
+.plan-editor summary { position: absolute; top: 9px; right: 12px; display: flex; align-items: center; justify-content: center; min-width: 64px; min-height: 48px; padding: 8px; border-radius: var(--shape-full); color: var(--accent); font-size: 10px; font-weight: 600; cursor: pointer; }
+.plan-editor summary::marker { content: ''; }
+.plan-editor summary:focus-visible, .plan-editor select:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.plan-editor select { margin-bottom: 16px; background: var(--surface-bright); font-size: 12px; }

@@ -6,7 +6,7 @@
 <main class="phone" data-req="GYM-006"><header data-req="GYM-007"><span class="wordmark">gym assystant<span>●</span></span><span class="badge">MOCKUP</span></header>
 <div class="screen-area">
 <section id="program" data-view data-req="GYM-008 GYM-016"><p class="eyebrow">FULL BODY FOUNDATIONS · SAMPLE PROGRAM</p>
-<div id="todayCard" class="today-card" data-req="GYM-016"></div>
+<div id="sessionCard" class="session-card" aria-label="Selected training session" data-req="GYM-016"></div>
 <div class="calendar-heading" data-req="GYM-016"><h3>Your calendar</h3><button id="calendarToday" class="calendar-today">Today</button></div>
 <div class="week-controls" data-req="GYM-016"><button id="previousWeek" class="calendar-arrow" aria-label="Previous week">‹</button><strong id="weekLabel" aria-live="polite"></strong><button id="nextWeek" class="calendar-arrow" aria-label="Next week">›</button></div>
 <div id="calendarDays" class="calendar-days" role="group" aria-label="Week calendar" data-req="GYM-016"></div>
@@ -30,7 +30,7 @@
 <button id="programNav" aria-current="page"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span><span>Program</span></button>
 <button id="progressNav"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20h16M7 16v-5M12 16V7M17 16V4"/></svg></span><span>Progress</span></button>
 </nav></main>
-<dialog id="planningDialog" aria-labelledby="selectedDateLabel" data-req="GYM-006 GYM-016"><button id="closePlanning" class="back">← Back to calendar</button><div class="date-plan" data-req="GYM-016"><p id="selectedDateLabel" class="eyebrow"></p><label class="select-label" for="plannedSession">Session for this date</label><select id="plannedSession"><option value="none">No session planned</option><option value="0">Session A · lower body first</option><option value="1">Session B · push first</option><option value="2">Session C · pull first</option></select><button id="openPlannedSession" class="calendar-open">Open session</button><p class="field-help">Change a date to explore your plan. Edits reset on reload.</p></div></dialog>
+
 <dialog id="videoDialog" data-req="GYM-002 GYM-006"><button id="closeVideo" class="back">← Back to exercise</button><div class="video-placeholder"><span>▷</span><p>VIDEO PLACEHOLDER</p></div><h2 id="videoTitle"></h2><p>This is where an in-app video will show the machine and movement.</p><p class="muted">No playable video in this mockup. Video sources will be chosen when we define the app requirements.</p></dialog>
 <script src="data.js"></script><script src="calendar.js"></script><script src="metrics.js"></script><script src="timers.js"></script><script src="app.js"></script>
 </body></html>

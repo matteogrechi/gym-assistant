@@ -10,7 +10,7 @@ python3 -m http.server 8080
 
 Visit http://localhost:8080/mockup/ . On a phone, use the computer's LAN address and the same port.
 
-Choose a session in the sample program, then an exercise. Log reps and weight in the shared working/warm-up set list, edit seat notes, and try the execution stopwatch and recovery countdown. The Program / Progress navigation stays at the bottom. Progress shows explicitly fictional history and excludes current edits. Video access is a secondary placeholder. Everything resets on reload.
+Use the Program calendar to see today’s planned session and upcoming workouts. Browse weeks and tap a date to assign Session A/B/C or no session in its planning dialog. The editable sample repeats A on Monday, B on Wednesday, and C on Friday. Open a dated session, then use Start session to begin with its first unfinished exercise. Use Continue while active, Stop to pause the session and its timers, and Resume to keep going with your entries retained. Logs and timers are isolated between dates. Log reps and weight in the shared working/warm-up set list, edit seat notes, and try the execution stopwatch and recovery countdown. The Program / Progress navigation stays at the bottom. Progress shows explicitly fictional history and excludes current edits. Video access is a secondary placeholder. Everything resets on reload.
 
 The preview uses Material 3 conventions for shapes, selection, bottom navigation, and touch targets. It is a browser prototype, not a native Android app. No build step or runtime package dependencies are needed. Google Fonts are optional; system fonts are the fallback.
 

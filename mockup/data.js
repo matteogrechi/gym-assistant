@@ -1,5 +1,5 @@
 'use strict';
-// GYM-001, GYM-003, GYM-004, GYM-008, GYM-010: fictional templates and history.
+// GYM-001, GYM-003, GYM-004, GYM-008, GYM-010, GYM-016: fictional templates and history.
 const GymData = (() => {
   const catalog = [
     { id: 'leg', name: 'Leg press', category: 'LOWER BODY', machine: 'Leg press 01', seat: 'Seat 4 · backrest 2', weight: 60, reps: 12 },
@@ -26,6 +26,8 @@ const GymData = (() => {
       { reps: 8, weight: exercise.weight, done: true, warmup: false }
     ]
   })));
-  return { catalog, program, history, context };
+  // GYM-016: one editable date override per day; weekly plan is fictional.
+  const schedule = { 1: 0, 3: 1, 5: 2 };
+  return { catalog, program, history, context, schedule };
 })();
 if (typeof module !== 'undefined') module.exports = GymData;

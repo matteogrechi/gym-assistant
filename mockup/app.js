@@ -1,18 +1,33 @@
 'use strict';
-/* global GymData, GymMetrics, GymTimers */
+/* global GymData, GymMetrics, GymTimers, GymCalendar */
 const byId = id => document.getElementById(id);
-let sessionIndex = 0;
 let exerciseIndex = 0;
 let metric = 'reps';
-const session = () => GymData.program.sessions[sessionIndex];
+let todayDate = GymCalendar.today();
+let selectedDate = todayDate;
+let displayedWeek = GymCalendar.week(todayDate)[0];
+let sessionDate = null;
+const dateOverrides = {};
+const sessionInstances = new Map();
+const createSession = index => {
+  const instance = structuredClone(GymData.program.sessions[index]);
+  instance.exercises.forEach(entry => { entry.timers = GymTimers.create(); entry.warmups = []; });
+  instance.state = 'ready';
+  return instance;
+};
+// GYM-003, GYM-004, GYM-012, GYM-014, GYM-016: isolate each dated session occurrence.
+function getSession(index, date) {
+  const key = `${date}:${index}`;
+  if (!sessionInstances.has(key)) sessionInstances.set(key, createSession(index));
+  return sessionInstances.get(key);
+}
+let currentSession = null;
+const session = () => currentSession;
 const exercise = () => session().exercises[exerciseIndex];
 const completed = item => item.sets.filter(set => set.done).length;
 const format = value => new Intl.NumberFormat('en-GB', { maximumFractionDigits: 1 }).format(value);
-// GYM-012, GYM-014: independent transient state for each exercise occurrence.
-GymData.program.sessions.forEach(item => item.exercises.forEach(entry => {
-  entry.timers = GymTimers.create();
-  entry.warmups = [];
-}));
+const plannedIndex = date => GymCalendar.plan(date, GymData.schedule, dateOverrides);
+const fullDate = date => GymCalendar.label(date, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 // GYM-006, GYM-008, GYM-010, GYM-015: view switching and keyboard focus.
 function showView(id, focusId) {
   document.querySelectorAll('[data-view]').forEach(view => { view.hidden = view.id !== id; });
@@ -21,15 +36,47 @@ function showView(id, focusId) {
   if (focusId) byId(focusId).focus();
   document.querySelector('.screen-area').scrollTop = 0;
 }
-// GYM-008
+// GYM-008, GYM-016: today banner, weekly calendar, and upcoming agenda.
 function renderProgram() {
-  byId('sessionList').innerHTML = GymData.program.sessions.map((item, index) => `<button class="exercise-card" data-session="${index}"><span class="exercise-number">${String.fromCharCode(65 + index)}</span><span><strong>${item.name}</strong><small>${item.focus} · ${item.exercises.length} exercises</small></span><span class="chevron" aria-hidden="true">↗</span></button>`).join('');
+  todayDate = GymCalendar.today();
+  renderCalendar();
+}
+function renderCalendar() {
+  const todayIndex = plannedIndex(todayDate);
+  const todaySession = todayIndex === null ? null : GymData.program.sessions[todayIndex];
+  byId('todayCard').innerHTML = `<p class="eyebrow">TODAY · ${fullDate(todayDate)}</p><h3>${todaySession?.name ?? 'No session planned'}</h3><p>${todaySession ? todaySession.focus : 'Your next planned session is listed below.'}</p>${todaySession ? '<button id="openTodaySession" class="calendar-start">View today’s session <span aria-hidden="true">↗</span></button>' : ''}`;
+  const dates = GymCalendar.week(displayedWeek);
+  byId('weekLabel').textContent = `${GymCalendar.label(dates[0], { day: 'numeric', month: 'short' })} – ${GymCalendar.label(dates[6], { day: 'numeric', month: 'short', year: 'numeric' })}`;
+  byId('calendarDays').innerHTML = dates.map(date => {
+    const index = plannedIndex(date);
+    const name = index === null ? 'No session planned' : GymData.program.sessions[index].name;
+    return `<button class="calendar-day ${date === todayDate ? 'is-today' : ''}" data-date="${date}" aria-label="${fullDate(date)}${date === todayDate ? ', today' : ''}: ${name}" aria-pressed="${date === selectedDate}"><span>${date === todayDate ? 'Today' : GymCalendar.label(date, { weekday: 'short' })}</span><strong>${GymCalendar.label(date, { day: 'numeric' })}</strong><small>${index === null ? '—' : String.fromCharCode(65 + index)}</small></button>`;
+  }).join('');
+  byId('selectedDateLabel').textContent = `${selectedDate === todayDate ? 'TODAY · ' : ''}${fullDate(selectedDate)}`;
+  const selectedIndex = plannedIndex(selectedDate);
+  byId('plannedSession').value = selectedIndex === null ? 'none' : String(selectedIndex);
+  byId('openPlannedSession').hidden = selectedIndex === null;
+  byId('openPlannedSession').textContent = selectedDate > todayDate ? 'Preview session' : 'Open session';
+  const upcoming = GymCalendar.upcoming(todayDate, GymData.schedule, dateOverrides);
+  byId('upcomingSessions').innerHTML = upcoming.length ? upcoming.map(item => `<button class="exercise-card upcoming-card" data-planned-date="${item.date}"><span class="agenda-date"><strong>${GymCalendar.label(item.date, { day: 'numeric' })}</strong><small>${GymCalendar.label(item.date, { month: 'short' })}</small></span><span><strong>${GymData.program.sessions[item.sessionIndex].name}</strong><small>${GymCalendar.label(item.date, { weekday: 'long', day: 'numeric', month: 'short' })}</small></span><span class="chevron" aria-hidden="true">↗</span></button>`).join('') : '<p class="empty-calendar">No sessions planned in the next 28 days.</p>';
+}
+function openSession(index, date) {
+  byId('planningDialog').close();
+  sessionDate = date;
+  currentSession = getSession(index, date);
+  renderSession();
+  showView('session', 'backProgram');
 }
 // GYM-001, GYM-005, GYM-008
 function renderSession() {
   byId('sessionName').textContent = session().name;
-  byId('sessionFocus').textContent = session().focus;
-  byId('sessionCount').textContent = `${session().exercises.reduce((sum, item) => sum + completed(item), 0)} / 9 working sets done`;
+  byId('sessionFocus').textContent = `${session().focus} · ${fullDate(sessionDate)}${sessionDate > todayDate ? ' · Planned preview' : ''}`;
+  const done = session().exercises.reduce((sum, item) => sum + completed(item), 0);
+  byId('sessionCount').textContent = `${done} / 9 working sets done`;
+  const action = session().state === 'stopped' ? 'Resume session' : session().state === 'active' ? 'Continue session' : 'Start session';
+  byId('startSession').innerHTML = `${action} <span aria-hidden="true">↗</span>`;
+  byId('stopSession').hidden = session().state !== 'active';
+  byId('sessionStatus').textContent = session().state === 'stopped' ? 'Stopped · your entries are kept' : session().state === 'active' ? (done === 9 ? 'All working sets logged · session active' : sessionDate > todayDate ? 'Preview in progress' : 'In progress') : 'Ready to start';
   byId('exerciseList').innerHTML = session().exercises.map((item, index) => `<button class="exercise-card" data-exercise="${index}"><span class="exercise-number">0${index + 1}</span><span><strong>${item.name}</strong><small>3 × ${item.target} reps · ${completed(item)}/3 done</small></span><span class="chevron" aria-hidden="true">↗</span></button>`).join('');
 }
 function selectExercise(index) {
@@ -52,6 +99,7 @@ function renderExercise() {
   byId('exerciseCategory').textContent = `${session().name.toUpperCase()} · ${exercise().category}`;
   byId('prescription').textContent = `Program target: 3 working sets × ${exercise().target} reps`;
   byId('back').textContent = `← ${session().name}`;
+  byId('stopExerciseSession').hidden = session().state !== 'active';
   byId('seatInput').value = exercise().seat;
   renderSets();
   renderTimer();
@@ -112,36 +160,94 @@ function renderTimer() {
   byId('timerValue').setAttribute('aria-label', mode === 'execution' ? 'Execution elapsed time' : 'Recovery time remaining');
   const status = mode === 'recovery' && seconds === 0 ? 'Recovery complete · continue when ready' : running ? 'Running' : state[mode].elapsed > 0 ? 'Paused' : 'Ready';
   if (byId('timerStatus').textContent !== status) byId('timerStatus').textContent = status;
+  byId('timerToggle').disabled = session().state === 'stopped';
   byId('timerToggle').textContent = running ? 'Pause' : state[mode].elapsed > 0 && !(mode === 'recovery' && seconds === 0) ? 'Resume' : 'Start';
   byId('recoverySettings').hidden = mode !== 'recovery';
   byId('recoverySeconds').disabled = state.recovery.startedAt !== null;
   if (document.activeElement !== byId('recoverySeconds')) byId('recoverySeconds').value = state.duration;
   ['execution', 'recovery'].forEach(item => byId(`${item}Mode`).setAttribute('aria-pressed', mode === item));
   const other = mode === 'execution' ? 'recovery' : 'execution';
-  byId('timerContext').textContent = state[other].startedAt !== null ? `Your ${other} timer is also running.` : 'For this exercise · manual controls';
+  byId('timerContext').textContent = session().state === 'stopped' ? 'Session stopped · resume from the session screen.' : state[other].startedAt !== null ? `Your ${other} timer is also running.` : 'For this exercise · manual controls';
 }
-// GYM-008, GYM-001
-byId('sessionList').addEventListener('click', event => {
-  const card = event.target.closest('[data-session]');
-  if (!card) return;
-  sessionIndex = Number(card.dataset.session);
-  renderSession();
-  showView('session', 'backProgram');
-});
 byId('exerciseList').addEventListener('click', event => {
   const card = event.target.closest('[data-exercise]');
   if (card) selectExercise(Number(card.dataset.exercise));
 });
 byId('backProgram').addEventListener('click', () => {
+  selectedDate = sessionDate;
+  displayedWeek = GymCalendar.week(sessionDate)[0];
+  renderProgram();
   showView('program');
-  byId('sessionList').querySelector(`[data-session="${sessionIndex}"]`).focus();
+  byId('calendarDays').querySelector(`[data-date="${sessionDate}"]`).focus();
 });
 byId('back').addEventListener('click', () => {
   renderSession();
   showView('session');
   byId('exerciseList').querySelector(`[data-exercise="${exerciseIndex}"]`).focus();
 });
-byId('programNav').addEventListener('click', () => showView('program', 'programNav'));
+byId('programNav').addEventListener('click', () => { renderProgram(); showView('program', 'programNav'); });
+// GYM-016: date selection and assignment change only that day's plan.
+byId('calendarDays').addEventListener('click', event => {
+  const day = event.target.closest('[data-date]');
+  if (!day) return;
+  selectedDate = day.dataset.date;
+  renderCalendar();
+  byId('planningDialog').showModal();
+  byId('plannedSession').focus();
+});
+byId('plannedSession').addEventListener('change', event => {
+  dateOverrides[selectedDate] = event.target.value === 'none' ? null : Number(event.target.value);
+  renderCalendar();
+});
+byId('openPlannedSession').addEventListener('click', () => { const index = plannedIndex(selectedDate); if (index !== null) openSession(index, selectedDate); });
+byId('todayCard').addEventListener('click', event => {
+  if (!event.target.closest('#openTodaySession')) return;
+  const index = plannedIndex(todayDate);
+  if (index !== null) openSession(index, todayDate);
+});
+byId('upcomingSessions').addEventListener('click', event => {
+  const card = event.target.closest('[data-planned-date]');
+  if (!card) return;
+  selectedDate = card.dataset.plannedDate;
+  displayedWeek = GymCalendar.week(selectedDate)[0];
+  renderCalendar();
+  byId('planningDialog').showModal();
+  byId('plannedSession').focus();
+});
+['previousWeek', 'nextWeek'].forEach(id => byId(id).addEventListener('click', () => {
+  displayedWeek = GymCalendar.addDays(displayedWeek, id === 'previousWeek' ? -7 : 7);
+  selectedDate = displayedWeek;
+  renderCalendar();
+}));
+byId('calendarToday').addEventListener('click', () => {
+  todayDate = GymCalendar.today(); selectedDate = todayDate; displayedWeek = GymCalendar.week(todayDate)[0]; renderCalendar();
+});
+// GYM-017: start/continue/resume selects unfinished work and preserves recorded data.
+byId('startSession').addEventListener('click', () => {
+  session().state = 'active';
+  const next = session().exercises.findIndex(item => item.sets.some(set => !set.done));
+  selectExercise(next < 0 ? 0 : next);
+});
+// GYM-017, GYM-012: stop pauses every timer in this session occurrence.
+function stopSession() {
+  if (session().state !== 'active') return;
+  const now = Date.now();
+  session().exercises.forEach(item => {
+    GymTimers.pause(item.timers, 'execution', now);
+    GymTimers.pause(item.timers, 'recovery', now);
+  });
+  session().state = 'stopped';
+  renderSession();
+  showView('session', 'startSession');
+}
+byId('stopSession').addEventListener('click', stopSession);
+byId('stopExerciseSession').addEventListener('click', stopSession);
+// GYM-006, GYM-016: native planning dialog supports Escape and explicit dismissal.
+byId('closePlanning').addEventListener('click', () => byId('planningDialog').close());
+byId('planningDialog').addEventListener('click', event => {
+  const bounds = event.currentTarget.getBoundingClientRect();
+  if (event.target === event.currentTarget && (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom)) event.currentTarget.close();
+});
 // GYM-010
 byId('progressNav').addEventListener('click', () => { renderProgress(); showView('progress', 'progressNav'); });
 byId('progressExercise').innerHTML = GymData.catalog.map((item, index) => `<option value="${index}">${item.name}</option>`).join('');
@@ -167,6 +273,7 @@ byId('addWarmup').addEventListener('click', () => {
 // GYM-012
 ['execution', 'recovery'].forEach(mode => byId(`${mode}Mode`).addEventListener('click', () => { exercise().timers.mode = mode; renderTimer(); }));
 byId('timerToggle').addEventListener('click', () => {
+  if (session().state === 'stopped') return;
   const state = exercise().timers;
   if (state[state.mode].startedAt === null) GymTimers.start(state, state.mode, Date.now());
   else GymTimers.pause(state, state.mode, Date.now());
@@ -178,7 +285,7 @@ byId('recoverySeconds').addEventListener('change', event => {
   renderTimer();
 });
 setInterval(() => {
-  GymData.program.sessions.forEach(item => item.exercises.forEach(entry => GymTimers.read(entry.timers, 'recovery', Date.now())));
+  sessionInstances.forEach(item => item.exercises.forEach(entry => GymTimers.read(entry.timers, 'recovery', Date.now())));
   if (!byId('exercise').hidden) renderTimer();
 }, 200);
 // GYM-002, GYM-006

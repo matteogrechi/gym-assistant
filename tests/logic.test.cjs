@@ -89,3 +89,38 @@ test('GYM-012: recovery duration validates bounds and cannot change while runnin
   assert.equal(timers.setDuration(state, 3600), true);
   assert.equal(timers.read(state, 'recovery', 2000), 3600);
 });
+
+// GYM-016: actual calendar outcomes rather than DOM presence.
+const calendar = require('../mockup/calendar.js');
+test('GYM-016: Monday-first weeks cross month, year, leap-day and DST boundaries', () => {
+  assert.deepEqual(calendar.week('2026-10-12'), ['2026-10-12', '2026-10-13', '2026-10-14', '2026-10-15', '2026-10-16', '2026-10-17', '2026-10-18']);
+  assert.equal(calendar.week('2027-01-01')[0], '2026-12-28');
+  assert.equal(calendar.addDays('2028-02-28', 1), '2028-02-29');
+  assert.equal(calendar.addDays('2026-03-28', 2), '2026-03-30');
+  assert.equal(calendar.addDays('2026-10-24', 2), '2026-10-26');
+});
+
+test('GYM-016: sample sessions recur on weekdays; date edits affect only one day', () => {
+  assert.equal(calendar.plan('2026-10-12', data.schedule, {}), 0);
+  assert.equal(calendar.plan('2026-10-13', data.schedule, {}), null);
+  assert.equal(calendar.plan('2026-10-14', data.schedule, {}), 1);
+  assert.equal(calendar.plan('2026-10-16', data.schedule, {}), 2);
+  const overrides = { '2026-10-14': 2, '2026-10-16': null };
+  assert.equal(calendar.plan('2026-10-14', data.schedule, overrides), 2);
+  assert.equal(calendar.plan('2026-10-16', data.schedule, overrides), null);
+  assert.equal(calendar.plan('2026-10-21', data.schedule, overrides), 1);
+});
+
+test('GYM-016: upcoming agenda excludes today and respects overrides', () => {
+  assert.deepEqual(calendar.upcoming('2026-10-12', data.schedule, {}), [
+    { date: '2026-10-14', sessionIndex: 1 }, { date: '2026-10-16', sessionIndex: 2 }, { date: '2026-10-19', sessionIndex: 0 }
+  ]);
+  assert.deepEqual(calendar.upcoming('2026-10-12', data.schedule, { '2026-10-13': 2, '2026-10-14': null }), [
+    { date: '2026-10-13', sessionIndex: 2 }, { date: '2026-10-16', sessionIndex: 2 }, { date: '2026-10-19', sessionIndex: 0 }
+  ]);
+});
+
+test('GYM-016: an empty planning horizon produces an empty agenda', () => {
+  const overrides = Object.fromEntries(Array.from({ length: 28 }, (_, index) => [calendar.addDays('2026-10-12', index + 1), null]));
+  assert.deepEqual(calendar.upcoming('2026-10-12', data.schedule, overrides), []);
+});

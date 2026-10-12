@@ -70,4 +70,4 @@ Keep labeled warm-ups in the shared set list and recovery visible as legitimate 
 
 The psychological rationale is strongest for supporting choice, competence, and useful monitoring. The exact language and visuals should be evaluated with the user while exploring the mockup: does choosing a session feel straightforward, can they log a set without friction, and does progress feedback feel useful? A future adherence study would require consent, a clear outcome, and actual longitudinal use; none is part of this prototype.
 
-GYM-013 authorizes the identity and tone in `mockup/index.html`, `mockup/style.css`, and timer status copy in `mockup/app.js`. Reminders, streaks, rewards, social comparison, goal creation, mood collection, and gamification remain outside the current scope.
+GYM-013 authorizes the identity and tone in `mockup/index.html`, `mockup/style.css`, and timer status copy in `mockup/app.js`. Calendar planning is covered separately by GYM-016. Reminders, streaks, rewards, social comparison, goal creation, mood collection, and gamification remain outside the current scope.

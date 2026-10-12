@@ -1,10 +1,10 @@
 # gym assystant — draft specification
 
-Status: revision 2, for exploration. Only a disposable browser mockup is authorized. Android implementation starts after the user decides the scope. Mockup coverage does not mean a production requirement is implemented.
+Status: revision 3, for exploration. Only a disposable browser mockup is authorized. Android implementation starts after the user decides the scope. Mockup coverage does not mean a production requirement is implemented.
 
 ## Purpose
 
-Follow a training program made of multiple training sessions. During each session, prioritize logging repetitions and weight, time execution and recovery, retain machine setup notes, and offer secondary access to an exercise video. Review performance across comparable sessions.
+Follow a training program made of multiple training sessions. During each session, prioritize logging repetitions and weight, time execution and recovery, retain machine setup notes, and offer secondary access to an exercise video. Review performance across comparable sessions and see which session is planned today and on future dates.
 
 ## Requirements and acceptance criteria
 
@@ -17,7 +17,7 @@ Follow a training program made of multiple training sessions. During each sessio
 | GYM-005 | Mark sets done and undone. | Completion counts update in exercise and session views. This remains a proposed production behavior. |
 | GYM-006 | Explore a responsive dummy mockup. | Narrow phone and desktop layouts, visible prototype disclosure, keyboard access and focus restoration. Edits and timers are in memory and reset on reload; statistics are labeled fictional history. |
 | GYM-007 | Name the app gym assystant. | Browser title and visible branding use this exact spelling. |
-| GYM-008 | Center the app on a training program containing sessions. | Home shows one named sample program and three distinct session templates. Each defines ordered exercises, number of sets, and target rep ranges. Selecting a session shows those prescriptions separately from actual logged sets. Program and Progress are persistent bottom navigation destinations. No program editor is implied yet. |
+| GYM-008 | Center the app on a training program containing sessions. | Home identifies one sample program whose three distinct session templates are accessible through the calendar and upcoming agenda. Each defines ordered exercises, number of sets, and target rep ranges. Selecting a session shows those prescriptions separately from actual logged sets. Program and Progress are persistent bottom navigation destinations. No program editor is implied yet. |
 | GYM-009 | Prioritize performance logging. | Exercise screen order: back navigation, execution/recovery timers at the top, exercise and prescribed target, one combined warm-up/working-set list with reps/weight controls, machine setup, small video button. Set controls are visible before video access at mobile width. |
 | GYM-010 | Show training performance statistics. | A Progress view lets the user select an exercise and metric. Show dated history for best reps at a fixed weight, heaviest weight at exactly 10 reps, and volume load; also show completed working-set count for the displayed period. Values are computed from explicit fictional completed logs, not hardcoded chart labels. No comparable data means a gap, not zero. Details and comparison rules appear below. |
 | GYM-011 | Research progression metrics before finalizing analytics. | A linked literature brief distinguishes outcomes, workload, and consistency; cites original research and evidence syntheses; records limitations, formulas, and proposed versus included metrics. Research recommendations do not automatically authorize features. |
@@ -25,14 +25,16 @@ Follow a training program made of multiple training sessions. During each sessio
 | GYM-013 | Use an inviting, evidence-informed brand. | Retain the exact name gym assystant. Use the promise “Your pace. Your progress.”, clear next actions, personal progress feedback, and neutral language for rest or unfinished sets. Apply the sunrise-amber, deep-teal, and ivory palette, wordmark, and tone documented in branding-research.md. Warm accents emphasize action, calmer teal surfaces support logging/recovery, and text/control contrast remains readable. No shame, body-transformation promises, streak pressure, or unsupported claims that colors increase exercise adherence. |
 | GYM-014 | Track warm-up reps alongside working sets. | Add/remove warm-up sets; edit nonnegative whole-number reps and nonnegative finite kg; mark each done/undone. Show warm-up and working sets together in one list, with a visible type label on every row. Keep their data distinct, retain them when navigating, and exclude warm-ups from working-set completion, records, and all GYM-010 metrics. |
 | GYM-015 | Follow Android Material 3 UI conventions. | Use consistent shape tokens, pill-shaped action buttons, joined segmented selectors, rounded cards and dialog, an icon-and-label bottom navigation bar with a selected indicator, and at least 48 × 48 CSS-pixel touch areas in the phone mockup. Keep navigation outside the scrolling content. Real Android delivery must use dp and native Material components. Document official guidance in android-ui.md. |
+| GYM-016 | Plan sessions in a training calendar. | Program home shows today’s local date and its assigned session (or “No session planned”), a selectable week with previous/next/Today controls, and the next three scheduled sessions with dates. Scheduled days identify their session; today and the selected date are distinct. Selecting a date shows its plan and allows assigning A/B/C or no session. The sample repeats A on Monday, B on Wednesday, C on Friday; individual-date edits override that sample in memory. Keep the top today banner, week calendar, and upcoming agenda on Program home; remove redundant inline date-details and template lists. Selecting a day opens a planning dialog for assignment and session access. Opening a scheduled date uses an isolated session occurrence so edits never copy to other dates or templates. Future dates say “Preview session”; today/past dates say “Open session”. Reload resets edits. |
+| GYM-017 | Start, continue, stop, and resume a session. | Each dated session has Ready, Active, or Stopped state. Start session changes Ready to Active and opens the first exercise with unfinished working sets. Continue session keeps Active and reopens the next unfinished exercise; all sets logged allows reviewing the first exercise. Stop session is available on session and exercise screens while Active; it changes to Stopped, pauses both timers for all exercises in that occurrence, and retains sets, warm-ups, and setup notes. Resume session changes Stopped to Active and reopens the next unfinished exercise without clearing data. Stopped sessions cannot run timers until resumed. Resume does not automatically restart timers; timer start remains manual. Future dates retain preview context. State is isolated by date; reload resets it. No session history is saved. |
 
 ## Information model and navigation
 
 `Training program → session template → exercise prescription → working sets`
 
-Historical performance belongs to dated session occurrences, not to the reusable template. Historical records must retain the program/template identity and the exercise/machine/setup used at the time. Program editing and versioning UI are deferred.
+The calendar assigns session templates to dates. Calendar occurrences have isolated log, seat, warm-up, lifecycle, and timer state. Historical performance belongs to dated session occurrences, not to the reusable template. Historical records must retain the program/template identity and the exercise/machine/setup used at the time. Program editing and versioning UI are deferred.
 
-Mockup navigation: Program → Session → Exercise; top navigation also opens Progress. The example program has sessions A, B, and C. Targets are ranges; entered repetitions are actuals. Session duration estimates, scheduling, streaks, and recommendations are not part of this revision.
+Mockup navigation: Program/calendar → dated Session → Exercise; session templates are chosen through scheduled dates. Bottom navigation opens Program or Progress. The example program has sessions A, B, and C. Targets are ranges; entered repetitions are actuals. Session duration estimates, streaks, and recommendations are not part of this revision. Calendar scheduling is now included.
 
 ## GYM-010: metric definitions
 
@@ -51,16 +53,22 @@ The Progress view explicitly excludes the current editable session: four past fi
 
 Manual stopwatch and countdown controls are mockup choices, pending exploration. Recovery duration is editable only while paused. Changing it resets that countdown. Reset stops the selected timer and restores zero (execution) or the chosen duration (recovery). Resuming a finished recovery starts a fresh interval. No sound, vibration, background service, notifications, or timing history is included. Browser rendering can pause in the background; elapsed time is recalculated on return. Native Android background/lock-screen behavior remains undecided.
 
+## GYM-016: calendar assumptions
+
+Today follows the browser/device local date. The week starts Monday. Civil-date calculations preserve calendar dates across daylight-saving changes and month/year boundaries. The weekly sample is an exploration assumption, not a recommended training frequency. Editing a date changes only that date; there is no drag/drop, automatic rescheduling, scheduling notification, or integration with an external calendar.
+
+The week strip scrolls horizontally on narrow phones so all seven dates retain Android-sized touch targets. The agenda considers future dates strictly after today and shows up to three planned occurrences within the next 28 days. If there are none, show a clear empty state. Past plans are not declared completed; scheduling and actual performance are different concepts. Finishing working sets does not persist history or automatically reschedule the plan.
+
 ## Deferred decisions and exclusions
 
-- Program creation/import, editing, scheduling, and adding/removing/reordering exercises or prescribed working sets (warm-up rows are editable).
+- Program creation/import, template editing, automatic rotations, recurring-schedule editing, and adding/removing/reordering exercises or prescribed working sets (warm-up rows are editable).
 - Primary training outcome: strength, hypertrophy, or general progress; optional RIR logging and estimated 1RM are research proposals only.
 - Video source, licensing, language, offline access, and machine-specific variations.
 - Seat carryover, persistence, backups, accounts, unit preferences, and per-side/total weight conventions.
 - History editing and persistence, completion flow, plan versioning, and Android technology.
 - Timer auto-transitions, per-set/program rest prescriptions, background reliability, alerts, and storing execution/rest duration.
 
-Statistics and timers are now in scope, superseding revision 1 exclusions. Social features, subscriptions, coaching, and notifications remain outside scope. No load-increase advice or personalized training prescription is implemented.
+Statistics, timers, and calendar planning are now in scope, superseding earlier exclusions. Social features, subscriptions, coaching, and notifications remain outside scope. No load-increase advice or personalized training prescription is implemented.
 
 ## Change and traceability rules
 

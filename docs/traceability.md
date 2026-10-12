@@ -12,7 +12,7 @@ Revision 2. All Android delivery is **not started**. “Covered” below means t
 | GYM-006 | `index.html`: shell/disclosures/dialog; `style.css`; `app.js`: `showView` | Browser: 320/390/430px, focus/navigation, reload reset, no page errors | Covered |
 | GYM-007 | `index.html`: browser title, wordmarks | Browser: title and visible branding | Covered |
 | GYM-008 | `data.js`: program/session/prescription; `app.js`: `renderProgram`, session selection; `index.html`: program/bottom navigation | Browser: three session templates, distinct ordering and rep targets | Covered; editing deferred |
-| GYM-009 | `index.html`: exercise order; CSS: set widths/font sizes | Browser: reps first, set log before secondary video; screenshot review | Covered |
+| GYM-009 | `index.html`: exercise order; CSS: set widths/font sizes | Browser: reps first, set log before secondary video; screenshot review confirms timer at the top | Covered |
 | GYM-010 | `metrics.js`: `series`, `countSets`; `data.js`: historical records/context; `app.js`: `renderProgress`; `index.html`: progress | Logic: exact expected metrics, comparison filters, gaps, warm-up exclusion; browser: selectors/current edits excluded | Fictional historical statistics covered; real persistence deferred |
 | GYM-011 | [progression-research.md](progression-research.md) | Literature review: eight original studies/reviews with limitations and proposed/included metrics | Research delivered |
 | GYM-012 | `timers.js`: timer state/actions; `app.js`: `renderTimer`, interval/actions; `index.html`: timer panel | Logic: pause/resume/reset, expiry/background catch-up, independence, bounds; browser: both timer modes/completion | Covered; native background/alerts deferred |

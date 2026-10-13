@@ -101,26 +101,96 @@ test('GYM-016: Monday-first weeks cross month, year, leap-day and DST boundaries
 });
 
 test('GYM-016: sample sessions recur on weekdays; date edits affect only one day', () => {
-  assert.equal(calendar.plan('2026-10-12', data.schedule, {}), 0);
+  assert.equal(calendar.plan('2026-10-12', data.schedule, {}), 'session-A');
   assert.equal(calendar.plan('2026-10-13', data.schedule, {}), null);
-  assert.equal(calendar.plan('2026-10-14', data.schedule, {}), 1);
-  assert.equal(calendar.plan('2026-10-16', data.schedule, {}), 2);
-  const overrides = { '2026-10-14': 2, '2026-10-16': null };
-  assert.equal(calendar.plan('2026-10-14', data.schedule, overrides), 2);
+  assert.equal(calendar.plan('2026-10-14', data.schedule, {}), 'session-B');
+  assert.equal(calendar.plan('2026-10-16', data.schedule, {}), 'session-C');
+  const overrides = { '2026-10-14': 'session-C', '2026-10-16': null };
+  assert.equal(calendar.plan('2026-10-14', data.schedule, overrides), 'session-C');
   assert.equal(calendar.plan('2026-10-16', data.schedule, overrides), null);
-  assert.equal(calendar.plan('2026-10-21', data.schedule, overrides), 1);
+  assert.equal(calendar.plan('2026-10-21', data.schedule, overrides), 'session-B');
 });
 
 test('GYM-016: upcoming agenda excludes today and respects overrides', () => {
   assert.deepEqual(calendar.upcoming('2026-10-12', data.schedule, {}), [
-    { date: '2026-10-14', sessionIndex: 1 }, { date: '2026-10-16', sessionIndex: 2 }, { date: '2026-10-19', sessionIndex: 0 }
+    { date: '2026-10-14', sessionId: 'session-B' }, { date: '2026-10-16', sessionId: 'session-C' }, { date: '2026-10-19', sessionId: 'session-A' }
   ]);
-  assert.deepEqual(calendar.upcoming('2026-10-12', data.schedule, { '2026-10-13': 2, '2026-10-14': null }), [
-    { date: '2026-10-13', sessionIndex: 2 }, { date: '2026-10-16', sessionIndex: 2 }, { date: '2026-10-19', sessionIndex: 0 }
+  assert.deepEqual(calendar.upcoming('2026-10-12', data.schedule, { '2026-10-13': 'session-C', '2026-10-14': null }), [
+    { date: '2026-10-13', sessionId: 'session-C' }, { date: '2026-10-16', sessionId: 'session-C' }, { date: '2026-10-19', sessionId: 'session-A' }
   ]);
 });
 
 test('GYM-016: an empty planning horizon produces an empty agenda', () => {
   const overrides = Object.fromEntries(Array.from({ length: 28 }, (_, index) => [calendar.addDays('2026-10-12', index + 1), null]));
   assert.deepEqual(calendar.upcoming('2026-10-12', data.schedule, overrides), []);
+});
+
+const plan = require('../mockup/plan.js');
+test('GYM-018: actual reps and weights never mutate the prescribed plan', () => {
+  const definition = plan.clone(data.program);
+  const workout = plan.openOccurrence(definition, data.catalog, '2026-10-12', 'session-A');
+  workout.exercises[0].sets[0].reps = 7;
+  workout.exercises[0].sets[0].weight = 42.5;
+  assert.equal(definition.sessions[0].exercises[0].minReps, 10);
+  assert.equal(definition.sessions[0].exercises[0].maxReps, 12);
+  const otherDay = plan.openOccurrence(definition, data.catalog, '2026-10-19', 'session-A');
+  assert.equal(otherDay.exercises[0].sets[0].weight, 60);
+  assert.equal(otherDay.exercises[0].sets[0].reps, 12);
+});
+
+test('GYM-018: saving updates new and untouched previews but protects recorded snapshots', () => {
+  const definition = plan.clone(data.program);
+  const active = plan.openOccurrence(definition, data.catalog, '2026-10-12', 'session-A');
+  active.state = 'active';
+  active.exercises[0].sets[0].reps = 7;
+  const untouched = plan.openOccurrence(definition, data.catalog, '2026-10-19', 'session-A');
+  const draft = plan.clone(definition);
+  draft.sessions[0].name = 'Strength A';
+  Object.assign(draft.sessions[0].exercises[0], { setCount: 4, minReps: 6, maxReps: 8 });
+  plan.apply(definition, draft, data.catalog);
+  const stillActive = plan.openOccurrence(definition, data.catalog, '2026-10-12', 'session-A', active);
+  assert.strictEqual(stillActive, active);
+  assert.equal(stillActive.name, 'Session A');
+  assert.equal(stillActive.exercises[0].sets.length, 3);
+  assert.equal(stillActive.exercises[0].sets[0].reps, 7);
+  const updated = plan.openOccurrence(definition, data.catalog, '2026-10-19', 'session-A', untouched);
+  assert.equal(updated.name, 'Strength A');
+  assert.equal(updated.exercises[0].sets.length, 4);
+  assert.equal(updated.exercises[0].target, '6–8');
+  assert.equal(updated.planRevision, 2);
+  assert.equal(active.planRevision, 1);
+});
+
+test('GYM-018: entries and stopped state keep the snapshot even after template removal', () => {
+  const definition = plan.clone(data.program);
+  const recorded = plan.openOccurrence(definition, data.catalog, '2026-10-12', 'session-A');
+  recorded.hasEntries = true;
+  const stopped = plan.openOccurrence(definition, data.catalog, '2026-10-19', 'session-A');
+  stopped.state = 'stopped';
+  const draft = plan.clone(definition);
+  draft.dateAssignments['2026-10-20'] = 'session-A';
+  assert.equal(plan.removeSession(draft, 'session-A'), true);
+  assert.equal(draft.schedule[1], null);
+  assert.equal(draft.dateAssignments['2026-10-20'], null);
+  plan.apply(definition, draft, data.catalog);
+  assert.strictEqual(plan.openOccurrence(definition, data.catalog, '2026-10-12', 'session-A', recorded), recorded);
+  assert.strictEqual(plan.openOccurrence(definition, data.catalog, '2026-10-19', 'session-A', stopped), stopped);
+  assert.equal(definition.sessions.find(item => item.id === 'session-B').label, 'B');
+  assert.equal(calendar.plan('2026-10-21', definition.schedule, {}), 'session-B');
+});
+
+test('GYM-018: invalid prescriptions or dangling assignments cannot replace the saved plan', () => {
+  const definition = plan.clone(data.program);
+  for (const patch of [{ setCount: 0 }, { setCount: 1.5 }, { minReps: 15, maxReps: 10 }, { maxReps: 51 }, { exerciseId: 'unknown' }]) {
+    const draft = plan.clone(definition);
+    Object.assign(draft.sessions[0].exercises[0], patch);
+    assert.throws(() => plan.apply(definition, draft, data.catalog));
+    assert.equal(definition.revision, 1);
+  }
+  const missing = plan.clone(definition);
+  missing.sessions[0].exercises = [];
+  assert(plan.validate(missing, data.catalog).length > 0);
+  const dangling = plan.clone(definition);
+  dangling.schedule[1] = 'removed';
+  assert.throws(() => plan.apply(definition, dangling, data.catalog));
 });

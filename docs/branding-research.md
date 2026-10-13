@@ -57,7 +57,7 @@ Calculated sRGB contrast for the applied role pairs: main text on ivory 11.05:1;
 | Location | Selected copy | Intended support |
 | --- | --- | --- |
 | Brand promise | Your pace. Your progress. | Autonomy and personal reference point |
-| Program home | Ready when you are. | A low-pressure invitation |
+| Train home | View session | A clear next action for the selected day |
 | Session action | Choose a session | Clear choice |
 | Working sets | Log your sets | Specific next action |
 | Progress view | See your progress. | Feedback from recorded performance |

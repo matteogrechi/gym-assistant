@@ -10,7 +10,13 @@ python3 -m http.server 8080
 
 Visit http://localhost:8080/mockup/ . On a phone, use the computer's LAN address and the same port.
 
-Use the Program calendar to see today’s planned session and upcoming workouts. All seven days fit across the screen. Tap a date to update the top card, then open that date’s session. Edit plan expands assignment inside the card so you can choose Session A/B/C or no session. The editable sample repeats A on Monday, B on Wednesday, and C on Friday. Open a dated session, then use Start session to begin with its first unfinished exercise. Use Continue while active, Stop to pause the session and its timers, and Resume to keep going with your entries retained. Logs and timers are isolated between dates. Log reps and weight in the shared working/warm-up set list, edit seat notes, and try the execution stopwatch and recovery countdown. The Program / Progress navigation stays at the bottom. Progress shows explicitly fictional history and excludes current edits. Video access is a secondary placeholder. Everything resets on reload.
+The bottom navigation separates three activities:
+
+- **Train:** the calendar and dated workout execution. Tap a day to update the top card; all seven days fit across the screen. Start, Continue, Stop, and Resume retain that workout’s logs and timers.
+- **Plan:** edit the sample program, session templates, exercises/order, prescribed sets and rep ranges, and weekly/date assignments. Changes remain drafts until Save plan. New workouts use the saved plan; sessions with recorded entries keep their original targets.
+- **Progress:** explicitly fictional historical performance, independent of current edits.
+
+Reps and weights, warm-up/working-set completion, seat notes, and execution/recovery timers belong to Train. Template prescriptions contain no actual logged sets or timers. Video access remains a secondary placeholder. The sample starts with A on Monday, B on Wednesday, and C on Friday. Everything resets on reload.
 
 The preview uses Material 3 conventions for shapes, selection, bottom navigation, and touch targets. It is a browser prototype, not a native Android app. No build step or runtime package dependencies are needed. Google Fonts are optional; system fonts are the fallback.
 

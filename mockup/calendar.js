@@ -23,8 +23,8 @@ const GymCalendar = (() => {
     const entries = [];
     for (let day = 1; day <= 28 && entries.length < limit; day++) {
       const next = addDays(date, day);
-      const sessionIndex = plan(next, schedule, overrides);
-      if (sessionIndex !== null) entries.push({ date: next, sessionIndex });
+      const sessionId = plan(next, schedule, overrides);
+      if (sessionId !== null) entries.push({ date: next, sessionId });
     }
     return entries;
   }

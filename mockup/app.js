@@ -1,5 +1,5 @@
 'use strict';
-/* global GymData, GymMetrics, GymTimers, GymCalendar */
+/* global GymData, GymMetrics, GymTimers, GymCalendar, GymPlan */
 const byId = id => document.getElementById(id);
 let exerciseIndex = 0;
 let metric = 'reps';
@@ -7,73 +7,81 @@ let todayDate = GymCalendar.today();
 let selectedDate = todayDate;
 let displayedWeek = GymCalendar.week(todayDate)[0];
 let sessionDate = null;
-const dateOverrides = {};
 const sessionInstances = new Map();
-const createSession = index => {
-  const instance = structuredClone(GymData.program.sessions[index]);
-  instance.exercises.forEach(entry => { entry.timers = GymTimers.create(); entry.warmups = []; });
-  instance.state = 'ready';
+// GYM-018: opening new previews copies the plan; recorded executions retain snapshots.
+function getSession(templateId, date) {
+  const key = `${date}:${templateId}`;
+  const previous = sessionInstances.get(key);
+  const instance = GymPlan.openOccurrence(GymData.program, GymData.catalog, date, templateId, previous);
+  if (instance !== previous) instance.exercises.forEach(entry => { entry.timers = GymTimers.create(); entry.warmups = []; });
+  sessionInstances.set(key, instance);
   return instance;
-};
-// GYM-003, GYM-004, GYM-012, GYM-014, GYM-016: isolate each dated session occurrence.
-function getSession(index, date) {
-  const key = `${date}:${index}`;
-  if (!sessionInstances.has(key)) sessionInstances.set(key, createSession(index));
-  return sessionInstances.get(key);
 }
 let currentSession = null;
 const session = () => currentSession;
 const exercise = () => session().exercises[exerciseIndex];
 const completed = item => item.sets.filter(set => set.done).length;
 const format = value => new Intl.NumberFormat('en-GB', { maximumFractionDigits: 1 }).format(value);
-const plannedIndex = date => GymCalendar.plan(date, GymData.schedule, dateOverrides);
+const escapeHtml = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+const recordedForDate = date => [...sessionInstances.values()].find(item => item.date === date && GymPlan.locked(item));
+const plannedForDate = date => {
+  const recorded = recordedForDate(date);
+  const sessionId = recorded?.templateId ?? GymCalendar.plan(date, GymData.program.schedule, GymData.program.dateAssignments);
+  return { sessionId, template: recorded ?? GymData.program.sessions.find(item => item.id === sessionId) ?? null };
+};
+const executionAssignments = () => {
+  const assignments = { ...GymData.program.dateAssignments };
+  sessionInstances.forEach(item => { if (GymPlan.locked(item)) assignments[item.date] = item.templateId; });
+  return assignments;
+};
 const fullDate = date => GymCalendar.label(date, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 // GYM-006, GYM-008, GYM-010, GYM-015: view switching and keyboard focus.
 function showView(id, focusId) {
   document.querySelectorAll('[data-view]').forEach(view => { view.hidden = view.id !== id; });
-  ['programNav', 'progressNav'].forEach(navId => byId(navId).removeAttribute('aria-current'));
-  byId(id === 'progress' ? 'progressNav' : 'programNav').setAttribute('aria-current', 'page');
+  ['programNav', 'planNav', 'progressNav'].forEach(navId => byId(navId).removeAttribute('aria-current'));
+  byId(id === 'progress' ? 'progressNav' : id === 'plan' || id === 'planSession' ? 'planNav' : 'programNav').setAttribute('aria-current', 'page');
   if (focusId) byId(focusId).focus();
   document.querySelector('.screen-area').scrollTop = 0;
 }
 // GYM-008, GYM-016: selected-date banner, fitted week, and upcoming agenda.
 function renderProgram() {
   todayDate = GymCalendar.today();
+  byId('trainProgramName').textContent = `${GymData.program.name.toUpperCase()} · SAMPLE PLAN`;
   renderCalendar();
 }
-function renderCalendar(keepEditorOpen = false) {
-  const selectedIndex = plannedIndex(selectedDate);
-  const planned = selectedIndex === null ? null : GymData.program.sessions[selectedIndex];
+function renderCalendar() {
+  const selected = plannedForDate(selectedDate);
+  const planned = selected.template;
   const dateLabel = `${selectedDate === todayDate ? 'TODAY · ' : ''}${fullDate(selectedDate)}`;
-  byId('sessionCard').innerHTML = `<p id="selectedDateLabel" class="eyebrow" aria-live="polite">${dateLabel}</p><h3>${planned?.name ?? 'No session planned'}</h3><p>${planned ? planned.focus : 'Use Edit plan to assign a session.'}</p><details id="planEditor" class="plan-editor" ${keepEditorOpen ? 'open' : ''}><summary>Edit plan</summary><label class="select-label" for="plannedSession">Session for this date</label><select id="plannedSession"><option value="none">No session planned</option>${GymData.program.sessions.map((item, index) => `<option value="${index}">${item.name} · ${item.focus.toLowerCase()}</option>`).join('')}</select></details>${planned ? `<button id="openSelectedSession" class="calendar-start">${selectedDate > todayDate ? 'Preview session' : 'View session'} <span aria-hidden="true">↗</span></button>` : ''}`;
-  byId('plannedSession').value = selectedIndex === null ? 'none' : String(selectedIndex);
+  byId('sessionCard').innerHTML = `<p id="selectedDateLabel" class="eyebrow" aria-live="polite">${dateLabel}</p><h3>${escapeHtml(planned?.name ?? 'No session planned')}</h3><p>${escapeHtml(planned ? planned.focus || 'Training session' : 'Assign a session in the Plan section.')}</p>${planned ? `<button id="openSelectedSession" class="calendar-start">${selectedDate > todayDate ? 'Preview session' : 'View session'} <span aria-hidden="true">↗</span></button>` : ''}`;
   const dates = GymCalendar.week(displayedWeek);
   byId('weekLabel').textContent = `${GymCalendar.label(dates[0], { day: 'numeric', month: 'short' })} – ${GymCalendar.label(dates[6], { day: 'numeric', month: 'short', year: 'numeric' })}`;
   byId('calendarDays').innerHTML = dates.map(date => {
-    const index = plannedIndex(date);
-    const name = index === null ? 'No session planned' : GymData.program.sessions[index].name;
-    return `<button class="calendar-day ${date === todayDate ? 'is-today' : ''}" data-date="${date}" aria-label="${fullDate(date)}${date === todayDate ? ', today' : ''}: ${name}" aria-pressed="${date === selectedDate}"><span>${date === todayDate ? 'Today' : GymCalendar.label(date, { weekday: 'short' })}</span><strong>${GymCalendar.label(date, { day: 'numeric' })}</strong><small>${index === null ? '—' : String.fromCharCode(65 + index)}</small></button>`;
+    const item = plannedForDate(date).template;
+    return `<button class="calendar-day ${date === todayDate ? 'is-today' : ''}" data-date="${date}" aria-label="${fullDate(date)}${date === todayDate ? ', today' : ''}: ${escapeHtml(item?.name ?? 'No session planned')}" aria-pressed="${date === selectedDate}"><span>${date === todayDate ? 'Today' : GymCalendar.label(date, { weekday: 'short' })}</span><strong>${GymCalendar.label(date, { day: 'numeric' })}</strong><small>${item?.label ?? '—'}</small></button>`;
   }).join('');
-  const upcoming = GymCalendar.upcoming(todayDate, GymData.schedule, dateOverrides);
-  byId('upcomingSessions').innerHTML = upcoming.length ? upcoming.map(item => `<button class="exercise-card upcoming-card" data-planned-date="${item.date}"><span class="agenda-date"><strong>${GymCalendar.label(item.date, { day: 'numeric' })}</strong><small>${GymCalendar.label(item.date, { month: 'short' })}</small></span><span><strong>${GymData.program.sessions[item.sessionIndex].name}</strong><small>${GymCalendar.label(item.date, { weekday: 'long', day: 'numeric', month: 'short' })}</small></span><span class="chevron" aria-hidden="true">↗</span></button>`).join('') : '<p class="empty-calendar">No sessions planned in the next 28 days.</p>';
+  const upcoming = GymCalendar.upcoming(todayDate, GymData.program.schedule, executionAssignments());
+  byId('upcomingSessions').innerHTML = upcoming.length ? upcoming.map(item => `<button class="exercise-card upcoming-card" data-planned-date="${item.date}"><span class="agenda-date"><strong>${GymCalendar.label(item.date, { day: 'numeric' })}</strong><small>${GymCalendar.label(item.date, { month: 'short' })}</small></span><span><strong>${escapeHtml(plannedForDate(item.date).template.name)}</strong><small>${GymCalendar.label(item.date, { weekday: 'long', day: 'numeric', month: 'short' })}</small></span><span class="chevron" aria-hidden="true">↗</span></button>`).join('') : '<p class="empty-calendar">No sessions planned in the next 28 days.</p>';
 }
-function openSession(index, date) {
+function openSession(templateId, date) {
   sessionDate = date;
-  currentSession = getSession(index, date);
+  currentSession = getSession(templateId, date);
   renderSession();
   showView('session', 'backProgram');
 }
 // GYM-001, GYM-005, GYM-008
 function renderSession() {
   byId('sessionName').textContent = session().name;
+  byId('sessionProgramName').textContent = session().programName.toUpperCase();
   byId('sessionFocus').textContent = `${session().focus} · ${fullDate(sessionDate)}${sessionDate > todayDate ? ' · Planned preview' : ''}`;
   const done = session().exercises.reduce((sum, item) => sum + completed(item), 0);
-  byId('sessionCount').textContent = `${done} / 9 working sets done`;
+  const total = session().exercises.reduce((sum, item) => sum + item.sets.length, 0);
+  byId('sessionCount').textContent = `${done} / ${total} working sets done`;
   const action = session().state === 'stopped' ? 'Resume session' : session().state === 'active' ? 'Continue session' : 'Start session';
   byId('startSession').innerHTML = `${action} <span aria-hidden="true">↗</span>`;
   byId('stopSession').hidden = session().state !== 'active';
-  byId('sessionStatus').textContent = session().state === 'stopped' ? 'Stopped · your entries are kept' : session().state === 'active' ? (done === 9 ? 'All working sets logged · session active' : sessionDate > todayDate ? 'Preview in progress' : 'In progress') : 'Ready to start';
-  byId('exerciseList').innerHTML = session().exercises.map((item, index) => `<button class="exercise-card" data-exercise="${index}"><span class="exercise-number">0${index + 1}</span><span><strong>${item.name}</strong><small>3 × ${item.target} reps · ${completed(item)}/3 done</small></span><span class="chevron" aria-hidden="true">↗</span></button>`).join('');
+  byId('sessionStatus').textContent = session().state === 'stopped' ? 'Stopped · your entries are kept' : session().state === 'active' ? (done === total ? 'All working sets logged · session active' : sessionDate > todayDate ? 'Preview in progress' : 'In progress') : 'Ready to start';
+  byId('exerciseList').innerHTML = session().exercises.map((item, index) => `<button class="exercise-card" data-exercise="${index}"><span class="exercise-number">0${index + 1}</span><span><strong>${escapeHtml(item.name)}</strong><small>${item.sets.length} × ${escapeHtml(item.target)} reps · ${completed(item)}/3 done</small></span><span class="chevron" aria-hidden="true">↗</span></button>`).join('');
 }
 function selectExercise(index) {
   exerciseIndex = index;
@@ -86,14 +94,14 @@ function setRow(set, index, kind) {
   return `<div class="set-row ${kind === 'warmups' ? 'warmup-row' : ''} ${set.done ? 'complete' : ''}"><span class="set-kind"><small>${kind === 'warmups' ? 'WARM-UP' : 'WORKING'}</small><b>${index + 1}</b></span><input aria-label="${label} ${index + 1} repetitions" type="number" min="0" step="1" required value="${set.reps}" data-kind="${kind}" data-set="${index}" data-field="reps"><input aria-label="${label} ${index + 1} weight in kilograms" type="number" min="0" step="any" required value="${set.weight}" data-kind="${kind}" data-set="${index}" data-field="weight"><button aria-label="${label} ${index + 1} complete" aria-pressed="${set.done}" data-kind="${kind}" data-toggle="${index}">✓</button></div>${kind === 'warmups' ? `<button class="remove-warmup" data-remove="${index}" aria-label="Remove warm-up ${index + 1}">Remove warm-up ${index + 1}</button>` : ''}`;
 }
 function renderSets() {
-  byId('setCount').textContent = `${completed(exercise())} of 3 complete`;
+  byId('setCount').textContent = `${completed(exercise())} of ${exercise().sets.length} complete`;
   byId('sets').innerHTML = exercise().warmups.map((set, index) => setRow(set, index, 'warmups')).join('') + exercise().sets.map((set, index) => setRow(set, index, 'sets')).join('');
 }
 // GYM-001, GYM-003, GYM-008, GYM-012
 function renderExercise() {
   byId('exerciseName').textContent = exercise().name;
   byId('exerciseCategory').textContent = `${session().name.toUpperCase()} · ${exercise().category}`;
-  byId('prescription').textContent = `Program target: 3 working sets × ${exercise().target} reps`;
+  byId('prescription').textContent = `Plan target: ${exercise().sets.length} working sets × ${exercise().target} reps`;
   byId('back').textContent = `← ${session().name}`;
   byId('stopExerciseSession').hidden = session().state !== 'active';
   byId('seatInput').value = exercise().seat;
@@ -109,11 +117,13 @@ function updateSet(input) {
     return;
   }
   set[input.dataset.field] = Number(input.value);
+  session().hasEntries = true;
 }
 // GYM-005, GYM-014
 function toggleSet(index, kind) {
   const set = exercise()[kind][index];
   set.done = !set.done;
+  session().hasEntries = true;
   renderSets();
   document.querySelector(`[data-kind="${kind}"][data-toggle="${index}"]`).focus();
 }
@@ -190,16 +200,10 @@ byId('calendarDays').addEventListener('click', event => {
   renderCalendar();
   byId('calendarDays').querySelector(`[data-date="${selectedDate}"]`).focus();
 });
-byId('sessionCard').addEventListener('change', event => {
-  if (event.target.id !== 'plannedSession') return;
-  dateOverrides[selectedDate] = event.target.value === 'none' ? null : Number(event.target.value);
-  renderCalendar(true);
-  byId('plannedSession').focus();
-});
 byId('sessionCard').addEventListener('click', event => {
   if (!event.target.closest('#openSelectedSession')) return;
-  const index = plannedIndex(selectedDate);
-  if (index !== null) openSession(index, selectedDate);
+  const item = plannedForDate(selectedDate);
+  if (item.template) openSession(item.sessionId, selectedDate);
 });
 byId('upcomingSessions').addEventListener('click', event => {
   const card = event.target.closest('[data-planned-date]');
@@ -238,13 +242,128 @@ function stopSession() {
 }
 byId('stopSession').addEventListener('click', stopSession);
 byId('stopExerciseSession').addEventListener('click', stopSession);
+// GYM-018: a single editable draft owns templates and scheduling, separate from Train.
+let planDraft = null;
+let draftDate = selectedDate;
+let editingTemplateId = null;
+let planDirty = false;
+let planMessage = 'Changes are drafts until you save the plan.';
+const ensureDraft = () => { if (!planDraft) planDraft = GymPlan.clone(GymData.program); };
+const templateDraft = () => planDraft.sessions.find(item => item.id === editingTemplateId);
+const assignmentOptions = first => `<option value="${first}">${first === 'weekly' ? 'Use weekly pattern' : 'No session'}</option>${first === 'weekly' ? '<option value="none">No session</option>' : ''}${planDraft.sessions.map(item => `<option value="${item.id}">${escapeHtml(item.name)} (${item.label})</option>`).join('')}`;
+function markPlanDirty() {
+  planDirty = true;
+  planMessage = 'Unsaved changes · save to update new workouts.';
+  byId('planFeedback').textContent = planMessage;
+  byId('templateFeedback').textContent = planMessage;
+}
+function renderDateAssignment() {
+  byId('planDateSession').innerHTML = assignmentOptions('weekly');
+  const override = Object.prototype.hasOwnProperty.call(planDraft.dateAssignments, draftDate);
+  byId('planDateSession').value = override ? planDraft.dateAssignments[draftDate] ?? 'none' : 'weekly';
+}
+function renderPlan() {
+  ensureDraft();
+  byId('planName').value = planDraft.name;
+  byId('planSessions').innerHTML = planDraft.sessions.map(item => `<div class="plan-session-row"><button type="button" class="exercise-card" data-edit-template="${item.id}"><span class="exercise-number">${item.label}</span><span><strong>${escapeHtml(item.name)}</strong><small>${item.exercises.length} exercises · ${item.exercises.reduce((sum, entry) => sum + (Number(entry.setCount) || 0), 0)} planned working sets</small></span><span class="chevron" aria-hidden="true">↗</span></button><button class="delete-template" type="button" data-delete-template="${item.id}" aria-label="Remove ${escapeHtml(item.name)}" ${planDraft.sessions.length === 1 ? 'disabled' : ''}>×</button></div>`).join('');
+  byId('addPlanSession').disabled = planDraft.sessions.length >= 7;
+  const days = [[1, 'Monday'], [2, 'Tuesday'], [3, 'Wednesday'], [4, 'Thursday'], [5, 'Friday'], [6, 'Saturday'], [0, 'Sunday']];
+  byId('weeklySchedule').innerHTML = days.map(([day, name]) => `<div class="schedule-row"><label for="weekday-${day}">${name}</label><select id="weekday-${day}" data-weekday="${day}">${assignmentOptions('none')}</select></div>`).join('');
+  days.forEach(([day]) => { byId(`weekday-${day}`).value = planDraft.schedule[day] ?? 'none'; });
+  byId('planDate').value = draftDate;
+  renderDateAssignment();
+  byId('planFeedback').textContent = planMessage;
+}
+function renderTemplate() {
+  const template = templateDraft();
+  byId('templateHeading').textContent = template.name || 'New session';
+  byId('templateName').value = template.name;
+  byId('templateFocus').value = template.focus;
+  byId('plannedExercises').innerHTML = template.exercises.length ? template.exercises.map((item, index) => `<div class="prescription-card"><label class="select-label" for="planned-machine-${item.entryId}">Exercise ${index + 1}</label><select id="planned-machine-${item.entryId}" data-entry="${item.entryId}" data-plan-field="exerciseId">${GymData.catalog.map(machine => `<option value="${machine.id}" ${machine.id === item.exerciseId ? 'selected' : ''}>${machine.name}</option>`).join('')}</select><div class="prescription-fields"><label>Working sets<input type="number" min="1" max="10" step="1" required value="${item.setCount}" data-entry="${item.entryId}" data-plan-field="setCount" aria-label="Exercise ${index + 1} planned working sets"></label><label>Min reps<input type="number" min="1" max="50" step="1" required value="${item.minReps}" data-entry="${item.entryId}" data-plan-field="minReps" aria-label="Exercise ${index + 1} minimum target reps"></label><label>Max reps<input type="number" min="1" max="50" step="1" required value="${item.maxReps}" data-entry="${item.entryId}" data-plan-field="maxReps" aria-label="Exercise ${index + 1} maximum target reps"></label></div><div class="prescription-actions"><button type="button" data-move-entry="${item.entryId}" data-direction="-1" aria-label="Move exercise ${index + 1} up" ${index === 0 ? 'disabled' : ''}>↑</button><button type="button" data-move-entry="${item.entryId}" data-direction="1" aria-label="Move exercise ${index + 1} down" ${index === template.exercises.length - 1 ? 'disabled' : ''}>↓</button><button type="button" data-remove-entry="${item.entryId}">Remove exercise</button></div></div>`).join('') : '<p class="field-help">Add an exercise to this session.</p>';
+  byId('exerciseToAdd').innerHTML = GymData.catalog.map(item => `<option value="${item.id}">${item.name}</option>`).join('');
+  byId('templateFeedback').textContent = planMessage;
+}
+function savePlan(event) {
+  event.preventDefault();
+  const errors = GymPlan.validate(planDraft, GymData.catalog);
+  if (errors.length) {
+    planMessage = errors.join(' ');
+    byId('planFeedback').textContent = planMessage;
+    byId('templateFeedback').textContent = planMessage;
+    return;
+  }
+  if (planDirty) GymPlan.apply(GymData.program, planDraft, GymData.catalog);
+  planDraft = GymPlan.clone(GymData.program);
+  planDirty = false;
+  planMessage = 'Plan saved · recorded sessions keep their original targets.';
+  renderPlan();
+  renderProgram();
+  showView('plan', 'planNav');
+}
+byId('planNav').addEventListener('click', () => {
+  ensureDraft(); draftDate = selectedDate; renderPlan(); showView('plan', 'planNav');
+});
+byId('planName').addEventListener('input', event => { planDraft.name = event.target.value; markPlanDirty(); });
+byId('weeklySchedule').addEventListener('change', event => {
+  if (!event.target.matches('[data-weekday]')) return;
+  planDraft.schedule[event.target.dataset.weekday] = event.target.value === 'none' ? null : event.target.value;
+  markPlanDirty();
+});
+byId('planDate').addEventListener('change', event => { draftDate = event.target.value; renderDateAssignment(); });
+byId('planDateSession').addEventListener('change', event => {
+  if (!byId('planDate').checkValidity()) { byId('planDate').reportValidity(); return; }
+  if (event.target.value === 'weekly') delete planDraft.dateAssignments[draftDate];
+  else planDraft.dateAssignments[draftDate] = event.target.value === 'none' ? null : event.target.value;
+  markPlanDirty();
+});
+byId('planSessions').addEventListener('click', event => {
+  const edit = event.target.closest('[data-edit-template]');
+  if (edit) { editingTemplateId = edit.dataset.editTemplate; renderTemplate(); showView('planSession', 'backToPlan'); }
+  const remove = event.target.closest('[data-delete-template]');
+  if (remove && GymPlan.removeSession(planDraft, remove.dataset.deleteTemplate)) { markPlanDirty(); renderPlan(); }
+});
+byId('addPlanSession').addEventListener('click', () => {
+  if (planDraft.sessions.length >= 7) return;
+  const label = [...'ABCDEFG'].find(value => !planDraft.sessions.some(item => item.label === value));
+  const id = `session-${crypto.randomUUID()}`;
+  planDraft.sessions.push({ id, label, name: `Session ${label}`, focus: '', exercises: [{ entryId: crypto.randomUUID(), exerciseId: GymData.catalog[0].id, setCount: 3, minReps: 10, maxReps: 12 }] });
+  editingTemplateId = id;
+  markPlanDirty(); renderTemplate(); showView('planSession', 'backToPlan');
+});
+byId('backToPlan').addEventListener('click', () => { renderPlan(); showView('plan', 'planNav'); });
+byId('templateName').addEventListener('input', event => { templateDraft().name = event.target.value; byId('templateHeading').textContent = event.target.value || 'New session'; markPlanDirty(); });
+byId('templateFocus').addEventListener('input', event => { templateDraft().focus = event.target.value; markPlanDirty(); });
+byId('plannedExercises').addEventListener('input', event => {
+  const field = event.target.dataset.planField;
+  if (!field) return;
+  const item = templateDraft().exercises.find(entry => entry.entryId === event.target.dataset.entry);
+  item[field] = field === 'exerciseId' ? event.target.value : Number(event.target.value);
+  markPlanDirty();
+});
+byId('plannedExercises').addEventListener('click', event => {
+  const remove = event.target.closest('[data-remove-entry]');
+  if (remove) { templateDraft().exercises = templateDraft().exercises.filter(item => item.entryId !== remove.dataset.removeEntry); markPlanDirty(); renderTemplate(); return; }
+  const move = event.target.closest('[data-move-entry]');
+  if (!move) return;
+  const list = templateDraft().exercises;
+  const index = list.findIndex(item => item.entryId === move.dataset.moveEntry);
+  const next = index + Number(move.dataset.direction);
+  if (next >= 0 && next < list.length) { [list[index], list[next]] = [list[next], list[index]]; markPlanDirty(); renderTemplate(); }
+});
+byId('addPlanExercise').addEventListener('click', () => {
+  templateDraft().exercises.push({ entryId: crypto.randomUUID(), exerciseId: byId('exerciseToAdd').value, setCount: 3, minReps: 10, maxReps: 12 });
+  markPlanDirty(); renderTemplate();
+});
+byId('planForm').addEventListener('submit', savePlan);
+byId('templateForm').addEventListener('submit', savePlan);
+
 // GYM-010
 byId('progressNav').addEventListener('click', () => { renderProgress(); showView('progress', 'progressNav'); });
 byId('progressExercise').innerHTML = GymData.catalog.map((item, index) => `<option value="${index}">${item.name}</option>`).join('');
 byId('progressExercise').addEventListener('change', renderProgress);
 document.querySelectorAll('[data-metric]').forEach(button => button.addEventListener('click', () => { metric = button.dataset.metric; renderProgress(); }));
 // GYM-003
-byId('seatInput').addEventListener('input', event => { exercise().seat = event.target.value; });
+byId('seatInput').addEventListener('input', event => { exercise().seat = event.target.value; session().hasEntries = true; });
 // GYM-004, GYM-005, GYM-014
 ['sets'].forEach(id => {
   byId(id).addEventListener('change', event => { if (event.target.matches('input')) updateSet(event.target); });
@@ -252,11 +371,12 @@ byId('seatInput').addEventListener('input', event => { exercise().seat = event.t
     const button = event.target.closest('[data-toggle]');
     if (button) toggleSet(Number(button.dataset.toggle), button.dataset.kind);
     const remove = event.target.closest('[data-remove]');
-    if (remove) { exercise().warmups.splice(Number(remove.dataset.remove), 1); renderSets(); byId('addWarmup').focus(); }
+    if (remove) { exercise().warmups.splice(Number(remove.dataset.remove), 1); session().hasEntries = true; renderSets(); byId('addWarmup').focus(); }
   });
 });
 byId('addWarmup').addEventListener('click', () => {
   exercise().warmups.push({ reps: 0, weight: 0, done: false });
+  session().hasEntries = true;
   renderSets();
   byId('sets').querySelector(`[data-kind="warmups"][data-set="${exercise().warmups.length - 1}"][data-field="reps"]`).focus();
 });
@@ -264,14 +384,16 @@ byId('addWarmup').addEventListener('click', () => {
 ['execution', 'recovery'].forEach(mode => byId(`${mode}Mode`).addEventListener('click', () => { exercise().timers.mode = mode; renderTimer(); }));
 byId('timerToggle').addEventListener('click', () => {
   if (session().state === 'stopped') return;
+  session().hasEntries = true;
   const state = exercise().timers;
   if (state[state.mode].startedAt === null) GymTimers.start(state, state.mode, Date.now());
   else GymTimers.pause(state, state.mode, Date.now());
   renderTimer();
 });
-byId('timerReset').addEventListener('click', () => { GymTimers.reset(exercise().timers, exercise().timers.mode); renderTimer(); });
+byId('timerReset').addEventListener('click', () => { session().hasEntries = true; GymTimers.reset(exercise().timers, exercise().timers.mode); renderTimer(); });
 byId('recoverySeconds').addEventListener('change', event => {
   if (!GymTimers.setDuration(exercise().timers, Number(event.target.value))) { event.target.reportValidity(); event.target.value = exercise().timers.duration; }
+  else session().hasEntries = true;
   renderTimer();
 });
 setInterval(() => {

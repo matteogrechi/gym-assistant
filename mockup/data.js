@@ -7,15 +7,17 @@ const GymData = (() => {
     { id: 'lat', name: 'Lat pulldown', category: 'UPPER BODY', machine: 'Pulldown 01', seat: 'Thigh pad 2', weight: 30, reps: 12 }
   ];
   const context = exercise => ({ exerciseId: exercise.id, machine: exercise.machine, setup: exercise.seat, unit: 'kg', convention: 'displayed-machine-load', rom: 'sample-full-rom', rir: 2 });
+  // GYM-018: templates contain prescriptions only, never actual logs or timers.
   const program = {
-    id: 'foundations', name: 'Full body foundations',
+    id: 'foundations', name: 'Full body foundations', revision: 1,
     sessions: ['A', 'B', 'C'].map((letter, index) => ({
-      id: `session-${letter}`, name: `Session ${letter}`, focus: ['Lower body first', 'Push first', 'Pull first'][index],
+      id: `session-${letter}`, label: letter, name: `Session ${letter}`, focus: ['Lower body first', 'Push first', 'Pull first'][index],
       exercises: [...catalog.slice(index), ...catalog.slice(0, index)].map(exercise => ({
-        ...exercise, target: index === 1 ? '8–10' : '10–12',
-        sets: Array.from({ length: 3 }, () => ({ reps: index === 1 ? 10 : exercise.reps, weight: exercise.weight, done: false }))
+        entryId: `${letter}-${exercise.id}`, exerciseId: exercise.id,
+        setCount: 3, minReps: index === 1 ? 8 : 10, maxReps: index === 1 ? 10 : 12
       }))
-    }))
+    })),
+    schedule: { 1: 'session-A', 3: 'session-B', 5: 'session-C' }, dateAssignments: {}
   };
   const dates = ['2026-09-14', '2026-09-21', '2026-09-28', '2026-10-05'];
   const history = dates.flatMap((date, index) => catalog.map(exercise => ({
@@ -26,8 +28,6 @@ const GymData = (() => {
       { reps: 8, weight: exercise.weight, done: true, warmup: false }
     ]
   })));
-  // GYM-016: one editable date override per day; weekly plan is fictional.
-  const schedule = { 1: 0, 3: 1, 5: 2 };
-  return { catalog, program, history, context, schedule };
+  return { catalog, program, history, context, get schedule() { return program.schedule; } };
 })();
 if (typeof module !== 'undefined') module.exports = GymData;

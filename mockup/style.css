@@ -191,8 +191,25 @@ input::placeholder { color: var(--on-surface-variant); opacity: 1; }
 .exercise-navigation { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
 .exercise-navigation .back { margin-bottom: 0; }
 
-/* GYM-016: optional date assignment expands inside the existing banner. */
-.plan-editor summary { position: absolute; top: 9px; right: 12px; display: flex; align-items: center; justify-content: center; min-width: 64px; min-height: 48px; padding: 8px; border-radius: var(--shape-full); color: var(--accent); font-size: 10px; font-weight: 600; cursor: pointer; }
-.plan-editor summary::marker { content: ''; }
-.plan-editor summary:focus-visible, .plan-editor select:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-.plan-editor select { margin-bottom: 16px; background: var(--surface-bright); font-size: 12px; }
+/* GYM-018: prescriptions and schedule editing have their own Plan destination. */
+.plan-input { display: block; width: 100%; margin-bottom: 18px; padding: 12px; border: 1px solid var(--outline); border-radius: 4px; color: var(--on-surface); background: var(--surface-bright); font-size: 14px; }
+.plan-session-row { display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--outline-variant); }
+.plan-session-row .exercise-card { flex: 1; min-width: 0; border-bottom: 0; }
+.delete-template { width: 48px; height: 48px; flex-shrink: 0; border: 0; border-radius: 50%; background: transparent; color: var(--on-surface-variant); font-size: 23px; }
+.schedule-row { display: grid; grid-template-columns: 90px minmax(0, 1fr); align-items: center; gap: 10px; margin-bottom: 10px; }
+.schedule-row label { font-size: 12px; }
+.schedule-row select { font-size: 12px; }
+.save-plan { width: 100%; min-height: 48px; margin-top: 20px; border: 0; border-radius: var(--shape-full); background: var(--accent); color: var(--on-surface); font-size: 13px; font-weight: 700; }
+.prescription-card { border: 1px solid var(--outline-variant); border-radius: var(--shape-medium); background: var(--surface-container); padding: 14px; margin-bottom: 18px; }
+.prescription-card select { background: var(--surface-bright); font-size: 13px; }
+.prescription-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 15px 0; }
+.prescription-fields label { min-width: 0; font-size: 10px; color: var(--on-surface-variant); }
+.prescription-fields input { display: block; width: 100%; min-width: 0; margin-top: 6px; padding: 8px 4px; border: 1px solid var(--outline); border-radius: 4px; background: var(--surface-bright); color: var(--on-surface); text-align: center; font-size: 18px; }
+.prescription-actions { display: flex; gap: 8px; }
+.prescription-actions button { min-height: 48px; border: 1px solid var(--outline); border-radius: var(--shape-full); background: transparent; padding: 8px; font-size: 11px; }
+.prescription-actions button:last-child { flex: 1; }
+.add-plan-exercise .small-button { margin-top: 12px; width: 100%; }
+
+/* GYM-018: editable names wrap within the phone layout. */
+h2, h3, .exercise-card strong { overflow-wrap: anywhere; }
+.exercise-card > span:nth-child(2) { min-width: 0; }

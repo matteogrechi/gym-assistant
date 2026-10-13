@@ -59,7 +59,7 @@ const GymPlan = (() => {
     const template = program.sessions.find(item => item.id === templateId);
     if (!template) throw new Error('This session template is no longer in the plan.');
     return {
-      date, templateId, programName: program.name, planRevision: program.revision,
+      date, templateId, programId: program.id, programName: program.name, planRevision: program.revision,
       name: template.name, focus: template.focus, label: template.label,
       // GYM-024: retain the original prescription separately from editable logs.
       prescribedExercises: clone(template.exercises),

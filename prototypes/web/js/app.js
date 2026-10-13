@@ -1,5 +1,5 @@
 'use strict';
-/* global GymData, GymMetrics, GymTimers, GymCalendar, GymPlan, GymAttendance, GymSession, GymSettings */
+/* global GymData, GymMetrics, GymTimers, GymCalendar, GymPlan, GymAttendance, GymSession, GymSettings, GymPrograms */
 const byId = id => document.getElementById(id);
 // GYM-015: uniform decorative SVGs; the surrounding button provides its action name.
 const buttonIcon = name => {
@@ -13,7 +13,7 @@ let selectedDate = todayDate;
 let displayedWeek = GymCalendar.week(todayDate)[0];
 let sessionDate = null;
 const sessionInstances = new Map();
-// GYM-020: past obligations are snapshots; plan saves cannot rewrite attendance.
+// GYM-020, GYM-026: past obligations retain original program identity; plan saves cannot rewrite attendance.
 const pastPlans = GymAttendance.planned(GymData.program, todayDate, true);
 let capturedThrough = todayDate;
 const observedAttendance = () => GymAttendance.observations(GymData.attendanceHistory, sessionInstances);
@@ -28,12 +28,12 @@ function capturePastPlans() {
   }
   capturedThrough = todayDate;
 }
-// GYM-018: opening new previews copies the plan; recorded executions retain snapshots.
-function getSession(templateId, date) {
+// GYM-018, GYM-026: opening new previews copies the owning plan; recorded executions retain snapshots.
+function getSession(templateId, date, programId = GymData.library.activePlanId) {
   const key = `${date}:${templateId}`;
   const previous = sessionInstances.get(key);
   const past = date < todayDate && pastPlans.find(item => item.plannedDate === date && item.templateId === templateId);
-  const definition = past ? { name: past.programName, revision: past.planRevision, sessions: [past.template] } : GymData.program;
+  const definition = past ? { id: past.programId, name: past.programName, revision: past.planRevision, sessions: [past.template] } : GymData.library.plans.find(item => item.id === programId);
   const instance = GymPlan.openOccurrence(definition, GymData.catalog, date, templateId, previous);
   if (instance !== previous) instance.exercises.forEach(entry => { entry.timers = GymTimers.create(); entry.warmups = []; });
   sessionInstances.set(key, instance);
@@ -50,7 +50,7 @@ const plannedForDate = date => {
   const recorded = recordedForDate(date);
   const past = date < todayDate && pastPlans.find(item => item.plannedDate === date);
   const sessionId = recorded?.templateId ?? past?.templateId ?? GymCalendar.plan(date, GymData.program.schedule, GymData.program.dateAssignments);
-  return { sessionId, template: recorded ?? past?.template ?? GymData.program.sessions.find(item => item.id === sessionId) ?? null };
+  return { sessionId, programId: recorded?.programId ?? past?.programId ?? GymData.library.activePlanId, template: recorded ?? past?.template ?? GymData.program.sessions.find(item => item.id === sessionId) ?? null };
 };
 const executionAssignments = () => {
   const assignments = { ...GymData.program.dateAssignments };
@@ -62,7 +62,7 @@ const fullDate = date => GymCalendar.label(date, { weekday: 'short', day: 'numer
 function showView(id, focusId) {
   document.querySelectorAll('[data-view]').forEach(view => { view.hidden = view.id !== id; });
   ['programNav', 'planNav', 'progressNav'].forEach(navId => byId(navId).removeAttribute('aria-current'));
-  if (id !== 'settings') byId(id === 'progress' ? 'progressNav' : id === 'plan' || id === 'planSession' ? 'planNav' : 'programNav').setAttribute('aria-current', 'page');
+  if (id !== 'settings') byId(id === 'progress' ? 'progressNav' : id === 'plans' || id === 'plan' || id === 'planSession' ? 'planNav' : 'programNav').setAttribute('aria-current', 'page');
   if (focusId) byId(focusId).focus();
   document.querySelector('.screen-area').scrollTop = 0;
 }
@@ -77,7 +77,7 @@ function renderCalendar() {
   const selected = plannedForDate(selectedDate);
   const planned = selected.template;
   const dateLabel = `${selectedDate === todayDate ? 'TODAY · ' : ''}${fullDate(selectedDate)}`;
-  byId('sessionCard').innerHTML = `<p id="selectedDateLabel" class="eyebrow" aria-live="polite">${dateLabel}</p><h3>${escapeHtml(planned?.name ?? 'No session planned')}</h3><p>${escapeHtml(planned ? planned.focus || 'Training session' : 'Assign a session in the Plan section.')}</p>${planned ? `<button id="openSelectedSession" class="md-button md-filled calendar-start">${selectedDate > todayDate ? 'Preview session' : 'View session'}</button>` : ''}`;
+  byId('sessionCard').innerHTML = `<p id="selectedDateLabel" class="eyebrow" aria-live="polite">${dateLabel}</p><h3>${escapeHtml(planned?.name ?? 'No session planned')}</h3><p>${escapeHtml(planned ? [selected.programId !== GymData.library.activePlanId ? planned.programName ?? pastPlans.find(item => item.plannedDate === selectedDate)?.programName : '', planned.focus || 'Training session'].filter(Boolean).join(' · ') : 'Assign a session in the Plan section.')}</p>${planned ? `<button id="openSelectedSession" class="md-button md-filled calendar-start">${selectedDate > todayDate ? 'Preview session' : 'View session'}</button>` : ''}`;
   const dates = GymCalendar.week(displayedWeek);
   byId('weekLabel').textContent = `${GymCalendar.label(dates[0], { day: 'numeric', month: 'short' })} – ${GymCalendar.label(dates[6], { day: 'numeric', month: 'short', year: 'numeric' })}`;
   byId('calendarDays').innerHTML = dates.map(date => {
@@ -90,18 +90,18 @@ function renderCalendar() {
   const finishedIds = new Set([...sessionInstances.values()].filter(item => item.state === 'finished').map(item => GymAttendance.key(item.date, item.templateId)));
   const pending = GymAttendance.pending(pastPlans, observedAttendance(), todayDate).filter(item => !finishedIds.has(item.id));
   byId('pendingCount').textContent = `${pending.length} not yet logged`;
-  byId('pendingSessions').innerHTML = pending.slice(0, 3).map(item => `<button class="exercise-card" data-pending-date="${item.plannedDate}"><span class="agenda-date"><strong>${GymCalendar.label(item.plannedDate, { day: 'numeric' })}</strong><small>${GymCalendar.label(item.plannedDate, { month: 'short' })}</small></span><span><strong>${escapeHtml(item.template.name)}</strong><small>${GymCalendar.label(item.plannedDate, { weekday: 'long' })}</small></span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button>`).join('') || '<p class="empty-calendar">No pending sessions in the last 28 days.</p>';
+  byId('pendingSessions').innerHTML = pending.slice(0, 3).map(item => `<button class="exercise-card" data-pending-date="${item.plannedDate}"><span class="agenda-date"><strong>${GymCalendar.label(item.plannedDate, { day: 'numeric' })}</strong><small>${GymCalendar.label(item.plannedDate, { month: 'short' })}</small></span><span><strong>${escapeHtml(item.template.name)}</strong><small>${escapeHtml([item.programId !== GymData.library.activePlanId ? item.programName : '', GymCalendar.label(item.plannedDate, { weekday: 'long' })].filter(Boolean).join(' · '))}</small></span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button>`).join('') || '<p class="empty-calendar">No pending sessions in the last 28 days.</p>';
 }
-function openSession(templateId, date) {
+function openSession(templateId, date, programId) {
   sessionDate = date;
-  currentSession = getSession(templateId, date);
+  currentSession = getSession(templateId, date, programId);
   renderSession();
   showView('session', 'backProgram');
 }
 // GYM-001, GYM-005, GYM-008, GYM-019
 function renderSession() {
   byId('sessionName').textContent = session().name;
-  byId('sessionFocus').textContent = [session().focus, fullDate(sessionDate), sessionDate > todayDate ? 'Planned preview' : ''].filter(Boolean).join(' · ');
+  byId('sessionFocus').textContent = [session().programId !== GymData.library.activePlanId ? session().programName : '', session().focus, fullDate(sessionDate), sessionDate > todayDate ? 'Planned preview' : ''].filter(Boolean).join(' · ');
   const done = session().exercises.reduce((sum, item) => sum + completed(item), 0);
   const total = session().exercises.reduce((sum, item) => sum + item.sets.length, 0);
   byId('sessionCount').textContent = `${done} / ${total} working sets done`;
@@ -299,7 +299,7 @@ byId('calendarDays').addEventListener('click', event => {
 byId('sessionCard').addEventListener('click', event => {
   if (!event.target.closest('#openSelectedSession')) return;
   const item = plannedForDate(selectedDate);
-  if (item.template) openSession(item.sessionId, selectedDate);
+  if (item.template) openSession(item.sessionId, selectedDate, item.programId);
 });
 byId('upcomingSessions').addEventListener('click', event => {
   const card = event.target.closest('[data-planned-date]');
@@ -349,13 +349,38 @@ function finishSession() {
 }
 byId('finishSession').addEventListener('click', finishSession);
 byId('finishExerciseSession').addEventListener('click', finishSession);
-// GYM-018: a single editable draft owns templates and scheduling, separate from Train.
+// GYM-018, GYM-026: the selected editor uses its retained per-plan draft, separate from Train.
 let planDraft = null;
+let editingPlanId = GymData.library.activePlanId;
+const planDrafts = new Map();
+let libraryMessage = '';
 let draftDate = selectedDate;
 let editingTemplateId = null;
 let planDirty = false;
 let planMessage = '';
-const ensureDraft = () => { if (!planDraft) planDraft = GymPlan.clone(GymData.program); };
+const ensureDraft = () => { if (!planDraft) planDraft = GymPlan.clone(GymData.library.plans.find(item => item.id === editingPlanId)); };
+// GYM-026: cache each draft independently; editor navigation never commits it.
+function retainDraft() {
+  if (planDraft) planDrafts.set(editingPlanId, { draft: planDraft, dirty: planDirty, message: planMessage });
+}
+function openPlan(id) {
+  retainDraft(); editingPlanId = id;
+  const cached = planDrafts.get(id);
+  planDraft = cached?.draft ?? GymPlan.clone(GymData.library.plans.find(item => item.id === id));
+  planDirty = cached?.dirty ?? false; planMessage = cached?.message ?? '';
+  editingTemplateId = null; draftDate = selectedDate; renderPlan(); showView('plan', 'backToPlans');
+}
+function renderPlans() {
+  retainDraft();
+  const savedIds = new Set(GymData.library.plans.map(item => item.id));
+  const plans = [...GymData.library.plans, ...[...planDrafts.values()].filter(item => !savedIds.has(item.draft.id)).map(item => item.draft)];
+  byId('libraryFeedback').textContent = libraryMessage;
+  byId('savedPlans').innerHTML = plans.map(item => {
+    const active = item.id === GymData.library.activePlanId;
+    const dirty = planDrafts.get(item.id)?.dirty;
+    return `<div class="plan-library-row"><button class="exercise-card" data-edit-plan="${escapeHtml(item.id)}"><span><strong>${escapeHtml(item.name)}</strong><small>${item.sessions.length} ${item.sessions.length === 1 ? 'session' : 'sessions'}${dirty ? ' · Unsaved changes' : ''}</small>${active ? '<span class="active-plan-tag">Active</span>' : ''}</span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button>${!active && savedIds.has(item.id) ? `<button class="md-button md-outlined use-plan" data-use-plan="${escapeHtml(item.id)}" aria-label="Use ${escapeHtml(item.name)} as active plan">Use plan</button>` : ''}</div>`;
+  }).join('');
+}
 const templateDraft = () => planDraft.sessions.find(item => item.id === editingTemplateId);
 const assignmentOptions = first => `<option value="${first}">${first === 'weekly' ? 'Use weekly pattern' : 'No session'}</option>${first === 'weekly' ? '<option value="none">No session</option>' : ''}${planDraft.sessions.map(item => `<option value="${item.id}">${escapeHtml(item.name)} (${item.label})</option>`).join('')}`;
 // GYM-025: Save indicates a pending change instead of offering a no-op.
@@ -365,6 +390,7 @@ function syncSaveActions() {
 function markPlanDirty() {
   planDirty = true;
   planMessage = 'Unsaved changes';
+  retainDraft();
   syncSaveActions();
   byId('planFeedback').textContent = planMessage;
   byId('templateFeedback').textContent = planMessage;
@@ -415,16 +441,37 @@ function savePlan(event) {
     byId('templateFeedback').textContent = planMessage;
     return;
   }
-  if (planDirty) GymPlan.apply(GymData.program, planDraft, GymData.catalog);
-  planDraft = GymPlan.clone(GymData.program);
+  let saved;
+  try { saved = planDirty ? GymPrograms.commit(GymData.library, planDraft, GymData.catalog) : GymData.library.plans.find(item => item.id === editingPlanId); }
+  catch (error) { byId('planFeedback').textContent = error.message; byId('templateFeedback').textContent = error.message; return; }
+  planDraft = GymPlan.clone(saved);
   planDirty = false;
   planMessage = 'Plan saved';
+  libraryMessage = '';
+  retainDraft();
   renderPlan();
   renderProgram();
   showView('plan', 'planNav');
 }
-byId('planNav').addEventListener('click', () => {
-  ensureDraft(); draftDate = selectedDate; renderPlan(); showView('plan', 'planNav');
+byId('planNav').addEventListener('click', () => { renderPlans(); showView('plans', 'planNav'); });
+byId('backToPlans').addEventListener('click', () => { renderPlans(); showView('plans', 'planNav'); });
+byId('savedPlans').addEventListener('click', event => {
+  const edit = event.target.closest('[data-edit-plan]');
+  if (edit) { openPlan(edit.dataset.editPlan); return; }
+  const use = event.target.closest('[data-use-plan]');
+  if (!use) return;
+  retainDraft();
+  try {
+    GymPrograms.activate(GymData.library, use.dataset.usePlan, planDrafts.get(use.dataset.usePlan)?.dirty);
+    libraryMessage = ''; renderProgram(); renderPlans();
+    byId('savedPlans').querySelector(`[data-edit-plan="${use.dataset.usePlan}"]`).focus();
+  } catch (error) { libraryMessage = error.message; byId('libraryFeedback').textContent = libraryMessage; }
+});
+byId('addPlan').addEventListener('click', () => {
+  retainDraft();
+  const draft = GymPrograms.create(GymData.catalog, `plan-${crypto.randomUUID()}`);
+  planDrafts.set(draft.id, { draft, dirty: true, message: 'Unsaved new plan' });
+  openPlan(draft.id); byId('planName').focus();
 });
 byId('planName').addEventListener('input', event => { planDraft.name = event.target.value; markPlanDirty(); });
 byId('weeklySchedule').addEventListener('change', event => {
@@ -552,7 +599,8 @@ GymSettings.mount({
   input: () => {
     todayDate = GymCalendar.today();
     capturePastPlans();
-    return { settings: GymSettings.state, program: GymData.program, draft: planDirty ? planDraft : null,
+    retainDraft();
+    return { settings: GymSettings.state, program: GymData.program, plans: GymData.library.plans, activePlanId: GymData.library.activePlanId, drafts: [...planDrafts.values()].filter(item => item.dirty).map(item => item.draft),
       catalog: GymData.catalog, sessions: sessionInstances, pastPlans,
       history: GymData.history, attendanceHistory: GymData.attendanceHistory,
       context: GymData.context, today: todayDate, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone };

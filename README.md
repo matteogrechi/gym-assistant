@@ -20,7 +20,7 @@ Open [prototypes/web/index.html](prototypes/web/index.html) directly, or run fro
 python3 -m http.server 8080
 ```
 
-Visit http://localhost:8080/prototypes/web/ . The top-right ⋮ → Settings menu previews language, theme, and a save folder, and downloads status JSON, statistics CSV, and a recovery guide. All data is fictional; edits reset on reload. Detailed usage is in the [prototype README](prototypes/web/README.md).
+Visit http://localhost:8080/prototypes/web/ . Plan lets you browse, create, edit, and activate named programs while retaining existing workouts. The top-right ⋮ → Settings menu previews language, theme, and a save folder, and downloads status JSON, statistics CSV, and a recovery guide. All data is fictional; edits reset on reload. Detailed usage is in the [prototype README](prototypes/web/README.md).
 
 ## Verify the prototype
 

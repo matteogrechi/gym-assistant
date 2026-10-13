@@ -1,6 +1,6 @@
 'use strict';
 /* global GymCalendar */
-// GYM-020: planned cohorts and observed attendance are distinct from performance.
+// GYM-020, GYM-026: original-program planned cohorts and observed attendance are distinct from performance.
 const GymAttendance = (() => {
   const calendar = typeof module !== 'undefined' ? require('./calendar.js') : GymCalendar;
   const key = (date, templateId) => `${date}:${templateId}`;
@@ -10,7 +10,7 @@ const GymAttendance = (() => {
       const date = calendar.addDays(today, offset);
       const templateId = calendar.plan(date, program.schedule, program.dateAssignments);
       const template = program.sessions.find(item => item.id === templateId);
-      if (template) records.push({ id: key(date, templateId), plannedDate: date, templateId, template: structuredClone(template), programName: program.name, planRevision: program.revision });
+      if (template) records.push({ id: key(date, templateId), plannedDate: date, templateId, programId: program.id, template: structuredClone(template), programName: program.name, planRevision: program.revision });
     }
     return records;
   }
@@ -27,7 +27,7 @@ const GymAttendance = (() => {
       if (item.attendedDate) {
         const id = key(item.date, item.templateId);
         // A repeat visit to the same occurrence never replaces its first observation.
-        if (!byId.has(id)) byId.set(id, { plannedDate: item.date, templateId: item.templateId, actualDate: item.attendedDate });
+        if (!byId.has(id)) byId.set(id, { plannedDate: item.date, templateId: item.templateId, programId: item.programId, actualDate: item.attendedDate });
       }
     });
     return byId;

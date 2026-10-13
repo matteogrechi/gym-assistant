@@ -403,3 +403,12 @@ details[open] > summary .disclosure-icon svg { transform: rotate(180deg); }
 .settings-details, .metric-details { padding-block: 4px; }
 .prescription-card summary { padding-inline: 0; }
 @media (prefers-reduced-motion: no-preference) { .disclosure-icon svg { transition: transform 160ms ease; } }
+
+/* GYM-026: browse saved programs separately from their editors and activation. */
+.plan-library-row { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--outline-variant); }
+.plan-library-row .exercise-card { flex: 1; min-width: 0; border-bottom: 0; }
+.plan-library-row .exercise-card > span:first-child { min-width: 0; }
+.plan-library-row small { display: block; }
+.active-plan-tag { display: inline-block; margin-top: 8px; border-radius: var(--shape-full); padding: 4px 10px; background: var(--tonal-container); color: var(--on-surface); font-size: 11px; font-weight: 600; }
+.use-plan { flex-shrink: 0; padding-inline: 16px; }
+#libraryFeedback:empty { display: none; }

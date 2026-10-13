@@ -1,6 +1,6 @@
-# Durable data files — version 1
+# Durable data files — version 2
 
-GYM-023 and GYM-024 define these files. Android implementation is not started. The web prototype downloads real files containing fictional history and this visit's demo edits; it does not save to its preview folder, persist across reloads, or import backups.
+GYM-023, GYM-024 and GYM-026 define these files. Android implementation is not started. The web prototype downloads real files containing fictional history and this visit's demo edits; it does not save to its preview folder, persist across reloads, or import backups.
 
 ## Principles
 
@@ -14,15 +14,15 @@ Top-level keys:
 
 | Field | Meaning |
 | --- | --- |
-| `format`, `formatVersion`, `exportedAt`, `timeZone` | Stable format identity, integer version 1, UTC capture time, device IANA time zone. |
+| `format`, `formatVersion`, `exportedAt`, `timeZone` | Stable format identity, integer version 2, UTC capture time, device IANA time zone. |
 | `dataKind`, `dataDictionary` | Explicit prototype provenance and a field/semantics guide included inside the file. |
 | `settings` | Requested language/theme and preview folder label. Native backups will use non-authoritative folder access metadata; an exported URI cannot grant permission. |
-| `savedPlan`, `unsavedPlanDraft` | Reusable program with sessions, prescriptions and weekday/date assignments; draft is separate and null when absent. A draft is never silently treated as committed. |
+| `savedPlans`, `activePlanId`, `unsavedPlanDrafts` | All saved programs with sessions, prescriptions and weekday/date assignments; one active saved-plan ID; an array of separate per-plan drafts (empty when absent). Drafts, including new unsaved plans, are never silently committed. |
 | `exerciseCatalog` | Exercise IDs, machine identity, sample default setup/weight/reps. |
-| `executionSessions` | Every opened occurrence, with stable `occurrenceId`, planned `date`, template identity, original prescription copy, current exercise order, lifecycle, entries and actual attendance/finish dates where present. |
-| `pastPlannedSessions` | Frozen recent obligations including original dates, program revision and template snapshots, even when the saved plan changes. |
+| `executionSessions` | Every opened occurrence, with stable `occurrenceId`, planned `date`, original `programId`, globally unique template identity, original prescription copy, current exercise order, lifecycle, entries and actual attendance/finish dates where present. |
+| `pastPlannedSessions` | Frozen recent obligations including original dates, original `programId`, program revision and template snapshots, even when the saved plan changes. |
 | `samplePerformanceHistory` | Fictional raw working sets plus machine/setup/load/ROM/effort context and actual observation dates. |
-| `sampleAttendanceHistory` | Fictional planned and actual visit dates; execution-session attendance is retained separately. |
+| `sampleAttendanceHistory` | Fictional original program IDs and planned/actual visit dates; execution-session attendance is retained separately. |
 
 Execution exercises contain `sets` (working sets), `warmups`, seat notes (`seat`), prescribed rep range (`target`), and timers. Position in each array is the recorded order. A set's `done` flag is completion, not proof of attendance by itself; the documented positive-rep working-set rule still applies. Original immutable working-set prescriptions are in `prescribedExercises` rather than inferred from edited values. User text is preserved, including Unicode and line breaks.
 
@@ -34,7 +34,7 @@ All current mockup records are demo data. `dataKind` and CSV source labels disti
 
 Long-form rows have the fixed header:
 
-`format_version,record_type,source,exercise_id,machine,setup,load_convention,rom,rir,occurrence_id,template_id,planned_date,actual_date,period_start,period_end,as_of_date,metric,reference_weight_kg,value,unit,missing_reason`
+`format_version,record_type,source,program_id,exercise_id,machine,setup,load_convention,rom,rir,occurrence_id,template_id,planned_date,actual_date,period_start,period_end,as_of_date,metric,reference_weight_kg,value,unit,missing_reason`
 
 | Record type | Rows and semantics |
 | --- | --- |
@@ -46,7 +46,7 @@ Only derived values appear here; full state JSON retains raw logs. Values do not
 
 ## Recovery without the app
 
-The Settings recovery-guide download is plain UTF-8 text and includes the version-1 header and dictionary. Open JSON in any text editor to inspect raw records. Standard Python can extract sets without the app:
+The Settings recovery-guide download is plain UTF-8 text and includes the version-2 header and dictionary. It includes all saved programs and retained drafts, including inactive ones. CSV program IDs distinguish original plan ownership; attendance cohorts remain historical snapshots rather than being recalculated from a newly active plan. Open JSON in any text editor to inspect raw records. Standard Python can extract sets without the app:
 
 ```python
 import json
@@ -66,4 +66,8 @@ Open CSV in a spreadsheet using UTF-8 and comma separation, or `csv.DictReader` 
 
 On Android, choose a writable location through the [system document picker](https://developer.android.com/training/data-storage/shared/documents-files) and retain the granted URI permission. A folder can later become unavailable; keep current data and report an unsaved state rather than claiming success. Save after committed changes and timer pause/background events. Write a complete new snapshot, verify success, then replace/promote it while retaining a previous valid file; document-provider capabilities determine the safe replacement strategy. No every-second writes.
 
-Version 1 is an exploratory interchange contract. Future incompatible changes increment `formatVersion`, keep earlier files intact, and document how to migrate/read them. Additive fields must not silently reinterpret existing fields. A future reader should preserve unknown fields and clearly reject unsupported versions rather than erase data. The prototype includes no importer or native persistence implementation.
+Version 2 is an exploratory interchange contract. Future incompatible changes increment `formatVersion`, keep earlier files intact, and document how to migrate/read them. Additive fields must not silently reinterpret existing fields. A future reader should preserve unknown fields and clearly reject unsupported versions rather than erase data. The prototype includes no importer or native persistence implementation.
+
+## Version 1 → version 2 recovery
+
+Version 1 backups remain readable. For conversion, keep the original file: wrap `savedPlan` as the single-element `savedPlans` array, set `activePlanId` to that plan's ID, and wrap a non-null `unsavedPlanDraft` as `unsavedPlanDrafts` (otherwise an empty array). Add that original plan ID to execution/obligation/attendance records that lack `programId`; version-1 sample performance records already carry it. Existing occurrence and template IDs remain unchanged; future plans use globally unique IDs. Set `formatVersion` to 2 only after converting and documenting the dictionary. Version-2 CSV adds `program_id` after `source`; an isolated version-1 CSV without its backup has unknown plan ownership, so preserve that uncertainty rather than inventing a plan ID. No importer is implemented in the mockup.

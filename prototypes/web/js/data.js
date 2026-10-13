@@ -14,7 +14,7 @@ const GymData = (() => {
       id: `session-${letter}`, label: letter, name: `Session ${letter}`, focus: ['Lower body first', 'Push first', 'Pull first'][index],
       exercises: [...catalog.slice(index), ...catalog.slice(0, index)].map(exercise => ({
         entryId: `${letter}-${exercise.id}`, exerciseId: exercise.id,
-        setCount: 3, minReps: index === 1 ? 8 : 10, maxReps: index === 1 ? 10 : 12
+        setCount: 3, minReps: index === 1 ? 8 : 10, maxReps: index === 1 ? 10 : 12, recoverySeconds: 90
       }))
     })),
     schedule: { 1: 'session-A', 3: 'session-B', 5: 'session-C' }, dateAssignments: {}
@@ -25,7 +25,7 @@ const GymData = (() => {
     sessions: ['A', 'B'].map((letter, index) => ({
       id: `routine-${letter}`, label: letter, name: index === 0 ? 'Upper body' : 'Lower body', focus: '',
       exercises: (index === 0 ? catalog.slice(1) : [catalog[0], catalog[1]]).map(exercise => ({
-        entryId: `routine-${letter}-${exercise.id}`, exerciseId: exercise.id, setCount: 2, minReps: 8, maxReps: 10
+        entryId: `routine-${letter}-${exercise.id}`, exerciseId: exercise.id, setCount: 2, minReps: 8, maxReps: 10, recoverySeconds: 90
       }))
     })), schedule: { 1: 'routine-A', 4: 'routine-B' }, dateAssignments: {}
   };

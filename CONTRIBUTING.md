@@ -61,7 +61,7 @@ Choose verification appropriate to the change:
 | Change | Verification |
 | --- | --- |
 | Mockup data, metrics, sessions or timers | Existing logic checks plus browser flows affected by the behavior. |
-| UI or interaction | Chromium browser suite and visual inspection of affected screens/states. |
+| UI or interaction | Chromium browser suite and visual inspection of affected screens/states; refresh affected images in `docs/reviews/previews/`. Keep historical comparisons under `docs/reviews/history/`. |
 | Durable file contract or export | Relevant logic/browser checks and recovery with standard JSON/CSV readers. |
 | Documentation, file moves or skills | Resolve links/source paths; validate skill frontmatter/UI YAML where affected; check routing and removal of placeholders. Runtime moves also need affected runtime checks. |
 | Native Android, once authorized | Checks provided by the actual Android project; document device/emulator coverage and gaps. |

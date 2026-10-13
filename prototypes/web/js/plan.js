@@ -19,6 +19,8 @@ const GymPlan = (() => {
         if (!catalogIds.has(item.exerciseId)) errors.push(`${prefix}: choose a catalog exercise.`);
         if (!Number.isInteger(item.setCount) || item.setCount < 1 || item.setCount > 10) errors.push(`${prefix}: working sets must be 1–10.`);
         if (!Number.isInteger(item.minReps) || !Number.isInteger(item.maxReps) || item.minReps < 1 || item.maxReps > 50 || item.minReps > item.maxReps) errors.push(`${prefix}: reps must form a whole-number range from 1 to 50.`);
+        const recovery = item.recoverySeconds ?? 90;
+        if (!Number.isInteger(recovery) || recovery < 1 || recovery > 3600) errors.push(`${prefix}: recovery must be whole seconds from 1 to 3600.`);
       });
     });
     Object.values(plan.schedule ?? {}).forEach(id => { if (id !== null && !ids.has(id)) errors.push('A weekday refers to a removed session.'); });
@@ -44,11 +46,10 @@ const GymPlan = (() => {
   }
   const locked = instance => instance && (instance.state !== 'ready' || instance.hasEntries || instance.orderChanged);
   // GYM-019: move the existing exercise object, retaining all occurrence data.
-  function moveExercise(instance, entryId, direction) {
+  function reorderExercise(instance, entryId, next) {
     if (instance.state === 'finished') return -1;
     const index = instance.exercises.findIndex(item => item.entryId === entryId);
-    const next = index + direction;
-    if (![1, -1].includes(direction) || index < 0 || next < 0 || next >= instance.exercises.length) return -1;
+    if (!Number.isInteger(next) || index < 0 || next < 0 || next >= instance.exercises.length || next === index) return -1;
     const [item] = instance.exercises.splice(index, 1);
     instance.exercises.splice(next, 0, item);
     instance.orderChanged = true;
@@ -68,12 +69,13 @@ const GymPlan = (() => {
         const machine = catalog.find(entry => entry.id === item.exerciseId);
         return {
           ...clone(machine), entryId: item.entryId,
+          recoverySeconds: item.recoverySeconds ?? 90,
           target: item.minReps === item.maxReps ? String(item.minReps) : `${item.minReps}–${item.maxReps}`,
           sets: Array.from({ length: item.setCount }, () => ({ reps: item.maxReps, weight: machine.weight, done: false }))
         };
       })
     };
   }
-  return { clone, validate, apply, removeSession, locked, openOccurrence, moveExercise };
+  return { clone, validate, apply, removeSession, locked, openOccurrence, reorderExercise };
 })();
 if (typeof module !== 'undefined') module.exports = GymPlan;

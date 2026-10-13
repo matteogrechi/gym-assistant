@@ -18,6 +18,7 @@ const GymExports = (() => {
     attendance: 'sampleAttendanceHistory contains fictional planned/actual visits; executionSessions.attendedDate records this visit’s demo attendance. Only a completed working set with positive whole-number reps and finite nonnegative kg establishes attendance, once per occurrence. Warm-ups, future previews and Start alone do not.',
     executionSessions: 'programId identifies the original program; globally unique template IDs keep occurrenceId=date:templateId stable. date is planned date; attendedDate is first valid working-set attendance day; finishedAt ends a session, not proof all sets are done.',
     exercises: 'Array order is execution order; entryId is stable identity; seat is setup note; target is original rep range; prescribedExercises holds original working-set counts/ranges.',
+    recoverySeconds: 'Planned recovery per exercise: whole seconds from 1 to 3600, default 90 when absent in older files. Original prescribedExercises and execution exercises retain the occurrence target; timers.duration preserves its countdown seconds through plan changes.',
     sets: 'sets=working sets; warmups=warm-up sets. reps is a whole number; weight is kg; done is completion. Warm-ups do not count in performance or attendance.',
     context: 'Historical machine/setup/unit/convention/rom/rir define comparability; sample rir=2. No actual effort collection is implemented.',
     lifecycle: 'ready, inProgress, paused, finished; finished can be partial. Never restart timers just because a session is inProgress.',

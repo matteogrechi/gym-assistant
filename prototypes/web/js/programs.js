@@ -6,7 +6,7 @@ const GymPrograms = (() => {
   function create(catalog, id) {
     return { id, name: 'New plan', revision: 1, sessions: [{
       id: `${id}-session-A`, label: 'A', name: 'Session A', focus: '',
-      exercises: [{ entryId: `${id}-A-1`, exerciseId: catalog[0].id, setCount: 3, minReps: 10, maxReps: 12 }]
+      exercises: [{ entryId: `${id}-A-1`, exerciseId: catalog[0].id, setCount: 3, minReps: 10, maxReps: 12, recoverySeconds: 90 }]
     }], schedule: {}, dateAssignments: {} };
   }
   function commit(library, draft, catalog) {

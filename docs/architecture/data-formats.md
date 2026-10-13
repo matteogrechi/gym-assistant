@@ -44,6 +44,10 @@ Long-form rows have the fixed header:
 
 Only derived values appear here; full state JSON retains raw logs. Values do not depend on UI language, current chart selection, or rounded display text. Literal quotation marks are doubled, all cells are quoted, and records end in CRLF. Unrepresentable numeric overflow is blank with `numeric_overflow`, not converted into a valid observation.
 
+## Planned recovery duration
+
+Each planned exercise stores `recoverySeconds` (whole seconds, 1–3600). Dated execution exercises and their original `prescribedExercises` retain that target; `timers.duration` uses the occurrence's planned seconds. Plan edits cannot rewrite a protected occurrence's target or elapsed timers. This is an additive version-2 field: earlier files without it use the original 90-second default, while existing captured timer durations remain unchanged. The reference IDs displayed outside the mockup phone are presentation metadata and are not exported as app state.
+
 ## Recovery without the app
 
 The Settings recovery-guide download is plain UTF-8 text and includes the version-2 header and dictionary. It includes all saved programs and retained drafts, including inactive ones. CSV program IDs distinguish original plan ownership; attendance cohorts remain historical snapshots rather than being recalculated from a newly active plan. Open JSON in any text editor to inspect raw records. Standard Python can extract sets without the app:

@@ -17,7 +17,8 @@ Android distinguishes filled, filled tonal, outlined, and text buttons by emphas
 | Pause session; Finish while Paused | Outlined button |
 | Today, Reset, video access, recovery guide | Text button |
 | Back on secondary screens | Standard circular icon button |
-| Previous/next week and exercise move earlier/later | Outlined icon button |
+| Previous/next week | Outlined icon button |
+| Exercise sorting in Plan and Train | 48px outlined drag handle with grip icon; touch/mouse drop and ArrowUp/ArrowDown keyboard support |
 | Remove session template | Standard icon button with a trash icon |
 | Set completion | Toggle icon button with checked fill and pressed semantics |
 | Execution/Recovery and progress metric selection | Joined single-choice segmented buttons with a selected check and tonal fill |

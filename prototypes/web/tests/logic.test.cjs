@@ -79,16 +79,6 @@ test('GYM-012: modes and separate exercise timers remain independent', () => {
   assert.equal(timers.read(second, 'recovery', 10000), 90);
 });
 
-test('GYM-012: recovery duration validates bounds and cannot change while running', () => {
-  const state = timers.create();
-  for (const bad of [0, -1, 1.5, 3601, NaN, Infinity]) assert.equal(timers.setDuration(state, bad), false);
-  assert.equal(timers.setDuration(state, 1), true);
-  timers.start(state, 'recovery', 0);
-  assert.equal(timers.setDuration(state, 20), false);
-  timers.pause(state, 'recovery', 500);
-  assert.equal(timers.setDuration(state, 3600), true);
-  assert.equal(timers.read(state, 'recovery', 2000), 3600);
-});
 
 // GYM-016: actual calendar outcomes rather than DOM presence.
 const calendar = require('../js/calendar.js');
@@ -170,7 +160,7 @@ test('GYM-017: partial Finish is terminal, preserves records without marking set
   assert.equal(instance.attendedDate, undefined);
   assert.equal(instance.exercises.flatMap(item => item.sets).filter(set => set.done).length, 1);
   assert.equal(timers.read(instance.exercises[0].timers, 'execution', 9000), 5);
-  assert.equal(plan.moveExercise(instance, 'A-leg', 1), -1);
+  assert.equal(plan.reorderExercise(instance, 'A-leg', 1), -1);
   for (const action of ['start', 'pause', 'resume', 'finish']) assert.equal(lifecycle.transition(instance, action, 9000), false);
   assert.strictEqual(plan.openOccurrence(data.program, data.catalog, instance.date, 'session-A', instance), instance);
 });
@@ -253,7 +243,7 @@ test('GYM-019: permutation retains exercise identity, logs and running timers; p
   leg.timers = timers.create();
   timers.start(leg.timers, 'execution', 1000);
   const before = plan.clone(definition);
-  assert.equal(plan.moveExercise(workout, 'A-leg', 1), 1);
+  assert.equal(plan.reorderExercise(workout, 'A-leg', 1), 1);
   assert.strictEqual(workout.exercises[1], leg);
   assert.deepEqual(leg.sets[0], { reps: 8, weight: 42.5, done: true });
   assert.equal(leg.seat, 'Seat 7');
@@ -267,11 +257,11 @@ test('GYM-019: permutation retains exercise identity, logs and running timers; p
 test('GYM-019: reordered Ready preview survives reopening and plan saves; boundaries leave it untouched', () => {
   const definition = plan.clone(data.program);
   const preview = plan.openOccurrence(definition, data.catalog, '2026-10-19', 'session-A');
-  for (const [id, direction] of [['A-leg', -1], ['A-lat', 1], ['missing', 1], ['A-leg', 2]]) {
-    assert.equal(plan.moveExercise(preview, id, direction), -1);
+  for (const [id, target] of [['A-leg', -1], ['A-lat', 3], ['missing', 1], ['A-leg', 0], ['A-leg', 1.5]]) {
+    assert.equal(plan.reorderExercise(preview, id, target), -1);
     assert.equal(preview.orderChanged, false);
   }
-  assert.equal(plan.moveExercise(preview, 'A-chest', -1), 0);
+  assert.equal(plan.reorderExercise(preview, 'A-chest', 0), 0);
   const draft = plan.clone(definition);
   draft.sessions[0].name = 'New plan name';
   plan.apply(definition, draft, data.catalog);
@@ -301,7 +291,7 @@ test('GYM-018: saving updates new and untouched previews but protects recorded s
   const untouched = plan.openOccurrence(definition, data.catalog, '2026-10-19', 'session-A');
   const draft = plan.clone(definition);
   draft.sessions[0].name = 'Strength A';
-  Object.assign(draft.sessions[0].exercises[0], { setCount: 4, minReps: 6, maxReps: 8 });
+  Object.assign(draft.sessions[0].exercises[0], { setCount: 4, minReps: 6, maxReps: 8, recoverySeconds: 120 });
   plan.apply(definition, draft, data.catalog);
   const stillActive = plan.openOccurrence(definition, data.catalog, '2026-10-12', 'session-A', active);
   assert.strictEqual(stillActive, active);
@@ -312,6 +302,9 @@ test('GYM-018: saving updates new and untouched previews but protects recorded s
   assert.equal(updated.name, 'Strength A');
   assert.equal(updated.exercises[0].sets.length, 4);
   assert.equal(updated.exercises[0].target, '6–8');
+  assert.equal(updated.exercises[0].recoverySeconds, 120);
+  assert.equal(updated.prescribedExercises[0].recoverySeconds, 120);
+  assert.equal(stillActive.exercises[0].recoverySeconds, 90);
   assert.equal(updated.planRevision, 2);
   assert.equal(active.planRevision, 1);
 });
@@ -500,4 +493,28 @@ test('GYM-026: version-2 backups retain all saved plans, active ID, per-plan dra
   assert(rows.every(row => row.format_version === '2'));
   assert.equal(rows.find(row => row.metric === 'planned_sessions').value, '12');
   assert(exportsApi.guide().includes('v1 savedPlan becomes savedPlans'));
+});
+
+// GYM-012, GYM-018: recovery is validated in prescriptions, not edited in execution.
+test('GYM-012, GYM-018: planned recovery bounds and legacy default preserve saved state', () => {
+  const definition = plan.clone(data.program);
+  for (const bad of [0, -1, 1.5, 3601, NaN, Infinity]) {
+    const draft = plan.clone(definition);
+    draft.sessions[0].exercises[0].recoverySeconds = bad;
+    assert.throws(() => plan.apply(definition, draft, data.catalog));
+    assert.equal(definition.sessions[0].exercises[0].recoverySeconds, 90);
+  }
+  for (const seconds of [1, 3600]) {
+    const draft = plan.clone(definition);
+    draft.sessions[0].exercises[0].recoverySeconds = seconds;
+    plan.apply(definition, draft, data.catalog);
+    const occurrence = plan.openOccurrence(definition, data.catalog, '2026-10-12', 'session-A');
+    const timer = timers.create(occurrence.exercises[0].recoverySeconds);
+    timers.start(timer, 'recovery', 1000); timers.pause(timer, 'recovery', 1500);
+    timers.reset(timer, 'recovery');
+    assert.equal(timers.read(timer, 'recovery', 2000), seconds);
+  }
+  delete definition.sessions[0].exercises[0].recoverySeconds;
+  assert.deepEqual(plan.validate(definition, data.catalog), []);
+  assert.equal(plan.openOccurrence(definition, data.catalog, '2026-10-12', 'session-A').exercises[0].recoverySeconds, 90);
 });

@@ -16,17 +16,11 @@ const GymTimers = (() => {
     if (mode === 'recovery') timer.elapsed = Math.min(timer.elapsed, state.duration * 1000);
   }
   function reset(state, mode) { state[mode].elapsed = 0; state[mode].startedAt = null; }
-  function setDuration(state, seconds) {
-    if (!Number.isInteger(seconds) || seconds < 1 || seconds > 3600 || state.recovery.startedAt !== null) return false;
-    state.duration = seconds;
-    reset(state, 'recovery');
-    return true;
-  }
   function read(state, mode, now) {
     const ms = elapsed(state[mode], now);
     if (mode === 'recovery' && ms >= state.duration * 1000) { pause(state, mode, now); return 0; }
     return mode === 'execution' ? Math.floor(ms / 1000) : Math.ceil((state.duration * 1000 - ms) / 1000);
   }
-  return { create, start, pause, reset, setDuration, read };
+  return { create, start, pause, reset, read };
 })();
 if (typeof module !== 'undefined') module.exports = GymTimers;

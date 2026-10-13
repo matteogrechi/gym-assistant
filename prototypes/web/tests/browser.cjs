@@ -679,6 +679,36 @@ const fs = require('node:fs/promises');
     await expect(page.locator('#settings h2')).toHaveText('Impostazioni');
     await expect(page.locator('#programNav')).toContainText('Allenamento');
     await expect(page.locator('#settings')).toHaveAttribute('lang', 'it');
+    const beforeSpanish = await page.evaluate(() => structuredClone([...sessionInstances.values()]));
+    await page.locator('#appLanguage').selectOption('es');
+    await expect(page.locator('#settings h2')).toHaveText('Ajustes');
+    await expect(page.locator('#programNav')).toContainText('Entrenar');
+    await expect(page.locator('#progressNav')).toContainText('Progreso');
+    await expect(page.locator('#settings')).toHaveAttribute('lang', 'es');
+    await expect(page.locator('#overflowButton')).toHaveAccessibleName('Más opciones');
+    await expect(page.locator('#settingsBack')).toHaveAccessibleName('Volver a la pantalla anterior');
+    await expect(page.locator('#exportDetails summary')).toContainText('Acerca de los archivos');
+    await expect(page.locator('#exportDetails .disclosure-icon')).toHaveCount(1);
+    await page.locator('#changeFolder').click();
+    await expect(page.locator('#folderTitle')).toHaveText('Vista previa de carpeta');
+    await expect(page.locator('#cancelFolder')).toHaveText('Cancelar');
+    await page.locator('#cancelFolder').click();
+    assert.deepEqual(await page.evaluate(() => structuredClone([...sessionInstances.values()])), beforeSpanish);
+    for (const width of [320,390,430]) {
+      await page.setViewportSize({width,height:844});
+      const badSpanish = await page.evaluate(() => [...document.querySelectorAll('#settings button,#settings select,#settings summary,.main-nav button')].filter(el=>el.getClientRects().length).filter(el=>{const r=el.getBoundingClientRect();return r.height<47.9||r.width<47.9||r.left<0||r.right>innerWidth;}).map(el=>el.id||el.tagName));
+      assert.deepEqual(badSpanish, []);
+    }
+    await page.setViewportSize({width:390,height:844});
+    await page.screenshot({path:path.join(previews,'settings-spanish.png')});
+    const spanishDownloadEvent = page.waitForEvent('download');
+    await page.locator('#downloadStatus').click();
+    const spanishDownload = await spanishDownloadEvent;
+    const spanishBackup = JSON.parse(await fs.readFile(await spanishDownload.path(),'utf8'));
+    assert.equal(spanishBackup.settings.language,'es');
+    assert.equal(spanishBackup.unsavedPlanDrafts[0].name,'Unsaved programme');
+    assert.equal(spanishBackup.savedPlans[0].name,'Full body foundations');
+    await page.locator('#appLanguage').selectOption('it');
     await page.locator('#appTheme').selectOption('dark');
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     for (const width of [320, 390, 430]) {
@@ -773,6 +803,12 @@ const fs = require('node:fs/promises');
     await page.evaluate(() => Object.defineProperty(navigator, 'language', { configurable: true, value: 'it-IT' }));
     await page.locator('#appLanguage').selectOption('system');
     await expect(page.locator('#settings h2')).toHaveText('Impostazioni');
+    for (const language of ['es-ES','es-MX']) {
+      await page.evaluate(language => Object.defineProperty(navigator, 'language', { configurable: true, value: language }),language);
+      await page.locator('#appLanguage').dispatchEvent('change');
+      await expect(page.locator('#settings h2')).toHaveText('Ajustes');
+      await expect(page.locator('#settings')).toHaveAttribute('lang','es');
+    }
     await page.evaluate(() => Object.defineProperty(navigator, 'language', { configurable: true, value: 'fr-FR' }));
     await page.locator('#appLanguage').dispatchEvent('change');
     await expect(page.locator('#settings h2')).toHaveText('Settings');
@@ -983,7 +1019,7 @@ const fs = require('node:fs/promises');
     await expect(page.locator('[data-edit-plan]')).toHaveCount(2);
     await expect(page.locator('[data-edit-plan="foundations"]')).toContainText('Active');
     assert.deepEqual(errors, []);
-    console.log('PASS: multiple-plan browsing/creation/draft isolation/activation, original workout and future-order/timer retention, old-plan catch-up/cohort ownership, v2 library/draft exports and reload reset; consistent Back, Save/draft states, static finished status, empty-focus subtitle and numeric keyboard entry; top-right overflow menu, keyboard/outside dismissal and retained screen/scroll/drafts/timers, three bottom destinations; settings language/theme/system following, folder preview/cancel, JSON/CSV/guide downloads, complete non-mutating snapshots, unchanged metric exports, narrow Settings targets, reload reset; pending catch-up sessions and planned/actual attendance, single-count visits, preview/warm-up exclusion, protected denominators and past prescriptions, workout reordering with retained logs/running timers, plan/date isolation and reordered preview retention, session Start/Pause/Resume/Finish, paused timer isolation, selected-date card without popup, fitted seven-day week, separate plan editing, prescription snapshots, stable session IDs, today/future calendar, date assignment, week navigation, dated log isolation, program navigation, set logging/validation, unified warm-ups, timers, secondary video, progress metrics, state isolation, mobile widths, bottom navigation, standard 48px targets, reload reset.');
+    console.log('PASS: Spanish selection/system variants, translated controls, retained data and export preference, narrow layouts; multiple-plan browsing/creation/draft isolation/activation, original workout and future-order/timer retention, old-plan catch-up/cohort ownership, v2 library/draft exports and reload reset; consistent Back, Save/draft states, static finished status, empty-focus subtitle and numeric keyboard entry; top-right overflow menu, keyboard/outside dismissal and retained screen/scroll/drafts/timers, three bottom destinations; settings language/theme/system following, folder preview/cancel, JSON/CSV/guide downloads, complete non-mutating snapshots, unchanged metric exports, narrow Settings targets, reload reset; pending catch-up sessions and planned/actual attendance, single-count visits, preview/warm-up exclusion, protected denominators and past prescriptions, workout reordering with retained logs/running timers, plan/date isolation and reordered preview retention, session Start/Pause/Resume/Finish, paused timer isolation, selected-date card without popup, fitted seven-day week, separate plan editing, prescription snapshots, stable session IDs, today/future calendar, date assignment, week navigation, dated log isolation, program navigation, set logging/validation, unified warm-ups, timers, secondary video, progress metrics, state isolation, mobile widths, bottom navigation, standard 48px targets, reload reset.');
     console.log(`Previews: ${previews}`);
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

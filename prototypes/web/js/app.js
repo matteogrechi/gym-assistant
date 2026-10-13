@@ -180,12 +180,8 @@ function renderExercise() {
   byId('prescription').textContent = `Target: ${exercise().sets.length} sets × ${exercise().target} reps`;
   byId('back').innerHTML = buttonIcon('back');
   byId('back').setAttribute('aria-label', `Back to ${session().name}`);
-  byId('exerciseSessionActions').hidden = session().state === 'ready';
   byId('exerciseSessionStatus').textContent = GymSession.labels[session().state];
   byId('exerciseSessionStatus').hidden = !['paused', 'finished'].includes(session().state);
-  byId('pauseExerciseSession').hidden = session().state !== 'inProgress';
-  byId('finishExerciseSession').hidden = !['inProgress', 'paused'].includes(session().state);
-  byId('finishExerciseSession').className = `md-button ${session().state === 'paused' ? 'md-outlined' : 'md-filled'}`;
   byId('seatInput').value = exercise().seat;
   byId('seatInput').disabled = session().state === 'finished';
   renderReadonlyValue(byId('seatInput'), session().state === 'finished');
@@ -401,7 +397,6 @@ function pauseSession() {
   showView('session', 'startSession');
 }
 byId('pauseSession').addEventListener('click', pauseSession);
-byId('pauseExerciseSession').addEventListener('click', pauseSession);
 let pendingFinishSession = null;
 function completeSession(target) {
   if (target !== session() || !GymSession.transition(target, 'finish', Date.now())) return;
@@ -420,7 +415,6 @@ function finishSession() {
   GymDialogs.open(byId('finishSessionDialog'));
 }
 byId('finishSession').addEventListener('click', finishSession);
-byId('finishExerciseSession').addEventListener('click', finishSession);
 byId('cancelFinishSession').addEventListener('click', () => byId('finishSessionDialog').close());
 byId('finishSessionDialog').addEventListener('close', () => { pendingFinishSession = null; });
 byId('confirmFinishSession').addEventListener('click', () => {

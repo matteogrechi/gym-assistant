@@ -300,7 +300,6 @@ h2, h3, .exercise-card strong { overflow-wrap: anywhere; }
 .attendance-card .field-help:last-child { margin-bottom: 0; }
 
 /* GYM-017: both lifecycle actions fit narrow exercise screens. */
-.exercise-session-actions { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 12px; }
 .session-actions #finishSession { flex: 1 1 170px; }
 /* GYM-017: preserve recorded-value contrast during read-only review. */
 .finished-review input:disabled { opacity: 1; }
@@ -314,9 +313,6 @@ h2, h3, .exercise-card strong { overflow-wrap: anywhere; }
 .session-start { margin-bottom: 12px; }
 #sessionStatus { font-size: 12px; margin-block: 10px 0; }
 #sessionFocus { margin-bottom: 16px; }
-.exercise-session-actions { align-items: center; flex-wrap: nowrap; }
-.exercise-session-actions .md-button { padding-inline: 16px; }
-.exercise-session-actions .field-help { margin: 0; }
 .timer-panel { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 12px; margin-bottom: 16px; }
 .timer-tabs, #timerContext { grid-column: 1 / -1; }
 .timer-tabs { grid-row: 1; }

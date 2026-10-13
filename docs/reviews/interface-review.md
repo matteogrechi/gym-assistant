@@ -1,5 +1,7 @@
 # Interface review — GYM-021
 
+The later [basic feature review](basic-feature-review.md) uses two opposing reviewer roles to test task coverage before native coding. Its recommendations are separate from the implemented corrections recorded below.
+
 Review date: 13 October 2026. Browser user walkthrough at 390 × 844 CSS pixels, with a repeatable 12 October sample date. This is an interface inspection, not a usability study with independent participants.
 
 The reviewer opened the calendar, started a session, selected execution/recovery, opened the video, paused/resumed, logged a working set, finished and reviewed a log, opened Plan and its template editor, and selected progress metrics. Actual screenshots and visible content were inspected before changing the specification.

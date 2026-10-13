@@ -4,6 +4,8 @@ Status: design presented before native coding, 13 October 2026; specification re
 
 The [specification](../product/spec.md) remains the product source of truth. [Traceability](../product/traceability.md) distinguishes implemented browser evidence from planned Android work. The reviewed mockup supplies interaction/layout references, not production code. No WebView conversion is planned.
 
+The subsequent [basic feature review](../reviews/basic-feature-review.md) challenges proposed additions against actual mockup workflows. Its recommendations do not resolve the pending choices in §9 or authorize extra implementation scope.
+
 ## 1. Offline contract and boundaries
 
 All runtime tasks work without connectivity, including first launch: create/edit programs, schedule, log working/warm-up sets and setup, reorder, run both timers, view supplied local exercise videos, calculate statistics, change settings and write/read local files. There is no account, backend, sync, analytics, advertising, remote font or video URL. The merged release manifest must contain no INTERNET permission, including permissions contributed by dependencies. No connectivity gate appears in any app workflow.

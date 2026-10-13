@@ -92,4 +92,4 @@ The [context and delegation workflow](.agents/skills/gym-repo-delivery/reference
 
 ## Project skills
 
-The [AGENTS.md routing table](AGENTS.md) links three focused skills stored in `.agents/skills/`. Each has `SKILL.md` and optional UI metadata in `agents/openai.yaml`; the repository is their source of truth. Agents can read the linked instructions directly even when their client does not expose repository skills in its picker. No global installation is required. Skill structure follows the [official skill documentation](https://developers.openai.com/codex/skills/).
+The [AGENTS.md routing table](AGENTS.md) links project skills stored in `.agents/skills/`, including the vendored Ponytail coding philosophy. Each has `SKILL.md` and optional UI metadata in `agents/openai.yaml`; the repository is their source of truth. Agents can read the linked instructions directly even when their client does not expose repository skills in its picker. No global installation is required. Skill structure follows the [official skill documentation](https://developers.openai.com/codex/skills/).

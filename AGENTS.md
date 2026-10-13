@@ -20,8 +20,11 @@ Open the relevant `SKILL.md` before working on its area. Skills are versioned in
 | Product requirements, feature changes, traceability or durable data contracts | [gym-spec-workflow](.agents/skills/gym-spec-workflow/SKILL.md) |
 | Mockup UI changes, accessibility, responsive behavior or user walkthroughs | [gym-mockup-review](.agents/skills/gym-mockup-review/SKILL.md) |
 | Repository organization, process/skill changes, validation, commits or delivery | [gym-repo-delivery](.agents/skills/gym-repo-delivery/SKILL.md) |
+| Minimal complete coding changes, reuse and dependency choices | [ponytail](.agents/skills/ponytail/SKILL.md) |
 
 Product changes often need the first two skills and delivery guidance. Documentation-only work normally needs delivery guidance alone. Explicit user instructions and existing authorization take precedence over repository guidance; these skills introduce no extra approval requirement.
+
+Ponytail is vendored from [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail/tree/2961b52fc1fe6a5a87c7a959a79512e5c2f3ffe5/skills/ponytail), revision `2961b52fc1fe6a5a87c7a959a79512e5c2f3ffe5`, under its [MIT license](.agents/skills/ponytail/LICENSE). Its instructions are unchanged; only the unsupported `argument-hint` frontmatter field is omitted for Codex compatibility. Use its default `full` level for the authorized Android implementation; minimal code must still satisfy the specification, traceability, offline operation and accessibility requirements.
 
 ## Shared rules
 

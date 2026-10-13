@@ -175,10 +175,12 @@ button { min-width: 48px; }
 input, select { min-height: 48px; }
 input::placeholder { color: var(--on-surface-variant); opacity: 1; }
 /* GYM-016: today's plan, selectable week, date assignment, and future agenda. */
-.session-card { position: relative; background: var(--primary); color: var(--on-primary); padding: 20px; border-radius: var(--shape-medium); margin-bottom: 22px; }
-.session-card .eyebrow { padding-right: 72px; color: var(--accent); font-size: 9px; letter-spacing: 1.2px; }
-.session-card h3 { font-size: 26px; letter-spacing: -.7px; }
-.session-card p:not(.eyebrow) { color: #d8e9e8; font-size: 12px; margin: 8px 0 16px; }
+/* GYM-016: the last grid row stays reserved even on days without a session. */
+.session-card { position: relative; display: grid; grid-template-rows: 16px auto minmax(0, 1fr) 48px; gap: 8px; height: 224px; background: var(--primary); color: var(--on-primary); padding: 20px; border-radius: var(--shape-medium); margin-bottom: 22px; }
+.session-card .eyebrow { margin: 0; color: var(--accent); font-size: 9px; line-height: 16px; letter-spacing: 1.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.session-card h3 { font-size: 26px; line-height: 30px; letter-spacing: -.7px; }
+.session-card p:not(.eyebrow) { min-height: 0; color: #d8e9e8; font-size: 12px; line-height: 18px; margin: 0; }
+.session-card h3, .session-card p:not(.eyebrow) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
 .calendar-start, #startSession { width: 100%; }
 .calendar-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 

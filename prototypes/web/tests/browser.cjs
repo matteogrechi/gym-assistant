@@ -136,10 +136,20 @@ const fs = require('node:fs/promises');
         return bounds.length === 7 && grid.scrollWidth <= grid.clientWidth && bounds.every((r, index) => r.left >= 0 && r.right <= innerWidth && Math.abs(r.top - bounds[0].top) < 1 && (!index || r.left >= bounds[index - 1].right));
       });
       assert(weekFits, `Full week must fit without scrolling at ${width}px`);
+      // GYM-016: choosing a rest day must not resize the card or move the calendar.
+      const trainLayout = () => page.evaluate(() => {
+        const card = document.getElementById('sessionCard').getBoundingClientRect();
+        return { width: card.width, height: card.height, calendarTop: document.querySelector('.calendar-heading').getBoundingClientRect().top, weekTop: document.getElementById('calendarDays').getBoundingClientRect().top };
+      });
+      const plannedLayout = await trainLayout();
       await page.locator('#calendarDays [data-date="2026-10-18"]').click();
       await expect(page.locator('#sessionCard h3')).toHaveText('No session planned');
       await expect(page.locator('#openSelectedSession')).toHaveCount(0);
       await expect(page.locator('dialog:modal')).toHaveCount(0);
+      assert.deepEqual(await trainLayout(), plannedLayout, `Rest-day layout changed at ${width}px`);
+      await page.locator('#calendarDays [data-date="2026-10-14"]').click();
+      await expect(page.locator('#sessionCard h3')).toHaveText('Session B');
+      assert.deepEqual(await trainLayout(), plannedLayout, `Future-session layout changed at ${width}px`);
       await page.locator('#calendarToday').click();
     }
     await page.setViewportSize({ width: 390, height: 844 });
@@ -1251,6 +1261,35 @@ const fs = require('node:fs/promises');
     }
     assert.equal(referencesSeen.size,12);
     await page.reload(); await reference('VIEW-001');
+    // GYM-016: long saved names/focus do not grow the card or cover its action.
+    await openActivePlan(); await page.locator('[data-edit-template="session-A"]').click();
+    const longSessionName = 'Strength ' + 'A'.repeat(51);
+    await page.locator('#templateName').fill(longSessionName);
+    if (!await page.locator('#templateNotes').evaluate(el => el.open)) await page.locator('#templateNotes > summary').click();
+    await page.locator('#templateFocus').fill('F'.repeat(100));
+    await page.locator('#templateForm .save-plan').click();
+    for (const theme of ['light','dark']) {
+      await openSettings(); await page.locator('#appTheme').selectOption(theme); await page.locator('#programNav').click();
+      for (const width of [320,390,430,1440]) {
+        await page.setViewportSize({width,height:width===1440?980:844});
+        await page.locator('#calendarToday').click();
+        await expect(page.locator('#sessionCard h3')).toHaveText(longSessionName);
+        const cardLayout = () => page.evaluate(() => {
+          const c=document.getElementById('sessionCard').getBoundingClientRect(),w=document.getElementById('calendarDays').getBoundingClientRect();
+          return {width:c.width,height:c.height,weekOffset:w.top-c.top};
+        });
+        const baseline = await cardLayout();
+        const contained = await page.locator('#sessionCard').evaluate(el => {
+          const card=el.getBoundingClientRect(),title=el.querySelector('h3').getBoundingClientRect(),copy=el.querySelector('p:not(.eyebrow)').getBoundingClientRect(),action=el.querySelector('button').getBoundingClientRect();
+          return title.bottom<=copy.top && copy.bottom<=action.top && action.height>=48 && action.bottom<=card.bottom && action.right<=card.right && el.scrollWidth<=el.clientWidth;
+        });
+        assert(contained,`Long session content overlaps at ${theme}/${width}px`);
+        await page.locator('#calendarDays [data-date="2026-10-18"]').click();
+        await expect(page.locator('#openSelectedSession')).toHaveCount(0);
+        assert.deepEqual(await cardLayout(),baseline,`Long/empty layout differs at ${theme}/${width}px`);
+        assert(await page.evaluate(() => document.documentElement.scrollWidth<=innerWidth));
+      }
+    }
     assert.deepEqual(errors, []);
     console.log('PASS: phone-contained video/folder overlays and cards, desktop/mobile resize/scroll, short-height internal scrolling, native modal focus/Escape/scrim dismissal; Spanish selection/system variants, translated controls, retained data and export preference, narrow layouts; multiple-plan browsing/creation/draft isolation/activation, original workout and future-order/timer retention, old-plan catch-up/cohort ownership, v2 library/draft exports and reload reset; consistent Back, Save/draft states, static finished status, empty-focus subtitle and numeric keyboard entry; top-right overflow menu, keyboard/outside dismissal and retained screen/scroll/drafts/timers, three bottom destinations; settings language/theme/system following, folder preview/cancel, JSON/CSV/guide downloads, complete non-mutating snapshots, unchanged metric exports, narrow Settings targets, reload reset; pending catch-up sessions and planned/actual attendance, single-count visits, preview/warm-up exclusion, protected denominators and past prescriptions, workout reordering with retained logs/running timers, plan/date isolation and reordered preview retention, session Start/Pause/Resume/Finish, paused timer isolation, selected-date card without popup, fitted seven-day week, separate plan editing, prescription snapshots, stable session IDs, today/future calendar, date assignment, week navigation, dated log isolation, program navigation, set logging/validation, unified warm-ups, timers, secondary video, progress metrics, state isolation, mobile widths, bottom navigation, standard 48px targets, reload reset.');
     console.log(`Previews: ${previews}`);

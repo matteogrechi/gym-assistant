@@ -299,7 +299,7 @@ h2, h3, .exercise-card strong { overflow-wrap: anywhere; }
 .attendance-details dd { margin: 0; font-weight: 700; white-space: nowrap; }
 .attendance-card .field-help:last-child { margin-bottom: 0; }
 
-/* GYM-017: both lifecycle actions fit narrow exercise screens. */
+/* GYM-017: the Finish action fits narrow session screens. */
 .session-actions #finishSession { flex: 1 1 170px; }
 /* GYM-017: preserve recorded-value contrast during read-only review. */
 .finished-review input:disabled { opacity: 1; }

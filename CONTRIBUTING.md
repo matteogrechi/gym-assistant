@@ -1,6 +1,6 @@
 # Contributing to gym assystant
 
-The current phase defines the Android product through a disposable web mockup. Native implementation begins after the user authorizes that phase. [The specification](docs/product/spec.md) is the feature source of truth; [traceability](docs/product/traceability.md) records actual coverage and the reverse source inventory. Write or refine acceptance criteria before feature code and keep both directions current. Research is evidence, not automatic permission to add features.
+The user has requested native Android implementation with entirely offline operation. The [implementation plan](docs/architecture/android-implementation-plan.md) is presented before code; explicitly pending product extensions remain proposals. The disposable web mockup stays a design reference. Native code has not started in this planning revision. [The specification](docs/product/spec.md) is the feature source of truth; [traceability](docs/product/traceability.md) records actual coverage and the reverse source inventory. Write or refine acceptance criteria before feature code and keep both directions current. Research is evidence, not automatic permission to add features.
 
 ## Repository conventions
 

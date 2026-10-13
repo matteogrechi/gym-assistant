@@ -75,3 +75,7 @@ Version 2 is an exploratory interchange contract. Future incompatible changes in
 ## Version 1 → version 2 recovery
 
 Version 1 backups remain readable. For conversion, keep the original file: wrap `savedPlan` as the single-element `savedPlans` array, set `activePlanId` to that plan's ID, and wrap a non-null `unsavedPlanDraft` as `unsavedPlanDrafts` (otherwise an empty array). Add that original plan ID to execution/obligation/attendance records that lack `programId`; version-1 sample performance records already carry it. Existing occurrence and template IDs remain unchanged; future plans use globally unique IDs. Set `formatVersion` to 2 only after converting and documenting the dictionary. Version-2 CSV adds `program_id` after `source`; an isolated version-1 CSV without its backup has unknown plan ownership, so preserve that uncertainty rather than inventing a plan ID. No importer is implemented in the mockup.
+
+## Native implementation planning
+
+The user has now requested native implementation and entirely offline operation (GYM-027). The [Android plan](android-implementation-plan.md) proposes Room runtime persistence plus automatic local JSON generations, and [native-data-v3.md](native-data-v3.md) describes the proposed real-data contract. This file remains the version-2 mockup contract; no native format writer or restore is implemented yet. The native plan's real-history and restore choices must be settled before their serializers/acceptance criteria are implemented.

@@ -37,7 +37,7 @@ gym-assistant/
 
 Project-level Gradle settings, build configuration, and the Gradle wrapper will belong under `android/`; module build configuration will belong under `android/app/`. Those files are intentionally not generated in this change. [Android build configuration](https://developer.android.com/build)
 
-The choice to place the Android project in its own repository subdirectory is a repository convention, not a requirement imposed by Android. No framework, SDK/version, language, package name, storage approach, or feature-module structure is selected here. Additional modules can be introduced later when actual responsibilities justify them. [Android module patterns](https://developer.android.com/topic/modularization/patterns)
+The choice to place the Android project in its own repository subdirectory is a repository convention, not a requirement imposed by Android. The [Android implementation plan](android-implementation-plan.md) now proposes Kotlin/Compose, the API26/36 baseline, application identity, Room/local media/open-file recovery and a pure Kotlin `domain/` module alongside `app/`. These are planning choices; no modules or Gradle files have been generated. Additional modules require actual responsibilities, not one module for every screen. [Android module patterns](https://developer.android.com/topic/modularization/patterns)
 
 Browser JavaScript, HTML/CSS, fictional fixtures, Node packages, and mockup tests remain exclusively in `prototypes/web/`. They are design/reference artifacts, not Android source, app resources, or production tests. Review screenshots remain documentation artifacts rather than packaged assets.
 

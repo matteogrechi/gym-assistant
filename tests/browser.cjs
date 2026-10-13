@@ -276,8 +276,11 @@ const fs = require('node:fs/promises');
     await page.locator('#timerReset').click();
     const scrolledBottom = await page.locator('.main-nav').boundingBox();
     assert.equal(scrolledBottom.y, bottom.y);
-    const smallButtons = await page.evaluate(() => [...document.querySelectorAll('#exercise button,#exercise input')].filter(el => el.getClientRects().length && !el.disabled).filter(el => { const r = el.getBoundingClientRect(); return r.height < 47.9 || r.width < 47.9; }).map(el => el.id || el.className));
-    assert.deepEqual(smallButtons, []);
+    for (const width of [320, 390, 430]) {
+      await page.setViewportSize({ width, height: 844 });
+      const badControls = await page.evaluate(() => [...document.querySelectorAll('#exercise button,#exercise input')].filter(el => el.getClientRects().length).filter(el => { const r = el.getBoundingClientRect(); return r.height < 47.9 || r.width < 47.9 || r.left < 0 || r.right > innerWidth; }).map(el => el.id || el.className));
+      assert.deepEqual(badControls, [], `Exercise controls fit and retain touch targets at ${width}px`);
+    }
     await page.setViewportSize({ width: 1280, height: 950 });
     await page.locator('#programNav').click();
     await page.screenshot({ path: path.join(previews, 'desktop.png') });

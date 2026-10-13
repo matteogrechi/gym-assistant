@@ -20,7 +20,7 @@ Move exercises up/down in the Train session list when machines are busy. Only th
 
 Reps and weights, warm-up/working-set completion, seat notes, and execution/recovery timers belong to Train. Template prescriptions contain no actual logged sets or timers. Video access remains a secondary placeholder. The sample starts with A on Monday, B on Wednesday, and C on Friday. Everything resets on reload.
 
-The preview uses Material 3 conventions for shapes, selection, bottom navigation, and touch targets. It is a browser prototype, not a native Android app. No build step or runtime package dependencies are needed. Google Fonts are optional; system fonts are the fallback.
+The preview uses Material 3 button families: filled primary actions, tonal Add actions, outlined Stop, text actions, and consistent icon controls. Timer/metric segments include a selected check. Shapes, interaction states, bottom navigation, and touch targets follow the documented Android guidance. It is a browser prototype, not a native Android app. No build step or runtime package dependencies are needed. Google Fonts are optional; system fonts are the fallback.
 
 - [Specification](docs/spec.md): stable requirement IDs and acceptance criteria.
 - [Traceability](docs/traceability.md): spec ↔ source ↔ verification.

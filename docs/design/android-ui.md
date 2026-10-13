@@ -11,6 +11,9 @@ Android distinguishes filled, filled tonal, outlined, and text buttons by emphas
 | Open workout, Start/Resume/Finish session (Finish is outlined while Paused), timer Start/Pause/Resume, Save plan | Filled button |
 | Add session or catalog exercise | Filled tonal button |
 | Inline Add warm-up | Text button beside the set heading |
+| Download status JSON | Filled button |
+| Change save folder; download statistics CSV | Outlined button |
+| Download recovery guide | Text button |
 | Pause session; Finish while Paused | Outlined button |
 | Back, Today, Reset, remove warm-up/exercise text, video access | Text button |
 | Previous/next week and exercise move earlier/later | Outlined icon button |
@@ -24,10 +27,12 @@ Timer and metric choices form single-choice groups. Each selected segment shows 
 
 Lists, the calendar, and bottom navigation retain their own component shapes rather than adopting action-button pills. The theme scale is 8, 12, 16, and 28 CSS pixels plus full rounding. [Android: Material components](https://developer.android.com/design/ui/mobile/guides/components/material-overview)
 
-Train, Plan, and Progress are bottom navigation destinations, with persistent labels, 24-pixel icons, a rounded selected indicator, and an 80-pixel bar outside the scroll area. Keep the top app identity and bottom navigation visible while the content scrolls. The three destinations distinguish execution, plan management, and performance review. [Android: Navigation bar](https://developer.android.com/develop/ui/compose/components/navigation-bar)
+Train, Plan, Progress, and Settings are bottom navigation destinations, with persistent labels, 24-pixel icons, a rounded selected indicator, and an 80-pixel bar outside the scroll area. Keep the top app identity and bottom navigation visible while the content scrolls. The four destinations distinguish execution, plan management, performance review, and app/data preferences. [Android: Navigation bar](https://developer.android.com/develop/ui/compose/components/navigation-bar)
 
 Standard interactive targets have a minimum of 48 × 48 CSS pixels for this phone-sized preview, including completion buttons, timer controls, and selectors. Per the user’s request to show the entire week without horizontal scrolling, calendar date cells use seven equal columns: their width can be below 48 CSS pixels on narrow previews, while height stays at least 48 pixels. This is a documented prototype exception; touch areas do not overlap. Native Android implementation must measure in dp and use platform accessibility semantics. The preview's CSS pixels are a design approximation rather than a physical-size guarantee on arbitrary browsers. [Android: Accessibility defaults](https://developer.android.com/develop/ui/compose/accessibility/api-defaults)
 
 The future Android app should use native Material components and verify screen-reader behavior, display/font scaling, insets, and system Back. These checks are deferred with Android implementation. The mockup already provides focus states, labels, programmatic selected/pressed states, textual warm-up labels, and a native browser dialog.
 
 GYM-021 keeps timer actions compact, uses short visible Pause/Finish labels with full accessible names, and uses browser disclosure controls for occasional settings and metric definitions. Disclosure summaries retain 48px targets and visible keyboard focus. Invalid collapsed fields expand before validation focus. These disclosures are prototype presentations; native Android equivalents remain undecided.
+
+GYM-022 adds System default/Light/Dark appearance through shared color roles. The dark palette retains warm amber actions and teal surfaces; checked text pairs exceed 4.5:1 and input outlines/chart pairs exceed 3:1 in both palettes. Native behavior follows [Android dark-theme guidance](https://developer.android.com/develop/ui/views/theming/darktheme). Language offers System default/English/Italiano; the browser translates only Settings/navigation with explicit region language metadata and a preview notice. Native full localization follows [Android per-app languages](https://developer.android.com/guide/topics/resources/app-languages). GYM-023's folder picker dialog is a labeled prototype preview; native folder access uses the [Storage Access Framework](https://developer.android.com/training/data-storage/shared/documents-files).

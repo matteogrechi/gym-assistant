@@ -20,7 +20,7 @@ Open [prototypes/web/index.html](prototypes/web/index.html) directly, or run fro
 python3 -m http.server 8080
 ```
 
-Visit http://localhost:8080/prototypes/web/ . All data is fictional; edits reset on reload. Detailed usage is in the [prototype README](prototypes/web/README.md).
+Visit http://localhost:8080/prototypes/web/ . Settings previews language, theme, and a save folder, and downloads status JSON, statistics CSV, and a recovery guide. All data is fictional; edits reset on reload. Detailed usage is in the [prototype README](prototypes/web/README.md).
 
 ## Verify the prototype
 
@@ -39,6 +39,8 @@ CHROMIUM_PATH=/usr/bin/chromium npm run test:browser
 ```
 
 Alternatively, install Playwright's browser with `npx playwright install chromium` and run `npm run test:browser`. Screenshots are written to the system temporary directory; set `PREVIEW_DIR` to override it. These checks validate the browser mockup, not an Android app.
+
+The [text-file contract](docs/architecture/data-formats.md) documents versioned backups and recovery without the app.
 
 ## Development boundary
 

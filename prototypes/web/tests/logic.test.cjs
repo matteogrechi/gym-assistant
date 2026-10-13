@@ -349,3 +349,93 @@ test('GYM-018: invalid prescriptions or dangling assignments cannot replace the 
   dangling.schedule[1] = 'removed';
   assert.throws(() => plan.apply(definition, dangling, data.catalog));
 });
+
+// GYM-023, GYM-024: exported files preserve original data and do not change live training state.
+const exportsApi = require('../js/exports.js');
+const exportInput = () => ({
+  settings: { language: 'it', theme: 'dark', saveFolderPreview: 'Documents/gym assystant' },
+  program: plan.clone(data.program), draft: null, catalog: data.catalog, sessions: new Map(),
+  pastPlans: attendance.planned(data.program, '2026-10-12'), history: data.history,
+  attendanceHistory: data.attendanceHistory, context: data.context, today: '2026-10-12', timeZone: 'Europe/Rome'
+});
+test('GYM-024: full JSON preserves Unicode, raw sets, prescription snapshots, drafts and planned/actual dates', () => {
+  const input = exportInput();
+  const session = plan.openOccurrence(input.program, data.catalog, '2026-10-09', 'session-C');
+  session.exercises.forEach(item => { item.timers = timers.create(); item.warmups = []; });
+  session.exercises[0].seat = 'Sedile 3, "alto"\nSchienale à';
+  session.exercises[0].sets[0] = { reps: 7, weight: 42.5, done: true };
+  session.exercises[0].warmups.push({ reps: 4, weight: 10, done: true });
+  session.attendedDate = '2026-10-12'; session.state = 'finished'; session.finishedAt = 10000;
+  input.sessions.set('2026-10-09:session-C', session);
+  input.draft = plan.clone(input.program); input.draft.name = 'Not saved';
+  input.program.sessions[2].exercises[0].setCount = 5;
+  const before = structuredClone(session);
+  const decoded = JSON.parse(exportsApi.json(input, 12000));
+  assert.equal(decoded.formatVersion, 1);
+  assert.equal(decoded.exportedAt, '1970-01-01T00:00:12.000Z');
+  assert.equal(decoded.unsavedPlanDraft.name, 'Not saved');
+  assert.notEqual(decoded.savedPlan.name, 'Not saved');
+  const copy = decoded.executionSessions[0];
+  assert.equal(copy.occurrenceId, '2026-10-09:session-C');
+  assert.equal(copy.finishedAt, '1970-01-01T00:00:10.000Z');
+  assert.equal(copy.attendedDate, '2026-10-12');
+  assert.equal(copy.exercises[0].seat, session.exercises[0].seat);
+  assert.equal(copy.prescribedExercises[0].setCount, 3);
+  assert.equal(decoded.savedPlan.sessions[2].exercises[0].setCount, 5);
+  assert.deepEqual(copy.exercises[0].sets, session.exercises[0].sets);
+  assert.deepEqual(copy.exercises[0].warmups, session.exercises[0].warmups);
+  assert.deepEqual(session, before);
+  assert.deepEqual(decoded.samplePerformanceHistory, data.history);
+  assert.deepEqual(decoded.pastPlannedSessions, input.pastPlans);
+  assert.equal(decoded.dataKind, 'prototype_demo');
+});
+test('GYM-024: snapshot captures running elapsed time and recovery expiry without stopping live timers', () => {
+  const input = exportInput();
+  const session = plan.openOccurrence(input.program, data.catalog, input.today, 'session-A');
+  session.exercises.forEach(item => { item.timers = timers.create(2); item.warmups = []; });
+  const state = session.exercises[0].timers;
+  state.execution.elapsed = 250; timers.start(state, 'execution', 1000); timers.start(state, 'recovery', 1000);
+  input.sessions.set('today', session);
+  const before = structuredClone(state);
+  const copy = exportsApi.snapshot(input, 5000).executionSessions[0].exercises[0].timers;
+  assert.equal(copy.execution.elapsed, 4250);
+  assert.equal(copy.recovery.elapsed, 2000);
+  assert.equal(copy.execution.startedAt, null);
+  assert.equal(copy.execution.wasRunningAtExport, true);
+  assert.equal(copy.recovery.wasRunningAtExport, true);
+  assert.deepEqual(state, before);
+});
+test('GYM-024: CSV has independently known metric values, attendance summary and safe quote/newline encoding', () => {
+  assert.equal(exportsApi.csv([{ setup: 'à,"seat"\n4', value: 42.5 }]).split('\r\n')[1], exportsApi.columns.map(key => key === 'setup' ? '"à,""seat""\n4"' : key === 'value' ? '"42.5"' : '""').join(','));
+  const input = exportInput();
+  const lines = exportsApi.statistics(input).trimEnd().split('\r\n');
+  const rows = lines.slice(1).map(line => Object.fromEntries(exportsApi.columns.map((key, index) => [key, line.slice(1, -1).split('","')[index]])));
+  const leg = rows.filter(row => row.exercise_id === 'leg' && row.metric === 'reps_at_reference_weight');
+  assert.deepEqual(leg.map(row => Number(row.value)), [9, 10, 11, 12]);
+  assert.equal(rows.find(row => row.exercise_id === 'leg' && row.actual_date === '2026-09-14' && row.metric === 'volume_load').value, '1520');
+  assert.equal(rows.find(row => row.metric === 'logged_sessions').value, '6');
+  assert.equal(rows.find(row => row.metric === 'planned_sessions').value, '12');
+  assert.equal(rows.find(row => row.metric === 'mean_delay_days').value, '1.5');
+  assert.equal(rows.filter(row => row.record_type === 'attendance').length, 12);
+  assert.equal(rows.filter(row => row.metric === 'reps_at_reference_weight').length, 12);
+  const session = plan.openOccurrence(input.program, data.catalog, '2026-10-09', 'session-C');
+  session.attendedDate = '2026-10-12';
+  input.sessions.set('catch-up', session);
+  const updated = exportsApi.statistics(input);
+  assert(updated.includes('"this_visit_demo"'));
+  assert(updated.includes('"logged_sessions","","7","sessions"'));
+});
+test('GYM-024: missing comparison/attendance are explicit gaps and invalid JSON numbers fail clearly', () => {
+  const input = exportInput();
+  input.history = plan.clone(data.history);
+  input.history[0].sets.forEach(set => { set.done = false; });
+  input.pastPlans = []; input.attendanceHistory = [];
+  const csv = exportsApi.statistics(input);
+  assert(csv.includes('"reps_at_reference_weight","60","","reps","no_comparable_set"'));
+  assert(csv.includes('"logged_percent","","","percent","no_planned_sessions"'));
+  assert(csv.includes('"mean_delay_days","","","days","no_late_sessions"'));
+  input.settings.invalidNumber = Infinity;
+  assert.throws(() => exportsApi.json(input, 0), /non-finite/);
+  assert(exportsApi.guide().includes('json.loads'));
+  assert(exportsApi.guide().includes(exportsApi.columns.join(',')));
+});

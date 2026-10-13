@@ -18,6 +18,6 @@ const GymMetrics = (() => {
     });
   }
   const countSets = (history, context) => comparable(history, context).reduce((sum, record) => sum + workingSets(record).length, 0);
-  return { series, countSets };
+  return { series, countSets, comparable };
 })();
 if (typeof module !== 'undefined') module.exports = GymMetrics;

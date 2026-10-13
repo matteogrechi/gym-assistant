@@ -43,3 +43,9 @@ Save is now next to the heading on both Plan editors, with draft/error feedback 
 The video dialog keeps the exercise name, a clear close control, and one non-playable demo statement. Finished review hides actions that cannot be used, retaining values and timer-mode review. Reordering announcements and routine timer status remain available to screen readers.
 
 Verification: all 25 logic tests and the Chromium user-flow suite passed, including 320/390/430px controls/disclosures, both timer modes, full visible working rows, first-view chart, keyboard metric disclosure, collapsed-field validation, optional focus editing, and finished-action hiding. The [specification](../product/spec.md) and [traceability](../product/traceability.md) record the retained feature scope.
+
+## Revision 10: Settings review
+
+Settings groups language/appearance above the save location and two primary file actions. File details and the recovery-guide download expand on demand; folder selection is explicitly a preview. At 390px, both downloads and the file disclosure fit above the persistent four-destination navigation bar. English/Italian controls and navigation fit at 320/390/430px with 48px targets. Native full translation and filesystem behavior remain deferred.
+
+Reviewed [light Settings](previews/settings.png), [dark Settings](previews/settings-dark.png), [dark Train](previews/program-dark.png), [dark logging](previews/exercise-dark.png), and [dark Progress](previews/progress-dark.png). Earlier screenshots are retained as revision-9 review artifacts. Theme changes preserve entries and timers; the file feedback says the file was handed to the browser, without claiming it was written to the preview folder. Full JSON, CSV and recovery-guide downloads were opened and checked independently.

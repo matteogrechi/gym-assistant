@@ -1,5 +1,5 @@
 'use strict';
-/* global GymData, GymMetrics, GymTimers, GymCalendar, GymPlan, GymAttendance, GymSession */
+/* global GymData, GymMetrics, GymTimers, GymCalendar, GymPlan, GymAttendance, GymSession, GymSettings */
 const byId = id => document.getElementById(id);
 // GYM-015: uniform decorative SVGs; the surrounding button provides its action name.
 const buttonIcon = name => {
@@ -61,8 +61,8 @@ const fullDate = date => GymCalendar.label(date, { weekday: 'short', day: 'numer
 // GYM-006, GYM-008, GYM-010, GYM-015: view switching and keyboard focus.
 function showView(id, focusId) {
   document.querySelectorAll('[data-view]').forEach(view => { view.hidden = view.id !== id; });
-  ['programNav', 'planNav', 'progressNav'].forEach(navId => byId(navId).removeAttribute('aria-current'));
-  byId(id === 'progress' ? 'progressNav' : id === 'plan' || id === 'planSession' ? 'planNav' : 'programNav').setAttribute('aria-current', 'page');
+  ['programNav', 'planNav', 'progressNav', 'settingsNav'].forEach(navId => byId(navId).removeAttribute('aria-current'));
+  byId(id === 'settings' ? 'settingsNav' : id === 'progress' ? 'progressNav' : id === 'plan' || id === 'planSession' ? 'planNav' : 'programNav').setAttribute('aria-current', 'page');
   if (focusId) byId(focusId).focus();
   document.querySelector('.screen-area').scrollTop = 0;
 }
@@ -534,3 +534,16 @@ byId('videoDialog').addEventListener('click', event => {
   if (event.target === event.currentTarget && (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom)) event.currentTarget.close();
 });
 renderProgram();
+
+// GYM-022–024: all exports use current state, not the selected chart or a saved demo fixture.
+GymSettings.mount({
+  open: () => showView('settings', 'settingsNav'),
+  input: () => {
+    todayDate = GymCalendar.today();
+    capturePastPlans();
+    return { settings: GymSettings.state, program: GymData.program, draft: planDirty ? planDraft : null,
+      catalog: GymData.catalog, sessions: sessionInstances, pastPlans,
+      history: GymData.history, attendanceHistory: GymData.attendanceHistory,
+      context: GymData.context, today: todayDate, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone };
+  }
+});

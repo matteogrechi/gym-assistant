@@ -324,3 +324,46 @@ summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; bo
 .finished-review .set-row [data-toggle]:disabled { opacity: 1; }
 
 .session-actions #startSession, .session-actions #finishSession { flex: 1; }
+
+/* GYM-022: system/light/dark appearance retains the amber and teal brand. */
+:root { --on-accent: #143f46; --hero: #143f46; --on-hero: #ffffff; color-scheme: light; }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --primary: #ffbf69;
+  --on-primary: #302112;
+  --surface: #142729;
+  --surface-bright: #1c3335;
+  --surface-container: #234245;
+  --tonal-container: #2d5051;
+  --on-surface: #edf5ee;
+  --on-surface-variant: #bacfca;
+  --outline: #9fb7b5;
+  --outline-variant: #476563;
+  --success: #95d6c6;
+  --on-success: #103c35;
+  --warmup-container: #423522;
+  --on-warmup: #ffdba8;
+  --reps-container: #203d3d;
+  --focus: #ffbf69;
+  --background: #0d1c1e;
+  --chart: #8ccfc3;
+  --scrim: #071719cc;
+}
+.md-filled, .calendar-day[aria-pressed="true"], .main-nav [aria-current="page"] .nav-icon { color: var(--on-accent); }
+.session-card { background: var(--hero); color: var(--on-hero); }
+.video-placeholder { background: var(--hero); }
+#recoverySeconds { color: var(--on-surface); }
+/* GYM-022–024: compact grouped Settings, 48px actions and narrow four-destination navigation. */
+#settings select { min-height: 48px; }
+.save-location { padding: 14px; background: var(--surface-container); border-radius: var(--shape-medium); }
+.save-location .select-label { margin: 0; }
+#saveFolder { overflow-wrap: anywhere; font-size: 14px; margin: 8px 0; }
+.export-actions { display: grid; gap: 10px; }
+#settingsFeedback:empty { display: none; }
+.folder-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+#folderDialog h2 { font-size: 24px; }
+#exportDetails { margin-top: 16px; }
+#settingsNav, #programNav, #planNav, #progressNav { min-width: 0; }
+.main-nav { padding-inline: 12px; }
+.main-nav .nav-icon { width: min(64px, 100%); }
+@media (max-width: 360px) { .main-nav button { font-size: 11px; } }

@@ -61,6 +61,8 @@ const GymPlan = (() => {
     return {
       date, templateId, programName: program.name, planRevision: program.revision,
       name: template.name, focus: template.focus, label: template.label,
+      // GYM-024: retain the original prescription separately from editable logs.
+      prescribedExercises: clone(template.exercises),
       state: 'ready', hasEntries: false, orderChanged: false,
       exercises: template.exercises.map(item => {
         const machine = catalog.find(entry => entry.id === item.exerciseId);

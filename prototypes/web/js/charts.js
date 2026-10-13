@@ -65,7 +65,7 @@ const GymCharts = (() => {
       const button = document.createElement('button');
       button.type = 'button'; button.className = `md-icon-button chart-point${point.value === null ? ' is-gap' : ''}`;
       button.dataset.observationDate = point.date;
-      button.style.left = `${point.x * 100}%`; button.style.top = point.y === null ? 'calc(100% + 12px)' : `${point.y * 100}%`;
+      button.style.left = `${point.x * 100}%`; button.style.top = point.y === null ? 'calc(100% - 24px)' : `${point.y * 100}%`;
       button.setAttribute('aria-label', `${dateLabel(point.date, true)}: ${point.value === null ? 'No comparable set' : `${format(point.value)} ${unit}`}`);
       button.setAttribute('aria-pressed', String(point.date === selectedDate));
       button.setAttribute('aria-describedby', 'chartHelp');
@@ -127,6 +127,11 @@ const GymCharts = (() => {
       content.style.width = `${baseWidth * view.zoom + 48}px`;
       timeline.scrollLeft = view.scrollLeft;
       view.scrollLeft = timeline.scrollLeft;
+      // Reveal once per exploration view; rerenders retain deliberate panning.
+      if (!view.selectionRevealed) {
+        reveal();
+        view.selectionRevealed = true;
+      }
     }
     function zoom(value, resetView = false) {
       cancelGesture();

@@ -1,15 +1,24 @@
 'use strict';
-// GYM-006, GYM-015: retain native modal semantics while confining presentation to the phone.
+// GYM-006, GYM-015, GYM-025: retain native modal semantics while confining presentation to the phone.
 const GymDialogs = (() => {
   const phone = document.querySelector('.phone');
   function position(dialog) {
     const bounds = phone.getBoundingClientRect();
     const style = getComputedStyle(phone);
     const radius = Math.max(0, parseFloat(style.borderTopLeftRadius) - phone.clientLeft);
+    const innerTop = bounds.top + phone.clientTop;
+    const viewport = window.visualViewport;
+    const viewportTop = Number.isFinite(viewport?.offsetTop) ? viewport.offsetTop : 0;
+    const fallbackHeight = Number.isFinite(window.innerHeight) ? window.innerHeight : 0;
+    const viewportHeight = Math.max(0, Number.isFinite(viewport?.height) ? viewport.height : fallbackHeight);
+    const visibleTop = Math.min(phone.clientHeight, Math.max(0, viewportTop - innerTop));
+    const visibleBottom = Math.min(phone.clientHeight, Math.max(visibleTop, viewportTop + viewportHeight - innerTop));
     dialog.style.setProperty('--modal-left', `${bounds.left + phone.clientLeft}px`);
-    dialog.style.setProperty('--modal-top', `${bounds.top + phone.clientTop}px`);
+    dialog.style.setProperty('--modal-top', `${innerTop}px`);
     dialog.style.setProperty('--modal-width', `${phone.clientWidth}px`);
     dialog.style.setProperty('--modal-height', `${phone.clientHeight}px`);
+    dialog.style.setProperty('--modal-visible-top', `${visibleTop}px`);
+    dialog.style.setProperty('--modal-visible-height', `${visibleBottom - visibleTop}px`);
     dialog.style.setProperty('--modal-radius', `${radius}px`);
   }
   const sync = () => phone.querySelectorAll('dialog[open]').forEach(position);

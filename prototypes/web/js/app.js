@@ -146,10 +146,11 @@ function setRow(set, index, kind) {
   const completion = session().state === 'finished'
     ? `<span class="set-status ${set.done ? 'is-complete' : ''}" role="img" aria-label="${label} ${index + 1} ${set.done ? 'complete' : 'not logged'}">${set.done ? buttonIcon('check') : '<span aria-hidden="true">—</span>'}</span>`
     : `<button class="md-icon-button md-toggle" aria-label="${label} ${index + 1} complete" aria-pressed="${set.done}" data-kind="${kind}" data-toggle="${index}">${buttonIcon('check')}</button>`;
-  return `<div class="set-row ${kind === 'warmups' ? 'warmup-row' : ''} ${set.done ? 'complete' : ''}"><span class="set-kind"><small>${kind === 'warmups' ? 'WARM-UP' : 'WORKING'}</small><b>${index + 1}</b>${remove}</span><input aria-label="${label} ${index + 1} repetitions" type="number" min="0" step="1" required value="${set.reps}" data-kind="${kind}" data-set="${index}" data-field="reps"><input aria-label="${label} ${index + 1} weight in kilograms" type="number" min="0" step="any" required value="${set.weight}" data-kind="${kind}" data-set="${index}" data-field="weight">${completion}</div>`;
+  return `<div class="set-row ${kind === 'warmups' ? 'warmup-row' : ''} ${set.done ? 'complete' : ''}"><span class="set-kind"><small>${kind === 'warmups' ? 'Warm-up' : 'Working'}</small><b>${index + 1}</b>${remove}</span><input aria-label="${label} ${index + 1} repetitions" type="number" min="0" step="1" required value="${set.reps}" data-kind="${kind}" data-set="${index}" data-field="reps"><input aria-label="${label} ${index + 1} weight in kilograms" type="number" min="0" step="any" required value="${set.weight}" data-kind="${kind}" data-set="${index}" data-field="weight">${completion}</div>`;
 }
 function renderSets() {
-  byId('setCount').textContent = `${completed(exercise())} of ${exercise().sets.length} complete`;
+  byId('setCount').textContent = `Working: ${completed(exercise())}/${exercise().sets.length}`;
+  byId('setCount').setAttribute('aria-label', `${completed(exercise())} of ${exercise().sets.length} working sets complete`);
   byId('sets').innerHTML = exercise().warmups.map((set, index) => setRow(set, index, 'warmups')).join('') + exercise().sets.map((set, index) => setRow(set, index, 'sets')).join('');
   if (session().state === 'finished') byId('sets').querySelectorAll('input,button').forEach(control => { control.disabled = true; });
 }
@@ -171,6 +172,11 @@ function renderReadonlyValue(field, readonly) {
 function renderExercise() {
   byId('exercise').classList.toggle('finished-review', session().state === 'finished');
   byId('exerciseName').textContent = exercise().name;
+  // GYM-009, GYM-017, GYM-026: keep exceptional date/plan context with the log.
+  const today = GymCalendar.today();
+  const context = [sessionDate !== today ? `${sessionDate > today ? 'Preview · ' : ''}${fullDate(sessionDate)}` : '', session().programId !== GymData.library.activePlanId ? session().programName : ''].filter(Boolean).join(' · ');
+  byId('exerciseContext').textContent = context;
+  byId('exerciseContext').hidden = !context;
   byId('prescription').textContent = `Target: ${exercise().sets.length} sets × ${exercise().target} reps`;
   byId('back').innerHTML = buttonIcon('back');
   byId('back').setAttribute('aria-label', `Back to ${session().name}`);
@@ -310,7 +316,7 @@ function renderTimer() {
   byId('timerToggle').textContent = running ? 'Pause' : state[mode].elapsed > 0 && !(mode === 'recovery' && seconds === 0) ? 'Resume' : 'Start';
   timerSegments.select(mode);
   const other = mode === 'execution' ? 'recovery' : 'execution';
-  byId('timerContext').textContent = session().state === 'paused' ? 'Resume the session to run timers.' : state[other].startedAt !== null ? `${other === 'execution' ? 'Execution' : 'Recovery'} is also running.` : '';
+  byId('timerContext').textContent = session().state === 'paused' ? 'Back to session, then Resume to run timers.' : state[other].startedAt !== null ? `${other === 'execution' ? 'Execution' : 'Recovery'} is also running.` : '';
 }
 byId('exerciseList').addEventListener('click', event => {
   // GYM-001: select an exercise within the current dated workout.
@@ -454,6 +460,7 @@ function syncSaveActions() {
 function applyPlanMode() {
   for (const form of [byId('planForm'), byId('templateForm')]) {
     form.classList.toggle('plan-readonly', !planEditing);
+    form.classList.toggle('plan-editing', planEditing);
     form.querySelectorAll('input,select').forEach(field => { field.disabled = !planEditing; });
     form.querySelectorAll('input:not([type]),input[type="text"],select:not(#exerciseToAdd)').forEach(field => renderReadonlyValue(field, !planEditing));
     form.querySelectorAll('[data-sort-handle],[data-remove-entry],[data-delete-template],#addPlanSession,#addPlanExercise').forEach(action => {
@@ -461,6 +468,9 @@ function applyPlanMode() {
       action.disabled = !planEditing || (action.matches('[data-delete-template]') && planDraft.sessions.length === 1) || (action.id === 'addPlanSession' && planDraft.sessions.length >= 7);
     });
   }
+  byId('dateAssignmentEditor').hidden = !planEditing;
+  byId('savedDateAssignments').hidden = planEditing;
+  byId('datePlanLabel').textContent = planEditing ? 'Change a date' : 'Date changes';
   byId('planHeading').textContent = planEditing ? 'Edit plan' : 'Plan';
   byId('templateHeading').textContent = planEditing ? 'Edit session' : 'Session';
   syncSaveActions();
@@ -472,6 +482,7 @@ function applyPlanMode() {
   (id === 'editPlan' ? byId('planName') : byId('templateName')).focus();
 }));
 function markPlanDirty() {
+  document.querySelectorAll('[data-plan-field][aria-invalid]').forEach(field => { field.removeAttribute('aria-invalid'); field.removeAttribute('aria-describedby'); });
   planDirty = true;
   planMessage = 'Unsaved changes';
   retainDraft();
@@ -483,6 +494,13 @@ function renderDateAssignment() {
   byId('planDateSession').innerHTML = assignmentOptions('weekly');
   const override = Object.prototype.hasOwnProperty.call(planDraft.dateAssignments, draftDate);
   byId('planDateSession').value = override ? planDraft.dateAssignments[draftDate] ?? 'none' : 'weekly';
+}
+// GYM-018, GYM-026: review stored exceptions without unlocking schedule edits.
+function renderSavedDateAssignments() {
+  const assignments = Object.entries(planDraft.dateAssignments).sort(([a], [b]) => a.localeCompare(b));
+  byId('savedDateAssignments').innerHTML = assignments.length
+    ? `<dl class="date-assignments">${assignments.map(([date, id]) => `<div><dt>${escapeHtml(fullDate(date))}</dt><dd>${escapeHtml(id === null ? 'Rest day' : planDraft.sessions.find(item => item.id === id)?.name ?? 'Unavailable session')}</dd></div>`).join('')}</dl>`
+    : '<p class="field-help">No date changes. Uses the weekly schedule.</p>';
 }
 function renderPlan() {
   ensureDraft();
@@ -498,6 +516,7 @@ function renderPlan() {
   days.forEach(([day]) => { byId(`weekday-${day}`).value = planDraft.schedule[day] ?? 'none'; });
   byId('planDate').value = draftDate;
   renderDateAssignment();
+  renderSavedDateAssignments();
   byId('planFeedback').textContent = planMessage;
   applyPlanMode();
 }
@@ -513,7 +532,7 @@ function renderTemplate(expanded = null) {
   byId('templateHeading').textContent = 'Edit session';
   byId('templateName').value = template.name;
   byId('templateFocus').value = template.focus;
-  byId('plannedExercises').innerHTML = template.exercises.length ? template.exercises.map((item, index) => `<div class="planned-exercise-row" data-sort-item="${escapeHtml(item.entryId)}">${sortHandle(GymData.catalog.find(machine => machine.id === item.exerciseId)?.name ?? 'exercise')}<details class="prescription-card" ${(expanded ? expanded.has(item.entryId) : index === 0) ? 'open' : ''}><summary><strong class="prescription-summary">${prescriptionSummary(item, index)}</strong><span class="disclosure-icon" aria-hidden="true">${buttonIcon('expand')}</span></summary><label class="select-label" for="planned-machine-${item.entryId}">Exercise</label><select id="planned-machine-${item.entryId}" data-entry="${item.entryId}" data-plan-field="exerciseId">${GymData.catalog.map(machine => `<option value="${machine.id}" ${machine.id === item.exerciseId ? 'selected' : ''}>${machine.name}</option>`).join('')}</select><div class="prescription-fields"><label>Working sets<input type="number" min="1" max="10" step="1" required value="${item.setCount}" data-entry="${item.entryId}" data-plan-field="setCount" aria-label="Exercise ${index + 1} planned working sets"></label><label>Min reps<input type="number" min="1" max="50" step="1" required value="${item.minReps}" data-entry="${item.entryId}" data-plan-field="minReps" aria-label="Exercise ${index + 1} minimum target reps"></label><label>Max reps<input type="number" min="1" max="50" step="1" required value="${item.maxReps}" data-entry="${item.entryId}" data-plan-field="maxReps" aria-label="Exercise ${index + 1} maximum target reps"></label></div><label class="select-label" for="planned-recovery-${item.entryId}">Recovery (s)</label><input id="planned-recovery-${item.entryId}" class="plan-input" type="number" min="1" max="3600" step="1" required value="${item.recoverySeconds ?? 90}" data-entry="${item.entryId}" data-plan-field="recoverySeconds" aria-label="Exercise ${index + 1} planned recovery seconds"><div class="prescription-actions"><button class="md-icon-button" type="button" data-remove-entry="${item.entryId}" aria-label="Remove exercise ${index + 1}">${buttonIcon('trash')}</button></div></details></div>`).join('') : '<p class="field-help">Add an exercise to this session.</p>';
+  byId('plannedExercises').innerHTML = template.exercises.length ? template.exercises.map((item, index) => `<div class="planned-exercise-row" data-sort-item="${escapeHtml(item.entryId)}">${sortHandle(GymData.catalog.find(machine => machine.id === item.exerciseId)?.name ?? 'exercise')}<details class="prescription-card" ${(expanded ? expanded.has(item.entryId) : planEditing && index === 0) ? 'open' : ''}><summary><strong class="prescription-summary">${prescriptionSummary(item, index)}</strong><span class="disclosure-icon" aria-hidden="true">${buttonIcon('expand')}</span></summary><label class="select-label" for="planned-machine-${item.entryId}">Exercise</label><select id="planned-machine-${item.entryId}" data-entry="${item.entryId}" data-plan-field="exerciseId">${GymData.catalog.map(machine => `<option value="${machine.id}" ${machine.id === item.exerciseId ? 'selected' : ''}>${machine.name}</option>`).join('')}</select><div class="prescription-fields"><label>Working sets<input type="number" min="1" max="10" step="1" required value="${item.setCount}" data-entry="${item.entryId}" data-plan-field="setCount" aria-label="Exercise ${index + 1} planned working sets"></label><label>Min reps<input type="number" min="1" max="50" step="1" required value="${item.minReps}" data-entry="${item.entryId}" data-plan-field="minReps" aria-label="Exercise ${index + 1} minimum target reps"></label><label>Max reps<input type="number" min="1" max="50" step="1" required value="${item.maxReps}" data-entry="${item.entryId}" data-plan-field="maxReps" aria-label="Exercise ${index + 1} maximum target reps"></label></div><label class="select-label" for="planned-recovery-${item.entryId}">Recovery (s)</label><input id="planned-recovery-${item.entryId}" class="plan-input" type="number" min="1" max="3600" step="1" required value="${item.recoverySeconds ?? 90}" data-entry="${item.entryId}" data-plan-field="recoverySeconds" aria-label="Exercise ${index + 1} planned recovery seconds"><div class="prescription-actions"><button class="md-icon-button" type="button" data-remove-entry="${item.entryId}" aria-label="Remove exercise ${index + 1}">${buttonIcon('trash')}</button></div></details></div>`).join('') : '<p class="field-help">Add an exercise to this session.</p>';
   byId('exerciseToAdd').innerHTML = GymData.catalog.map(item => `<option value="${item.id}">${item.name}</option>`).join('');
   byId('templateFeedback').textContent = planMessage;
   applyPlanMode();
@@ -526,6 +545,17 @@ function savePlan(event) {
     planMessage = errors.join(' ');
     byId('planFeedback').textContent = planMessage;
     byId('templateFeedback').textContent = planMessage;
+    // GYM-018, GYM-025: reveal the first cross-field error, including from Plan.
+    const invalidTemplate = planDraft.sessions.find(template => template.exercises.some(item => item.minReps > item.maxReps));
+    if (invalidTemplate) {
+      const entry = invalidTemplate.exercises.find(item => item.minReps > item.maxReps);
+      editingTemplateId = invalidTemplate.id;
+      renderTemplate(new Set([entry.entryId]));
+      showView('planSession', 'backToPlan');
+      const fields = byId('plannedExercises').querySelectorAll(`[data-entry="${entry.entryId}"][data-plan-field="minReps"],[data-entry="${entry.entryId}"][data-plan-field="maxReps"]`);
+      fields.forEach(field => { field.setAttribute('aria-invalid', 'true'); field.setAttribute('aria-describedby', 'templateFeedback'); });
+      fields[0].focus();
+    }
     return;
   }
   let saved;

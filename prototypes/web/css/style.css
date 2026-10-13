@@ -35,6 +35,8 @@
 * { box-sizing: border-box; }
 body { margin: 0; min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; gap: 100px; padding: 48px 32px; }
 button, input, select { font: inherit; }
+/* GYM-015, GYM-025: shared state layers replace the browser's gray tap flash. */
+button, input, select, summary { -webkit-tap-highlight-color: transparent; }
 button { cursor: pointer; color: inherit; touch-action: manipulation; }
 button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
 button:disabled, input:disabled { opacity: .38; cursor: default; }
@@ -60,7 +62,7 @@ h2 { font-size: 28px; letter-spacing: -1px; line-height: 1.25; margin: 0 0 10px;
 h3 { font-size: 15px; margin: 0; }
 .muted { font-size: 13px; color: var(--on-surface-variant); margin: 0 0 25px; }
 /* GYM-008, GYM-010, GYM-015: persistent Material-style bottom destinations. */
-.screen-area { min-height: 0; flex: 1; overflow-y: auto; padding: 8px 24px 24px; overscroll-behavior: contain; scrollbar-width: thin; }
+.screen-area { isolation: isolate; min-height: 0; flex: 1; overflow-y: auto; padding: 8px 24px 24px; overscroll-behavior: contain; scrollbar-width: thin; }
 .main-nav { display: flex; flex-shrink: 0; min-height: 80px; padding: 8px 20px calc(8px + env(safe-area-inset-bottom, 0px)); background: var(--surface-container); }
 .main-nav button { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 64px; min-width: 48px; background: transparent; border: 0; border-radius: var(--shape-large); font-size: 12px; font-weight: 500; }
 .nav-icon { display: grid; place-items: center; width: 64px; height: 32px; border-radius: var(--shape-full); }
@@ -81,10 +83,10 @@ h3 { font-size: 15px; margin: 0; }
 .seat-input { width: 100%; padding: 14px; border: 1px solid var(--outline); background: var(--surface-container); border-radius: var(--shape-small); color: var(--on-surface); font-size: 14px; }
 .field-help { font-size: 11px; color: var(--on-surface-variant); margin: 8px 0 16px; }
 /* GYM-004, GYM-009: repetitions have the largest input and first position. */
-.set-labels, .set-row { display: grid; grid-template-columns: 48px 1.2fr .85fr 48px; gap: 10px; align-items: center; text-align: center; }
+.set-labels, .set-row { display: grid; grid-template-columns: 56px 1.2fr .85fr 48px; gap: 10px; align-items: center; text-align: center; }
 .set-labels { font-size: 10px; letter-spacing: 1px; color: var(--on-surface-variant); margin-bottom: 9px; }
 .set-labels span:nth-child(2) { color: var(--on-surface); font-weight: 800; }
-.set-row { margin: 10px 0; font-size: 12px; }
+.set-row { margin: 8px 0; font-size: 12px; }
 .set-row input { width: 100%; min-width: 0; height: 56px; border: 1px solid var(--outline); border-radius: var(--shape-small); text-align: center; background: var(--surface-bright); padding: 9px 2px; color: var(--on-surface); font-size: 17px; }
 .set-row [data-field="reps"] { font-size: 25px; font-weight: 700; background: var(--reps-container); }
 
@@ -92,7 +94,7 @@ h3 { font-size: 15px; margin: 0; }
 .set-row.complete input { border-color: var(--success); }
 /* GYM-014: warm-up and working rows share one list with explicit labels. */
 .set-kind { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.set-kind small { font-size: 8px; font-weight: 700; letter-spacing: .1px; color: var(--on-surface-variant); }
+.set-kind small { white-space: nowrap; font-size: 11px; line-height: 14px; font-weight: 700; letter-spacing: 0; color: var(--on-surface-variant); }
 .set-kind b { font-size: 14px; }
 .warmup-row .set-kind small { color: var(--on-warmup); }
 .warmup-row .set-kind { background: var(--warmup-container); border-radius: 8px; padding: 7px 2px; }
@@ -406,14 +408,14 @@ summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; bo
 #recoverySeconds { color: var(--on-surface); }
 /* GYM-022–024: compact grouped Settings, 48px actions and a top-right overflow menu. */
 #settings select { min-height: 48px; }
-.save-location { padding: 14px; background: var(--surface-container); border-radius: var(--shape-medium); }
+.save-location { padding: 10px 12px; background: var(--surface-container); border-radius: var(--shape-medium); }
 .save-location .select-label { margin: 0; }
-#saveFolder { overflow-wrap: anywhere; font-size: 14px; margin: 8px 0; }
+#saveFolder { overflow-wrap: anywhere; font-size: 14px; margin: 4px 0; }
 .export-actions { display: grid; gap: 10px; }
 #settingsFeedback:empty { display: none; }
 .folder-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 #folderDialog h2 { font-size: 24px; }
-#exportDetails { margin-top: 16px; }
+#exportDetails { margin-top: 8px; }
 /* GYM-022: keep the compact app header and place overflow above scrolling content. */
 header { position: relative; z-index: 2; padding-bottom: 0; min-height: 48px; }
 .header-actions { display: flex; align-items: center; gap: 4px; }
@@ -489,3 +491,23 @@ details[open] > summary .disclosure-icon svg { transform: rotate(180deg); }
 #progress .chart-card { padding-block: 12px 8px; }
 #progress #metricSubtitle { margin-top: 4px; }
 #progress .chart { margin-top: 4px; }
+
+/* GYM-009, GYM-014, GYM-025: readable log scope without expanding its controls. */
+#exerciseContext { margin: 4px 0 12px; }
+/* GYM-018, GYM-025, GYM-026: one persistent editing action/status and compact review. */
+.editor-bar > .field-help:empty { display: none; }
+.plan-editing .editor-bar { position: sticky; top: 0; z-index: 4; padding-block: 8px; background: var(--surface); }
+.editor-bar .page-heading { margin-bottom: 8px; }
+.editor-bar .field-help { margin: 0 0 8px; }
+.plan-editing input, .plan-editing select, .plan-editing summary { scroll-margin-top: 132px; }
+.date-assignments { margin: 0 0 12px; font-size: 14px; }
+.date-assignments > div { display: grid; gap: 4px; padding-block: 8px; }
+.date-assignments dt { color: var(--on-surface-variant); font-size: 12px; }
+.date-assignments dd { margin: 0; overflow-wrap: anywhere; }
+/* GYM-022, GYM-025: remove noninteractive overhead while keeping target sizes. */
+#settings .section-heading { margin-block: 16px 8px; }
+#settings [data-settings-text="folderNote"] { margin-block: 6px 10px; }
+/* GYM-006: the scrim covers the phone; its grid uses the visible intersection. */
+.phone-modal { padding-top: calc(var(--modal-visible-top, 0px) + 16px); padding-bottom: calc(var(--modal-height) - var(--modal-visible-top, 0px) - var(--modal-visible-height, var(--modal-height)) + 16px); }
+
+html:has(.phone-modal[open]) { overflow: hidden; }

@@ -1,6 +1,6 @@
 # gym assystant — draft specification
 
-Status: revision 27, for exploration. Only a disposable browser mockup is authorized. Android implementation starts after the user decides the scope. Mockup coverage does not mean a production requirement is implemented.
+Status: revision 28, for exploration. Only a disposable browser mockup is authorized. Android implementation starts after the user decides the scope. Mockup coverage does not mean a production requirement is implemented.
 
 ## Purpose
 
@@ -67,6 +67,16 @@ Plan prescriptions and execution entries have separate data objects. Stable sess
 An untouched Ready preview can be refreshed from the saved plan when reopened. Starting it, recording any entries, or adjusting its execution order preserves its snapshot for subsequent visits. The Train calendar prioritizes an existing recorded/started workout for that date even if its template is later changed or removed. Exercise-performance statistics still use fictional immutable data. Attendance additionally uses this visit’s valid logged working sets, with original planned dates frozen for the recent past; saving real history across reloads remains deferred.
 
 Navigation: Train/calendar → dated Session → Exercise; Plan → plan library → selected plan editor → template editor; Progress → statistics; top-right ⋮ → Settings → language, appearance, save location, and exports → Back to the previous screen. The sample catalog remains small and illustrative. Plan controls add/remove/reorder prescribed exercises. Train permits reordering the dated workout separately; actual session warm-ups retain their existing controls. Multiple plans are included under GYM-026. Importing, automatic rotations, and cross-reload history remain unimplemented in the mockup. GYM-023 specifies native persistence for the later Android phase.
+
+## Revision 28: information and workflow review refinements
+
+- GYM-015/025: Suppress browser-owned gray tap-highlight overlays on controls that already have shared pressed/focus feedback; preserve visible keyboard focus and existing native semantics.
+
+- GYM-009/014/017/025: On Exercise, show a compact dated context only for a non-today workout (identify future dates as Preview) or an original plan differing from the active plan. The combined set-list counter explicitly counts working sets, with a full accessible completion label; warm-up/working captions use readable title-case text of at least 11px on one line in a type column wide enough to contain them. A paused timer explains the existing Back → session → Resume path. Keep today's ordinary logging compact and retain timer/lifecycle behavior.
+- GYM-018/025/026: Read-only template prescriptions start collapsed; Edit retains its first-open default. The date disclosure lists existing saved/draft date overrides as dated session/rest text while browsing; only Edit exposes assignment controls. Session-editor Save is labelled Save plan and commits the same whole-plan draft. Keep the existing heading/action/status together and visible while scrolling an edit form, without a duplicate Save control or obscuring focused fields; overflow menus and modal surfaces remain above it. A rejected cross-field rep range opens its template and prescription, identifies the invalid fields and focuses Min reps; drafts remain intact.
+- GYM-010/025: Missing-observation targets stay entirely inside the plot and cannot intercept date-lane panning. First layout for a new exercise reveals the selected observation after its timeline has a measurable width; metric switches and return navigation preserve deliberate exploration. Keep 48px targets, explicit gaps, zero-based axes and unchanged metric values.
+- GYM-006/025: Modal scrims remain phone-contained; their cards center and scroll within the visible intersection of phone and viewport, with 16px insets after resize or page scrolling. Background wheel scrolling is blocked while a modal is open; focused dialog actions remain reachable in short desktop windows.
+- GYM-022/025: Selecting Settings from its own overflow dismisses the menu and restores trigger focus without resetting reading position. Tighten noninteractive Settings spacing so the complete About the files disclosure fits the default English 390×844 entry view; retain 56px disclosures, 48px actions, readable text, wrapping and truthful folder/export boundaries.
 
 ## GYM-017: session state diagram
 

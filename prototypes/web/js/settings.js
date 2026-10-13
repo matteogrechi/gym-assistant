@@ -68,7 +68,8 @@ const GymSettings = (() => {
     });
     menuItem.addEventListener('click', () => {
       const active = document.querySelector('[data-view]:not([hidden])');
-      if (active.id !== 'settings') { returnView = active.id; returnScroll = document.querySelector('.screen-area').scrollTop; }
+      if (active.id === 'settings') { closeMenu(true); return; }
+      returnView = active.id; returnScroll = document.querySelector('.screen-area').scrollTop;
       closeMenu(); show('settings', 'settingsBack');
     });
     byId('settingsBack').addEventListener('click', () => {

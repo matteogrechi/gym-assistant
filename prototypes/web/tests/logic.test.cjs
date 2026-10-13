@@ -3,7 +3,39 @@ const assert = require('node:assert/strict');
 const data = require('../js/data.js');
 const metrics = require('../js/metrics.js');
 const timers = require('../js/timers.js');
+const charts = require('../js/charts.js');
 const context = data.context(data.catalog[0]);
+
+// GYM-010: chart geometry preserves observation dates and missing-data meaning.
+test('GYM-010: irregular dates use elapsed time and null observations break connecting lines', () => {
+  const source = [{date:'2026-09-14',value:9},{date:'2026-09-15',value:null},{date:'2026-09-21',value:10},{date:'2026-10-05',value:12}];
+  const copy = structuredClone(source);
+  const model = charts.layout(source, true);
+  assert.deepEqual(source,copy);
+  assert.deepEqual(model.points.map(point=>point.x),[0,1/21,1/3,1]);
+  assert.equal(model.points[1].y,null);
+  assert.deepEqual(model.segments.map(segment=>segment.map(point=>point.date)),[['2026-09-14'],['2026-09-21','2026-10-05']]);
+  assert.deepEqual(model.ticks,[15,10,5,0]);
+  assert.equal(model.points[0].y,1-9/15);
+  assert.equal(model.minimumWidth,48*21);
+});
+
+test('GYM-010: zero performance and missing observations remain visually distinct', () => {
+  const model = charts.layout([{date:'2026-09-14',value:0},{date:'2026-09-21',value:null},{date:'2026-10-05',value:Infinity}]);
+  assert.equal(model.points[0].y,1);
+  assert.equal(model.points[1].y,null);
+  assert.equal(model.points[2].value,null);
+  assert.deepEqual(model.segments.map(segment=>segment.length),[1]);
+});
+
+test('GYM-010: empty/single observations and raw workload scales have usable geometry', () => {
+  assert.deepEqual(charts.layout([]).points,[]);
+  const single = charts.layout([{date:'2026-10-05',value:12}],true);
+  assert.equal(single.points[0].x,.5);
+  assert.equal(single.maximum,15);
+  const workload = charts.layout([{date:'2026-09-14',value:1520},{date:'2026-10-05',value:1850}]);
+  assert.deepEqual(workload.ticks,[2000,1500,1000,500,0]);
+});
 
 // GYM-010: expected outcomes derive from the spec's sample records and formulas.
 test('GYM-010: sample progression separates matched reps, matched weight, and workload', () => {

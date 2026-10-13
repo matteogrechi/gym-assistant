@@ -313,6 +313,30 @@ const fs = require('node:fs/promises');
     await page.locator('#progressNav').click();
     await expect(page.locator('#metricValue')).toHaveText('12');
     await expect(page.locator('#workingSets')).toHaveText('12');
+    // GYM-010: inspect observations by touch and keyboard without changing history.
+    const historyBeforeInspection = await page.evaluate(() => JSON.stringify(GymData.history));
+    const attendanceBeforeInspection = await page.locator('#attendanceTotal').textContent();
+    await expect(page.locator('#metricDate')).toHaveAttribute('datetime','2026-10-05');
+    await expect(page.locator('#chart [data-observation-date]')).toHaveCount(4);
+    await page.locator('#chart [data-observation-date="2026-09-14"]').tap();
+    await expect(page.locator('#metricValue')).toHaveText('9');
+    await expect(page.locator('#metricDate')).toHaveText('14 Sept 2026');
+    await expect(page.locator('#chart [data-observation-date="2026-09-14"]')).toHaveAttribute('aria-pressed','true');
+    await page.locator('#chart [data-observation-date="2026-09-14"]').focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('#metricValue')).toHaveText('10');
+    await expect(page.locator('#chart [data-observation-date="2026-09-21"]')).toBeFocused();
+    await page.keyboard.press('ArrowLeft'); await page.keyboard.press('Space');
+    await expect(page.locator('#metricValue')).toHaveText('9');
+    await page.locator('[data-metric="weight"]').click();
+    await expect(page.locator('#metricValue')).toHaveText('50');
+    await expect(page.locator('#metricDate')).toHaveAttribute('datetime','2026-09-14');
+    await page.locator('#chart [data-observation-date="2026-10-05"]').click();
+    await expect(page.locator('#metricValue')).toHaveText('65');
+    await page.locator('[data-metric="reps"]').click();
+    await expect(page.locator('#metricValue')).toHaveText('12');
+    assert.equal(await page.evaluate(() => JSON.stringify(GymData.history)),historyBeforeInspection);
+    await expect(page.locator('#attendanceTotal')).toHaveText(attendanceBeforeInspection);
     await expect(page.locator('#performanceDetails')).not.toHaveAttribute('open');
     await expect(page.locator('#chart')).toBeInViewport();
     await page.locator('#performanceDetails > summary').focus();
@@ -1261,6 +1285,44 @@ const fs = require('node:fs/promises');
     }
     assert.equal(referencesSeen.size,12);
     await page.reload(); await reference('VIEW-001');
+    // GYM-010: missing/dense/empty histories retain readable, honest presentation.
+    await page.locator('#progressNav').click();
+    await page.evaluate(()=>{window.plotFixtureHistory=structuredClone(GymData.history);GymData.history.find(record=>record.exerciseId==='leg'&&record.date==='2026-09-21').sets=[];renderProgress();});
+    await page.locator('#chart [data-observation-date="2026-09-21"]').click();
+    await expect(page.locator('#metricValue')).toHaveText('—');
+    await expect(page.locator('#chartHelp')).toContainText('No comparable set');
+    await expect(page.locator('#chart .chart-trend')).toHaveCount(1);
+    const gapSegments = await page.locator('#chart .chart-trend').getAttribute('points');
+    assert.equal(gapSegments.trim().split(' ').length,2);
+    await page.evaluate(()=>{GymData.history.splice(0,GymData.history.length);renderProgress();});
+    await expect(page.locator('#chart')).toContainText('No comparable sessions');
+    await expect(page.locator('#chart button')).toHaveCount(0);
+    await expect(page.locator('#metricDate')).toHaveText('No observations');
+    await page.evaluate(()=>{GymData.history.push(...structuredClone(window.plotFixtureHistory));const dense=structuredClone(GymData.history.find(record=>record.exerciseId==='leg'&&record.date==='2026-09-21'));dense.date='2026-09-15';dense.sets[0]={...dense.sets[0],reps:10,weight:60.25,done:true};GymData.history.push(dense);renderProgress();});
+    await page.locator('[data-metric="weight"]').click();
+    await page.setViewportSize({width:320,height:844});
+    await page.locator('#chart [data-observation-date="2026-09-15"]').click();
+    await expect(page.locator('#metricValue')).toHaveText('60.25');
+    await expect(page.locator('#chartHelp')).toContainText('Swipe for dates');
+    assert(await page.locator('.chart-timeline').evaluate(el=>el.scrollWidth>el.clientWidth));
+    const pointBounds = await page.locator('#chart [data-observation-date]').evaluateAll(points=>points.map(point=>{const r=point.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};}));
+    assert(pointBounds.every(point=>point.width>=48&&point.height>=48));
+    for(let index=1;index<pointBounds.length;index++) assert(pointBounds[index].x-pointBounds[index-1].x>=47.9);
+    assert(await page.locator('.screen-area').evaluate(el=>el.scrollWidth<=el.clientWidth));
+    await page.evaluate(()=>{GymData.history.splice(0,GymData.history.length,...window.plotFixtureHistory);delete window.plotFixtureHistory;renderProgress();});
+    await page.locator('[data-metric="reps"]').click();
+    await page.locator('#chart [data-observation-date="2026-10-05"]').click();
+    for(const theme of ['light','dark']) {
+      await openSettings(); await page.locator('#appTheme').selectOption(theme); await page.locator('#progressNav').click();
+      for(const width of [320,390,430]) {
+        await page.setViewportSize({width,height:844});
+        await expect(page.locator('#chart')).toBeInViewport();
+        assert(await page.locator('.screen-area').evaluate(el=>el.scrollWidth<=el.clientWidth));
+        const bounds=await page.locator('#chart [data-observation-date]').evaluateAll(points=>points.map(point=>{const r=point.getBoundingClientRect();return {left:r.left,right:r.right,width:r.width,height:r.height};}));
+        assert(bounds.every(point=>point.width>=48&&point.height>=48&&point.left>=0&&point.right<=width));
+      }
+    }
+    console.log('PASS: VIEW-007 labelled plots, touch/keyboard inspection, retained dates, fractional values, gaps/empty history, dense-date panning and 48px non-overlapping targets in both themes.');
     // GYM-016: long saved names/focus do not grow the card or cover its action.
     await openActivePlan(); await page.locator('[data-edit-template="session-A"]').click();
     const longSessionName = 'Strength ' + 'A'.repeat(51);

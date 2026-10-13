@@ -21,6 +21,7 @@ Android distinguishes filled, filled tonal, outlined, and text buttons by emphas
 | Exercise sorting in Plan and Train | 48px outlined drag handle with grip icon; touch/mouse drop and ArrowUp/ArrowDown keyboard support |
 | Remove session template | Standard icon button with a trash icon |
 | Set completion | Toggle icon button with checked fill and pressed semantics |
+| Inspect a dated performance point | Circular 48px target with selected ring, pressed semantics and keyboard support |
 | Execution/Recovery and progress metric selection | Joined single-choice segmented buttons with a selected check and tonal fill |
 
 Icon actions use consistent 24-pixel SVGs, 48-pixel targets, and accessible names. The completion control preserves its binary pressed state. [Android: Icon buttons](https://developer.android.com/develop/ui/compose/components/icon-button)
@@ -44,3 +45,5 @@ GYM-025 standardizes Back as a 48px circular icon in compact secondary headings,
 Revision 13 enlarges every expand/collapse affordance: a full-width row with minimum 56px height, 14px label, and a 24px chevron in a 48px circular indicator at the right. The entire summary remains the native keyboard-accessible toggle; the circle is decorative rather than a second nested button. An upward chevron indicates expansion. Labels wrap, both themes share the treatment, and the indicator remains present after translation.
 
 Revision 16 confines app-owned modal presentation to the simulated phone display. Each native browser dialog supplies modal focus/Escape semantics, but its outer surface matches the phone's inner bounds and acts as the scrim; the page-wide native backdrop is transparent. A centered card with 16px minimum edge spacing scrolls internally on short displays, with shadows clipped to the phone. Resize/page-scroll observers retain alignment. This models the app window on desktop rather than centering the popup over the entire presentation. Native Android components remain future delivery.
+
+Revision 19 improves VIEW-007 with a 180px plot, 12px axis/date labels, a 14px metric heading and a live selected-date/value readout. Touch targets are 48px and keep their spacing through internal panning for dense dates; the value axis stays visible. Arrow keys and native Enter/Space activation provide keyboard inspection without a popup. These are browser plot controls; future native chart implementation remains undecided.

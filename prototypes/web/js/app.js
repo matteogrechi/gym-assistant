@@ -1,5 +1,5 @@
 'use strict';
-/* global GymData, GymMetrics, GymTimers, GymCalendar, GymPlan, GymAttendance, GymSession, GymSettings, GymPrograms, GymDialogs, GymSorting */
+/* global GymData, GymMetrics, GymTimers, GymCalendar, GymPlan, GymAttendance, GymSession, GymSettings, GymPrograms, GymDialogs, GymSorting, GymCharts */
 const byId = id => document.getElementById(id);
 // GYM-015: uniform decorative SVGs; the surrounding button provides its action name.
 const buttonIcon = name => {
@@ -10,6 +10,8 @@ const buttonIcon = name => {
 const sortHandle = name => `<button class="md-icon-button md-icon-outlined drag-handle" type="button" data-sort-handle aria-label="Reorder ${escapeHtml(name)}" aria-describedby="sortingHelp"><svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" stroke-width="3"/></svg></button>`;
 let exerciseIndex = 0;
 let metric = 'reps';
+let progressDate = null;
+let progressPoints = [];
 let todayDate = GymCalendar.today();
 let selectedDate = todayDate;
 let displayedWeek = GymCalendar.week(todayDate)[0];
@@ -46,6 +48,7 @@ const session = () => currentSession;
 const exercise = () => session().exercises[exerciseIndex];
 const completed = item => item.sets.filter(set => set.done).length;
 const format = value => new Intl.NumberFormat('en-GB', { maximumFractionDigits: 1 }).format(value);
+const formatObservation = value => new Intl.NumberFormat('en-GB', { maximumFractionDigits: 20 }).format(value);
 const escapeHtml = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
 const recordedForDate = date => [...sessionInstances.values()].find(item => item.date === date && GymPlan.locked(item));
 const plannedForDate = date => {
@@ -203,20 +206,51 @@ function renderProgress() {
     weight: { title: 'Weight at 10 reps', unit: 'kg', subtitle: 'Heaviest working set of exactly 10 reps', explanation: 'Track weight for the same repetition task. This is a performed set, not a tested maximum.' },
     volume: { title: 'Volume load', unit: 'kg·reps', subtitle: 'Weight × reps, summed over working sets', explanation: 'This describes workload. More volume does not by itself mean more strength or muscle growth.' }
   }[metric];
-  const last = series.at(-1);
+  const model = GymCharts.layout(series, metric === 'reps');
+  progressPoints = model.points;
+  if (!series.some(point => point.date === progressDate)) progressDate = series.at(-1)?.date ?? null;
   byId('metricTitle').textContent = labels.title;
-  byId('metricValue').textContent = last?.value == null ? '—' : format(last.value);
   byId('metricUnit').textContent = labels.unit;
   byId('metricSubtitle').textContent = labels.subtitle;
-  const max = Math.max(1, ...series.map(point => point.value ?? 0));
-  const dateLabel = date => new Date(`${date}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
-  byId('chart').innerHTML = series.map(point => `<div class="chart-column"><span class="chart-number">${point.value === null ? '—' : format(point.value)}</span><div class="bar-track"><div class="chart-bar" style="height:${point.value === null ? 0 : point.value / max * 100}%"></div></div><span class="chart-date">${dateLabel(point.date)}</span></div>`).join('');
-  byId('chart').setAttribute('aria-label', `${labels.title}. ${series.map(point => `${dateLabel(point.date)}: ${point.value === null ? 'No comparable set' : `${format(point.value)} ${labels.unit}`}`).join('; ')}. Baseline zero.`);
+  const dateLabel = (date, full = false) => GymCalendar.label(date, { day: 'numeric', month: 'short', ...(full ? { year: 'numeric' } : {}) });
+  GymCharts.render(byId('chart'), model, {unit:labels.unit, selectedDate:progressDate, format:formatObservation, dateLabel});
+  byId('chartHelp').textContent = model.points.some(point=>point.value===null) ? '— No comparable set · tap a point. Scale starts at 0.' : 'Tap a point to inspect a session · scale starts at 0.';
+  byId('chartHelp').hidden = !model.points.length;
+  selectProgressObservation(progressDate);
   byId('workingSets').textContent = GymMetrics.countSets(GymData.history, context);
   byId('comparisonContext').textContent = `${selected.machine} · ${selected.seat}. Sample history uses the same movement and 2 reps in reserve (estimated reps left). Warm-ups excluded.`;
   byId('metricExplanation').textContent = labels.explanation;
   document.querySelectorAll('[data-metric]').forEach(button => button.setAttribute('aria-pressed', button.dataset.metric === metric));
 }
+// GYM-010: inspecting a dated point changes only its readout and selected ring.
+function selectProgressObservation(date) {
+  const point = progressPoints.find(item => item.date === date);
+  progressDate = point?.date ?? null;
+  byId('metricValue').textContent = point?.value == null ? '—' : formatObservation(point.value);
+  byId('metricDate').textContent = point ? GymCalendar.label(point.date, {day:'numeric',month:'short',year:'numeric'}) : 'No observations';
+  if (point) byId('metricDate').dateTime = point.date;
+  else byId('metricDate').removeAttribute('datetime');
+  byId('chart').querySelectorAll('[data-observation-date]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.observationDate===progressDate)));
+  requestAnimationFrame(() => {
+    const selected = byId('chart').querySelector('[aria-pressed="true"]');
+    const timeline = byId('chart').querySelector('.chart-timeline');
+    const scrolls = timeline && timeline.scrollWidth > timeline.clientWidth;
+    if (selected && scrolls) timeline.scrollLeft = selected.offsetLeft + 24 - timeline.clientWidth / 2;
+    if (timeline) byId('chartHelp').textContent = `${progressPoints.some(point=>point.value===null) ? '— No comparable set · ' : ''}${scrolls ? 'Swipe for dates; tap a point' : 'Tap a point to inspect a session'}. Scale starts at 0.`;
+  });
+}
+byId('chart').addEventListener('click', event => {
+  const point = event.target.closest('[data-observation-date]');
+  if (point) selectProgressObservation(point.dataset.observationDate);
+});
+byId('chart').addEventListener('keydown', event => {
+  const point = event.target.closest('[data-observation-date]');
+  if (!point || !['ArrowLeft','ArrowRight'].includes(event.key)) return;
+  event.preventDefault();
+  const points = [...byId('chart').querySelectorAll('[data-observation-date]')];
+  const next = points[points.indexOf(point)+(event.key==='ArrowLeft'?-1:1)];
+  if (next) { next.focus(); selectProgressObservation(next.dataset.observationDate); }
+});
 // GYM-020: attendance describes recorded visits, never a strength penalty.
 function renderAttendance() {
   const today = GymCalendar.today();

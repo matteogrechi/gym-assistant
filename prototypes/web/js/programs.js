@@ -29,6 +29,11 @@ const GymPrograms = (() => {
     if (hasUnsavedChanges) throw new Error('Save this plan’s changes before using it.');
     library.activePlanId = id;
   }
-  return { create, commit, activate };
+  // GYM-026: explicit abandonment is limited to a never-saved new draft.
+  function discardDraft(library, drafts, id) {
+    if (library.activePlanId === id || library.plans.some(item => item.id === id)) return false;
+    return drafts.delete(id);
+  }
+  return { create, commit, activate, discardDraft };
 })();
 if (typeof module !== 'undefined') module.exports = GymPrograms;

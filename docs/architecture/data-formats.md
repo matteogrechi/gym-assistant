@@ -1,6 +1,6 @@
 # Durable data files — version 2
 
-GYM-023, GYM-024 and GYM-026 define these files. Android implementation is not started. The web prototype downloads real files containing fictional history and this visit's demo edits; it does not save to its preview folder, persist across reloads, or import backups.
+GYM-023, GYM-024, GYM-026 and GYM-028 define these files. Android implementation is not started. The web prototype downloads real files containing fictional history and this visit's demo edits; it does not save to its preview folder, persist across reloads, or import backups.
 
 ## Principles
 
@@ -18,7 +18,7 @@ Top-level keys:
 | `dataKind`, `dataDictionary` | Explicit prototype provenance and a field/semantics guide included inside the file. |
 | `settings` | Requested language/theme and preview folder label. Native backups will use non-authoritative folder access metadata; an exported URI cannot grant permission. |
 | `savedPlans`, `activePlanId`, `unsavedPlanDrafts` | All saved programs with sessions, prescriptions and weekday/date assignments; one active saved-plan ID; an array of separate per-plan drafts (empty when absent). Drafts, including new unsaved plans, are never silently committed. |
-| `exerciseCatalog` | Exercise IDs, machine identity, sample default setup/weight/reps. |
+| `exerciseCatalog` | Stable exercise IDs, machine identity and default setup/weight/reps; additive `custom: true` identifies user-created definitions with zero unrecorded defaults, not sample measurements. |
 | `executionSessions` | Every opened occurrence, with stable `occurrenceId`, planned `date`, original `programId`, globally unique template identity, original prescription copy, current exercise order, lifecycle, entries and actual attendance/finish dates where present. |
 | `pastPlannedSessions` | Frozen recent obligations including original dates, original `programId`, program revision and template snapshots, even when the saved plan changes. |
 | `samplePerformanceHistory` | Fictional raw working sets plus machine/setup/load/ROM/effort context and actual observation dates. |
@@ -47,6 +47,12 @@ Only derived values appear here; full state JSON retains raw logs. Values do not
 ## Planned recovery duration
 
 Each planned exercise stores `recoverySeconds` (whole seconds, 1–3600). Dated execution exercises and their original `prescribedExercises` retain that target; `timers.duration` uses the occurrence's planned seconds. Plan edits cannot rewrite a protected occurrence's target or elapsed timers. This is an additive version-2 field: earlier files without it use the original 90-second default, while existing captured timer durations remain unchanged. The reference IDs displayed outside the mockup phone are presentation metadata and are not exported as app state.
+
+## Local exercise definitions and draft discard
+
+Custom creation adds ordinary catalog entries with stable unique IDs, `name`, `machine`, optional default `seat` and `custom: true`. Legacy catalog entries without `custom` remain the original fictional examples. Custom defaults `weight: 0` and `reps: 0` mean unrecorded editable placeholders, never completed performance. Unknown ROM/effort context remains null; no synthetic history is created. Plans reference IDs and occurrences copy definitions/setup independently. Creating a catalog entry is separate from saving a plan; discarding its unsaved new-plan draft does not remove that shared definition.
+
+These are additive version-2 fields with no changed existing meanings. Discard removes only the selected never-saved draft from subsequent `unsavedPlanDrafts`; old exported copies remain intact. Finish confirmation is transient presentation state and is not exported. Cancelled confirmation leaves the raw occurrence/timers unchanged.
 
 ## Recovery without the app
 

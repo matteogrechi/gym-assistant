@@ -1,5 +1,5 @@
 'use strict';
-/* global GymData, GymMetrics, GymTimers, GymCalendar, GymPlan, GymAttendance, GymSession, GymSettings, GymPrograms, GymDialogs, GymSorting, GymCharts, GymSegments */
+/* global GymData, GymExerciseCatalog, GymMetrics, GymTimers, GymCalendar, GymPlan, GymAttendance, GymSession, GymSettings, GymPrograms, GymDialogs, GymSorting, GymCharts, GymSegments */
 const byId = id => document.getElementById(id);
 // GYM-015: uniform decorative SVGs; the surrounding button provides its action name.
 const buttonIcon = name => {
@@ -253,7 +253,9 @@ function renderProgress() {
   byId('chartHelp').hidden = !model.points.length;
   selectProgressObservation(progressDate);
   byId('workingSets').textContent = GymMetrics.countSets(GymData.history, context);
-  byId('comparisonContext').textContent = `${selected.machine} · ${selected.seat}. Sample history uses the same movement and 2 reps in reserve (estimated reps left). Warm-ups excluded.`;
+  byId('comparisonContext').textContent = selected.custom
+    ? [selected.machine, selected.seat, 'No sample history for this exercise. Effort and range of motion are unknown. Warm-ups excluded.'].filter(Boolean).join(' · ')
+    : `${selected.machine} · ${selected.seat}. Sample history uses the same movement and 2 reps in reserve (estimated reps left). Warm-ups excluded.`;
   byId('metricExplanation').textContent = labels.explanation;
   metricSegments.select(metric);
 }
@@ -400,13 +402,32 @@ function pauseSession() {
 }
 byId('pauseSession').addEventListener('click', pauseSession);
 byId('pauseExerciseSession').addEventListener('click', pauseSession);
-function finishSession() {
-  if (!GymSession.transition(session(), 'finish', Date.now())) return;
+let pendingFinishSession = null;
+function completeSession(target) {
+  if (target !== session() || !GymSession.transition(target, 'finish', Date.now())) return;
   renderSession();
   showView('session', 'backProgram');
 }
+// GYM-017, GYM-012: inspecting/cancelling a terminal action leaves live clocks untouched.
+function finishSession() {
+  const target = session();
+  if (!['inProgress', 'paused'].includes(target.state)) return;
+  const sets = target.exercises.flatMap(item => item.sets);
+  if (sets.every(item => item.done)) { completeSession(target); return; }
+  pendingFinishSession = target;
+  byId('finishSessionTitle').textContent = `Finish ${target.name}?`;
+  byId('finishSessionSummary').textContent = `${sets.filter(item => item.done).length} of ${sets.length} working sets logged.`;
+  GymDialogs.open(byId('finishSessionDialog'));
+}
 byId('finishSession').addEventListener('click', finishSession);
 byId('finishExerciseSession').addEventListener('click', finishSession);
+byId('cancelFinishSession').addEventListener('click', () => byId('finishSessionDialog').close());
+byId('finishSessionDialog').addEventListener('close', () => { pendingFinishSession = null; });
+byId('confirmFinishSession').addEventListener('click', () => {
+  const target = pendingFinishSession;
+  byId('finishSessionDialog').close();
+  if (target) completeSession(target);
+});
 // GYM-018, GYM-026: the selected editor uses its retained per-plan draft, separate from Train.
 let planDraft = null;
 let editingPlanId = GymData.library.activePlanId;
@@ -449,6 +470,7 @@ function syncSaveActions() {
   ['editPlan', 'editTemplate'].forEach(id => { byId(id).hidden = planEditing; });
   // GYM-026: activation is separate from library browsing and draft editing.
   const saved = GymData.library.plans.some(item => item.id === editingPlanId);
+  byId('discardNewDraft').hidden = saved;
   const active = editingPlanId === GymData.library.activePlanId;
   byId('planActivation').hidden = planEditing || !saved;
   byId('planActivationStatus').textContent = active ? 'Active plan' : planDirty ? 'Save changes before making this plan active.' : '';
@@ -463,7 +485,7 @@ function applyPlanMode() {
     form.classList.toggle('plan-editing', planEditing);
     form.querySelectorAll('input,select').forEach(field => { field.disabled = !planEditing; });
     form.querySelectorAll('input:not([type]),input[type="text"],select:not(#exerciseToAdd)').forEach(field => renderReadonlyValue(field, !planEditing));
-    form.querySelectorAll('[data-sort-handle],[data-remove-entry],[data-delete-template],#addPlanSession,#addPlanExercise').forEach(action => {
+    form.querySelectorAll('[data-sort-handle],[data-remove-entry],[data-delete-template],#addPlanSession,#addPlanExercise,#createExercise').forEach(action => {
       action.hidden = !planEditing;
       action.disabled = !planEditing || (action.matches('[data-delete-template]') && planDraft.sessions.length === 1) || (action.id === 'addPlanSession' && planDraft.sessions.length >= 7);
     });
@@ -526,14 +548,17 @@ function prescriptionSummary(item, index) {
   const reps = item.minReps === item.maxReps ? item.minReps : `${item.minReps}–${item.maxReps}`;
   return `${index + 1}. ${escapeHtml(name)} <span class="prescription-group">· ${item.setCount} × ${reps}</span> <span class="prescription-group">· ${item.recoverySeconds ?? 90}s recovery</span>`;
 }
+// GYM-028, GYM-025: reuse one escaped catalog label across planning and Progress.
+const catalogLabel = item => item.custom ? `${item.name} · ${item.machine}` : item.name;
+const catalogOptions = selected => GymData.catalog.map(item => `<option value="${item.id}" ${item.id === selected ? 'selected' : ''}>${escapeHtml(catalogLabel(item))}</option>`).join('');
 function renderTemplate(expanded = null) {
   syncSaveActions();
   const template = templateDraft();
   byId('templateHeading').textContent = 'Edit session';
   byId('templateName').value = template.name;
   byId('templateFocus').value = template.focus;
-  byId('plannedExercises').innerHTML = template.exercises.length ? template.exercises.map((item, index) => `<div class="planned-exercise-row" data-sort-item="${escapeHtml(item.entryId)}">${sortHandle(GymData.catalog.find(machine => machine.id === item.exerciseId)?.name ?? 'exercise')}<details class="prescription-card" ${(expanded ? expanded.has(item.entryId) : planEditing && index === 0) ? 'open' : ''}><summary><strong class="prescription-summary">${prescriptionSummary(item, index)}</strong><span class="disclosure-icon" aria-hidden="true">${buttonIcon('expand')}</span></summary><label class="select-label" for="planned-machine-${item.entryId}">Exercise</label><select id="planned-machine-${item.entryId}" data-entry="${item.entryId}" data-plan-field="exerciseId">${GymData.catalog.map(machine => `<option value="${machine.id}" ${machine.id === item.exerciseId ? 'selected' : ''}>${machine.name}</option>`).join('')}</select><div class="prescription-fields"><label>Working sets<input type="number" min="1" max="10" step="1" required value="${item.setCount}" data-entry="${item.entryId}" data-plan-field="setCount" aria-label="Exercise ${index + 1} planned working sets"></label><label>Min reps<input type="number" min="1" max="50" step="1" required value="${item.minReps}" data-entry="${item.entryId}" data-plan-field="minReps" aria-label="Exercise ${index + 1} minimum target reps"></label><label>Max reps<input type="number" min="1" max="50" step="1" required value="${item.maxReps}" data-entry="${item.entryId}" data-plan-field="maxReps" aria-label="Exercise ${index + 1} maximum target reps"></label></div><label class="select-label" for="planned-recovery-${item.entryId}">Recovery (s)</label><input id="planned-recovery-${item.entryId}" class="plan-input" type="number" min="1" max="3600" step="1" required value="${item.recoverySeconds ?? 90}" data-entry="${item.entryId}" data-plan-field="recoverySeconds" aria-label="Exercise ${index + 1} planned recovery seconds"><div class="prescription-actions"><button class="md-icon-button" type="button" data-remove-entry="${item.entryId}" aria-label="Remove exercise ${index + 1}">${buttonIcon('trash')}</button></div></details></div>`).join('') : '<p class="field-help">Add an exercise to this session.</p>';
-  byId('exerciseToAdd').innerHTML = GymData.catalog.map(item => `<option value="${item.id}">${item.name}</option>`).join('');
+  byId('plannedExercises').innerHTML = template.exercises.length ? template.exercises.map((item, index) => `<div class="planned-exercise-row" data-sort-item="${escapeHtml(item.entryId)}">${sortHandle(GymData.catalog.find(machine => machine.id === item.exerciseId)?.name ?? 'exercise')}<details class="prescription-card" ${(expanded ? expanded.has(item.entryId) : planEditing && index === 0) ? 'open' : ''}><summary><strong class="prescription-summary">${prescriptionSummary(item, index)}</strong><span class="disclosure-icon" aria-hidden="true">${buttonIcon('expand')}</span></summary><label class="select-label" for="planned-machine-${item.entryId}">Exercise</label><select id="planned-machine-${item.entryId}" data-entry="${item.entryId}" data-plan-field="exerciseId">${catalogOptions(item.exerciseId)}</select><div class="prescription-fields"><label>Working sets<input type="number" min="1" max="10" step="1" required value="${item.setCount}" data-entry="${item.entryId}" data-plan-field="setCount" aria-label="Exercise ${index + 1} planned working sets"></label><label>Min reps<input type="number" min="1" max="50" step="1" required value="${item.minReps}" data-entry="${item.entryId}" data-plan-field="minReps" aria-label="Exercise ${index + 1} minimum target reps"></label><label>Max reps<input type="number" min="1" max="50" step="1" required value="${item.maxReps}" data-entry="${item.entryId}" data-plan-field="maxReps" aria-label="Exercise ${index + 1} maximum target reps"></label></div><label class="select-label" for="planned-recovery-${item.entryId}">Recovery (s)</label><input id="planned-recovery-${item.entryId}" class="plan-input" type="number" min="1" max="3600" step="1" required value="${item.recoverySeconds ?? 90}" data-entry="${item.entryId}" data-plan-field="recoverySeconds" aria-label="Exercise ${index + 1} planned recovery seconds"><div class="prescription-actions"><button class="md-icon-button" type="button" data-remove-entry="${item.entryId}" aria-label="Remove exercise ${index + 1}">${buttonIcon('trash')}</button></div></details></div>`).join('') : '<p class="field-help">Add an exercise to this session.</p>';
+  byId('exerciseToAdd').innerHTML = catalogOptions();
   byId('templateFeedback').textContent = planMessage;
   applyPlanMode();
 }
@@ -606,6 +631,63 @@ byId('addPlan').addEventListener('click', () => {
   const draft = GymPrograms.create(GymData.catalog, `plan-${crypto.randomUUID()}`);
   planDrafts.set(draft.id, { draft, dirty: true, message: 'Unsaved new plan' });
   openPlan(draft.id); byId('planName').focus();
+});
+// GYM-026: clear the editor reference before library rendering can retain it again.
+let pendingDiscardId = null;
+byId('discardNewDraft').addEventListener('click', () => {
+  retainDraft();
+  if (GymData.library.plans.some(item => item.id === editingPlanId)) return;
+  pendingDiscardId = editingPlanId;
+  byId('discardDraftDescription').textContent = `Discard “${planDraft.name}”? This removes only this unsaved new plan.`;
+  GymDialogs.open(byId('discardDraftDialog'));
+});
+byId('cancelDiscardDraft').addEventListener('click', () => byId('discardDraftDialog').close());
+byId('discardDraftDialog').addEventListener('close', () => { pendingDiscardId = null; });
+byId('confirmDiscardDraft').addEventListener('click', () => {
+  const id = pendingDiscardId;
+  byId('discardDraftDialog').close();
+  if (!id || !GymPrograms.discardDraft(GymData.library, planDrafts, id)) return;
+  planDraft = null; editingTemplateId = null; planDirty = false; planMessage = ''; planEditing = false;
+  editingPlanId = GymData.library.activePlanId;
+  renderPlans(); showView('plans', 'addPlan');
+});
+// GYM-028: catalog saving is explicit and never silently inserts or saves a prescription.
+byId('createExercise').addEventListener('click', () => {
+  if (!planEditing) return;
+  byId('createExerciseForm').reset();
+  byId('createExerciseFeedback').textContent = '';
+  byId('createExerciseForm').querySelectorAll('input').forEach(field => field.setCustomValidity(''));
+  GymDialogs.open(byId('createExerciseDialog'));
+});
+byId('cancelCreateExercise').addEventListener('click', () => byId('createExerciseDialog').close());
+byId('createExerciseForm').addEventListener('input', event => {
+  event.target.setCustomValidity?.('');
+  byId('createExerciseFeedback').textContent = '';
+});
+byId('createExerciseForm').addEventListener('submit', event => {
+  event.preventDefault();
+  if (!planEditing) return;
+  for (const id of ['customExerciseName', 'customExerciseMachine']) {
+    const field = byId(id);
+    if (!field.value.trim()) {
+      field.setCustomValidity('Enter a name or machine variant, not only spaces.');
+      byId('createExerciseFeedback').textContent = field.validationMessage;
+      field.reportValidity(); return;
+    }
+  }
+  let definition;
+  try {
+    definition = GymExerciseCatalog.create(GymData.catalog, {
+      name: byId('customExerciseName').value, machine: byId('customExerciseMachine').value, seat: byId('customExerciseSeat').value
+    }, `custom-${crypto.randomUUID()}`);
+  } catch (error) { byId('createExerciseFeedback').textContent = error.message; return; }
+  const expanded = new Set([...byId('plannedExercises').querySelectorAll('[data-sort-item]')].filter(row => row.querySelector('details').open).map(row => row.dataset.sortItem));
+  byId('createExerciseDialog').close();
+  renderTemplate(expanded);
+  byId('exerciseToAdd').value = definition.id;
+  refreshProgressCatalog();
+  byId('templateFeedback').textContent = `${definition.name} saved. Add it to this session.`;
+  byId('exerciseToAdd').focus();
 });
 byId('planName').addEventListener('input', event => { planDraft.name = event.target.value; markPlanDirty(); });
 byId('weeklySchedule').addEventListener('change', event => {
@@ -682,7 +764,12 @@ byId('templateForm').addEventListener('submit', savePlan);
 
 // GYM-010
 byId('progressNav').addEventListener('click', () => { renderProgress(); showView('progress', 'progressNav'); });
-byId('progressExercise').innerHTML = GymData.catalog.map((item, index) => `<option value="${index}">${item.name}</option>`).join('');
+function refreshProgressCatalog() {
+  const selected = byId('progressExercise').value;
+  byId('progressExercise').innerHTML = GymData.catalog.map((item, index) => `<option value="${index}">${escapeHtml(catalogLabel(item))}</option>`).join('');
+  if (selected) byId('progressExercise').value = selected;
+}
+refreshProgressCatalog();
 byId('progressExercise').addEventListener('change', renderProgress);
 // GYM-010, GYM-015: reuse the same selector as timer modes; callbacks own domain state.
 const metricSegments = GymSegments.mount(byId('progressMetrics'), {

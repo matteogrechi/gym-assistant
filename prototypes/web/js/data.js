@@ -6,7 +6,8 @@ const GymData = (() => {
     { id: 'chest', name: 'Chest press', category: 'UPPER BODY', machine: 'Chest press 01', seat: 'Seat 3', weight: 20, reps: 10 },
     { id: 'lat', name: 'Lat pulldown', category: 'UPPER BODY', machine: 'Pulldown 01', seat: 'Thigh pad 2', weight: 30, reps: 12 }
   ];
-  const context = exercise => ({ exerciseId: exercise.id, machine: exercise.machine, setup: exercise.seat, unit: 'kg', convention: 'displayed-machine-load', rom: 'sample-full-rom', rir: 2 });
+  // GYM-028: local definitions have no fictional ROM or effort observations.
+  const context = exercise => ({ exerciseId: exercise.id, machine: exercise.machine, setup: exercise.seat, unit: 'kg', convention: 'displayed-machine-load', rom: exercise.custom ? null : 'sample-full-rom', rir: exercise.custom ? null : 2 });
   // GYM-018: templates contain prescriptions only, never actual logs or timers.
   const program = {
     id: 'foundations', name: 'Full body foundations', revision: 1,

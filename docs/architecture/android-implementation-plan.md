@@ -1,10 +1,10 @@
 # Android implementation plan — gym assystant
 
-Status: design presented before native coding, 13 October 2026; specification revision 29. The user has requested implementation and entirely offline operation. No Android sources, manifest, Gradle scaffold, database, player or APK exists yet. Two isolated planning reviewers examined data durability and native runtime/UI; the coordinator owns these recommendations and their scope decisions.
+Status: design presented before native coding, 13 October 2026; specification revision 30. The user has requested implementation and entirely offline operation. No Android sources, manifest, Gradle scaffold, database, player or APK exists yet. Two isolated planning reviewers examined data durability and native runtime/UI; the coordinator owns these recommendations and their scope decisions.
 
 The [specification](../product/spec.md) remains the product source of truth. [Traceability](../product/traceability.md) distinguishes implemented browser evidence from planned Android work. The reviewed mockup supplies interaction/layout references, not production code. No WebView conversion is planned.
 
-The subsequent [basic feature review](../reviews/basic-feature-review.md) challenges proposed additions against actual mockup workflows. Its recommendations do not resolve the pending choices in §9 or authorize extra implementation scope.
+The subsequent [basic feature review](../reviews/basic-feature-review.md) challenges proposed additions against actual mockup workflows. The user subsequently selected draft discard, incomplete Finish protection and local exercise creation in specification revision 30. Other pending choices in §9 remain unresolved.
 
 ## 1. Offline contract and boundaries
 
@@ -81,7 +81,7 @@ Data groups: exercise definitions/variants; saved plan revisions and separate dr
 
 Store planned civil dates separately from UTC timestamps and actual local observation dates/time zones. Time-zone/DST changes do not move an already recorded visit to a different day. Preserve schedule effective dates so opening the app after weeks offline reconstructs obligations from the program/revision that applied then. Never invent obligations before initial plan activation or rewrite old missed sessions from a newly active plan. Start/log/reorder protects an occurrence's original plan, prescription and timer target. Untouched today/future previews can reflect the newly saved/activated plan.
 
-Start → In progress, Pause → Paused, Resume → In progress, Finish → Finished remain the only transitions. Finish can be partial/empty, locks edits and never creates unperformed sets or attendance. No automatic rotation/rescheduling, prescription advice, streak or reopening Finished in v1.
+Start → In progress, Pause → Paused, Resume → In progress, Finish → Finished remain the only transitions. Finish can be partial/empty, locks edits and never creates unperformed sets or attendance. Before incomplete Finish, confirm whole-session completion and terminal meaning; opening/cancelling leaves clocks and lifecycle unchanged. A never-saved new-plan draft may be explicitly discarded without affecting saved plans or workouts. No automatic rotation/rescheduling, prescription advice, streak or reopening Finished in v1.
 
 Start, warm-ups, zero reps, future previews and Finish do not establish attendance. Record the first actual visit once with the first qualifying completed working set, atomically with completion. The current first-observation rule remains: undo changes working performance, but does not erase the already recorded visit. Retrospective attendance/history correction is a separate scope choice.
 
@@ -135,7 +135,7 @@ The [draft native v3 contract](native-data-v3.md) distinguishes genuine data, se
 | --- | --- | --- |
 | Video content | Local import first; bundled library only with supplied/cleared clips. | User preference requested; basic offline playback follows GYM-002/027, catalogue content is unresolved. |
 | Real-history inclusion | Qualifying completed working sets appear immediately, including unfinished/partial workouts; Finish locks them. | User preference requested; alternative Finished-only documented. |
-| Local exercise editor | Add/edit exercise name, machine variant, default setup and video within planning, allowing the user's real gym instead of the three illustrative machines. No new bottom tab or deletion/duplication feature. | Proposed native scope extension; explicit preference requested. |
+| Local exercise creation | Create name, stable machine/movement identity and optional default setup within planning (GYM-028). No new tab, definition editing/deletion or implied video import. | Approved in revision 30; working mockup, native source not started. |
 | Restore UI | Local whole-dataset restore with preview and replacement confirmation, to make backups useful after reinstall. | Proposed native scope extension; explicit preference requested. |
 | Device range | Android 8/API26 and later. | Proposed technical baseline; change if the user's device is older. |
 | Reboot clocks | Pause at last durable checkpoint and explain recovery; do not claim exact powered-off timing. | Recommended implementation policy, presented for review. |
@@ -162,4 +162,4 @@ Use focused fresh-context workers for independent domain/storage/UI slices once 
 
 Read-only environment check: java, javac, adb, sdkmanager, emulator and gradle are not on PATH; ANDROID_HOME and ANDROID_SDK_ROOT are unset. An existing installation elsewhere has not been ruled out. M1 must locate or provision the required JDK/SDK in an authorized location before claiming a build; SDK installation outside writable roots requires tool approval. No toolchain install was attempted during this planning delivery.
 
-No accounts/cloud, subscriptions/social, exercise prescription/coaching, RIR entry, e1RM, unit preferences beyond kg, history editing/reopening, plan duplication/deletion, automatic missed-session rescheduling, timer alerts, background video or per-set timer analytics are included. Restore and the local exercise editor are the specifically proposed exceptions to prior mockup exclusions, not silently added features. Installed font/media licenses and real device/toolchain evidence remain implementation work.
+No accounts/cloud, subscriptions/social, exercise prescription/coaching, RIR entry, e1RM, unit preferences beyond kg, history editing/reopening, plan duplication/deletion, automatic missed-session rescheduling, timer alerts, background video or per-set timer analytics are included. Local exercise creation is approved under GYM-028. Restore remains a proposed exception to prior mockup exclusions. Discarding only never-saved new drafts and confirming incomplete Finish are approved GYM-026/017 refinements; saved-plan deletion, definition editing and Finished reopening remain excluded. Installed font/media licenses and real device/toolchain evidence remain implementation work.

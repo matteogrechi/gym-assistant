@@ -1,6 +1,6 @@
 # Native portable data contract — draft version 3
 
-Status: pre-implementation proposal linked to [the Android plan](android-implementation-plan.md), specification revision 29. No native serializer, importer, migration or database is implemented. The browser keeps emitting the existing [version-2 contract](data-formats.md). Format version 3, if finalized, is independent of app and Room schema versions.
+Status: pre-implementation proposal linked to [the Android plan](android-implementation-plan.md), specification revision 30. No native serializer, importer, migration or database is implemented. The browser keeps emitting the existing [version-2 contract](data-formats.md). Format version 3, if finalized, is independent of app and Room schema versions.
 
 ## Why a new version
 
@@ -23,7 +23,7 @@ Keep `format: gym-assystant-status`, UTF-8, explicit dictionary/units, ISO civil
 | Portable timers | Mode, original recovery target, settled elapsed values, paused timer state and captured-running metadata. Do not import monotonic/device boot anchors as runnable clocks. |
 | Extensions/provenance | Preserve unknown additive fields and original legacy source labels without interpreting them as genuine training. |
 
-The history-inclusion branch and local exercise/restore extensions remain product choices in the plan. No shape above claims that those UI features are approved or implemented. First native actual history is empty; sample/demo input stays distinguishable and does not inflate genuine attendance/performance.
+Local exercise creation is approved under GYM-028; definition editing and deletion remain excluded. The history-inclusion branch and restore extension remain product choices. No shape above claims native implementation coverage. First native actual history is empty; sample/demo input stays distinguishable and does not inflate genuine attendance/performance.
 
 ## CSV and TXT
 

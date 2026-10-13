@@ -2,6 +2,8 @@
 
 Review date: 13 October 2026. Baseline: `4c89bfe`, specification revision 29. This is a review of basic user tasks before Android implementation, with recommendations rather than new requirements. The [specification](../product/spec.md) and [native implementation plan](../architecture/android-implementation-plan.md) retain their scope and pending choices. No mockup behavior or Android source changes accompany this review.
 
+Follow-up: the user selected F02, F04 and F01 (the first three points in the delivered shortlist). [Specification revision 30](../product/spec.md) now authorizes new-draft discard, incomplete Finish confirmation and local exercise creation. The review below preserves its original baseline findings; F03 remains deferred.
+
 ## Review method
 
 Two isolated agents worked in separate roles. The proposer navigated the mockup and identified blocked tasks, workarounds and the smallest useful additions. The challenger independently navigated the existing flows before receiving the proposer's unfiltered candidates, then tried to refute or reduce them. The coordinator checked their evidence and consolidated the decisions.

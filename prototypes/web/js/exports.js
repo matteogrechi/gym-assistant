@@ -1,6 +1,6 @@
 'use strict';
 /* global GymMetrics, GymAttendance, GymCalendar */
-// GYM-023, GYM-024, GYM-026: version-2 library snapshots and the existing statistics, without changing live data.
+// GYM-023, GYM-024, GYM-026, GYM-028: version-2 library snapshots and the existing statistics, without changing live data.
 const GymExports = (() => {
   const metrics = typeof module !== 'undefined' ? require('./metrics.js') : GymMetrics;
   const attendance = typeof module !== 'undefined' ? require('./attendance.js') : GymAttendance;
@@ -13,14 +13,14 @@ const GymExports = (() => {
     savedPlans: 'All saved programs, each with stable id and reusable templates/prescriptions with weekday keys 0=Sunday through 6=Saturday and date overrides; null assignment means no session.',
     activePlanId: 'One saved program ID supplies untouched calendar dates; protected workouts keep their original program.',
     unsavedPlanDrafts: 'Separate drafts by plan id, including unsaved new programs; never applied by export. Empty array when absent.',
-    exerciseCatalog: 'Stable exercise IDs, machine names and sample defaults. These defaults are not the user’s recorded performance.',
+    exerciseCatalog: 'Stable exercise IDs, names, machine/movement variants and default seat/setup. Additive version-2 custom=true identifies locally created definitions (absent for existing samples); category=CUSTOM and weight/reps=0 are unrecorded defaults, never observed performance. Duplicate names keep distinct IDs; plan exerciseId and execution exercise id refer to these definitions.',
     pastPlannedSessions: 'Original planned dates and frozen template/program-revision snapshots; preserve these even after saved-plan edits or deletion.',
     attendance: 'sampleAttendanceHistory contains fictional planned/actual visits; executionSessions.attendedDate records this visit’s demo attendance. Only a completed working set with positive whole-number reps and finite nonnegative kg establishes attendance, once per occurrence. Warm-ups, future previews and Start alone do not.',
     executionSessions: 'programId identifies the original program; globally unique template IDs keep occurrenceId=date:templateId stable. date is planned date; attendedDate is first valid working-set attendance day; finishedAt ends a session, not proof all sets are done.',
-    exercises: 'Array order is execution order; entryId is stable identity; seat is setup note; target is original rep range; prescribedExercises holds original working-set counts/ranges.',
+    exercises: 'Array order is execution order; entryId is stable identity; seat is an independent copy of the catalog default setup; target is original rep range; prescribedExercises holds original working-set counts/ranges. Custom sets begin with reps=0, weight=0 and done=false; occurrence notes never rewrite catalog defaults.',
     recoverySeconds: 'Planned recovery per exercise: whole seconds from 1 to 3600, default 90 when absent in older files. Original prescribedExercises and execution exercises retain the occurrence target; timers.duration preserves its countdown seconds through plan changes.',
     sets: 'sets=working sets; warmups=warm-up sets. reps is a whole number; weight is kg; done is completion. Warm-ups do not count in performance or attendance.',
-    context: 'Historical machine/setup/unit/convention/rom/rir define comparability; sample rir=2. No actual effort collection is implemented.',
+    context: 'Historical exerciseId/machine/setup/unit/convention/rom/rir define comparability; sample rom=sample-full-rom and rir=2 remain fictional sample context. Custom ROM/effort are unknown (null), with no invented sample history. No actual effort collection is implemented.',
     lifecycle: 'ready, inProgress, paused, finished; finished can be partial. Never restart timers just because a session is inProgress.',
     timers: 'duration in seconds; execution/recovery elapsed in milliseconds; startedAt is null in exported snapshots. wasRunningAtExport records prior status. Restore paused; do not count time away.',
     settings: 'language/theme requested choices. saveFolderPreview is a demo label, not a granted storage permission or a real save destination.',

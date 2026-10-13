@@ -71,7 +71,8 @@ const GymPlan = (() => {
           ...clone(machine), entryId: item.entryId,
           recoverySeconds: item.recoverySeconds ?? 90,
           target: item.minReps === item.maxReps ? String(item.minReps) : `${item.minReps}–${item.maxReps}`,
-          sets: Array.from({ length: item.setCount }, () => ({ reps: item.maxReps, weight: machine.weight, done: false }))
+          // GYM-028: custom defaults are unrecorded zeros, independent of rep targets.
+          sets: Array.from({ length: item.setCount }, () => ({ reps: machine.custom ? 0 : item.maxReps, weight: machine.custom ? 0 : machine.weight, done: false }))
         };
       })
     };

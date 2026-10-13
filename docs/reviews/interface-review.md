@@ -48,4 +48,23 @@ Verification: all 25 logic tests and the Chromium user-flow suite passed, includ
 
 Settings groups language/appearance above the save location and two primary file actions. File details and the recovery-guide download expand on demand; folder selection is explicitly a preview. At 390px, both downloads and the file disclosure fit above the persistent four-destination navigation bar. English/Italian controls and navigation fit at 320/390/430px with 48px targets. Native full translation and filesystem behavior remain deferred.
 
-Reviewed [light Settings](previews/settings.png), [dark Settings](previews/settings-dark.png), [dark Train](previews/program-dark.png), [dark logging](previews/exercise-dark.png), and [dark Progress](previews/progress-dark.png). Earlier screenshots are retained as revision-9 review artifacts. Theme changes preserve entries and timers; the file feedback says the file was handed to the browser, without claiming it was written to the preview folder. Full JSON, CSV and recovery-guide downloads were opened and checked independently.
+Reviewed [light Settings](previews/settings.png), [dark Settings](previews/settings-dark.png), [dark Train](previews/program-dark.png), [dark logging](previews/exercise-dark.png), and [dark Progress](previews/progress-dark.png). Linked previews show the latest reviewed screens; earlier narrative records describe their original revisions. Theme changes preserve entries and timers; the file feedback says the file was handed to the browser, without claiming it was written to the preview folder. Full JSON, CSV and recovery-guide downloads were opened and checked independently.
+
+## Revision 12: design consistency walkthrough
+
+Reviewed 50 screen/state captures: both light and dark themes, every destination and lifecycle state, warm-up/recovery/finished logs, schedule and template details, all progress metrics, exports/folder/overflow, plus 320px and 430px Settings/template layouts. No sub-48px standard controls were found; calendar dates retain their documented fitted-week exception. Revision 11 moves Settings to the top-right overflow and keeps three bottom destinations.
+
+| Finding | Correction specified before mockup changes |
+| --- | --- |
+| Session/template Back used a separate text row; exercise/Settings Back used a circular icon. | Shared compact secondary headings and 48px Back icons with destination labels. |
+| Fresh/saved plans showed the same bright Save action as unsaved drafts. | Disable Save until a change; keep validation and draft feedback. |
+| Finished logs retained round completion buttons and field outlines that implied editing. | Static check/dash status and readable values without editable outlines. |
+| Unavailable video showed a large play symbol. | Neutral video-frame placeholder; retain the unavailable message. |
+| Number fields could display browser-specific tiny spinner arrows. | Hide spinner decoration while retaining numeric input, validation and arrow-key editing. |
+| Clearing the optional focus could leave a leading separator before the session date. | Join only nonempty subtitle fragments. |
+
+Different action styles remain intentional: filled primary actions, tonal Add, outlined Pause/reorder, text secondary actions, and standard delete icons. Workout ordering stays vertical to preserve exercise-name space; template ordering stays horizontal within its card. Calendar cells remain shaped as dates rather than action pills. These differences serve their context and are not defects.
+
+Representative before/after evidence: [mixed Back row before](previews/design-before-back.png) → [compact Back heading after](previews/design-session.png), and [finished controls before](previews/design-before-finished-log.png) → [static finished review after](previews/design-finished-log.png). The remaining preview images were refreshed to show three bottom destinations and the overflow menu.
+
+Verification: all 29 logic checks and the Chromium regression suite passed, including overflow keyboard/outside/Escape/Tab dismissal, exact screen/scroll return, retained drafts/logs/timers, disabled/dirty/saved Save states, clean optional-focus subtitle, ArrowUp/ArrowDown entry, and static complete/not-logged finished statuses. The repeated 50-capture walkthrough found no standard control below 48px in either theme; narrow calendar cells retain their documented exception. Native Android implementation remains not started.

@@ -61,8 +61,8 @@ const fullDate = date => GymCalendar.label(date, { weekday: 'short', day: 'numer
 // GYM-006, GYM-008, GYM-010, GYM-015: view switching and keyboard focus.
 function showView(id, focusId) {
   document.querySelectorAll('[data-view]').forEach(view => { view.hidden = view.id !== id; });
-  ['programNav', 'planNav', 'progressNav', 'settingsNav'].forEach(navId => byId(navId).removeAttribute('aria-current'));
-  byId(id === 'settings' ? 'settingsNav' : id === 'progress' ? 'progressNav' : id === 'plan' || id === 'planSession' ? 'planNav' : 'programNav').setAttribute('aria-current', 'page');
+  ['programNav', 'planNav', 'progressNav'].forEach(navId => byId(navId).removeAttribute('aria-current'));
+  if (id !== 'settings') byId(id === 'progress' ? 'progressNav' : id === 'plan' || id === 'planSession' ? 'planNav' : 'programNav').setAttribute('aria-current', 'page');
   if (focusId) byId(focusId).focus();
   document.querySelector('.screen-area').scrollTop = 0;
 }
@@ -101,7 +101,7 @@ function openSession(templateId, date) {
 // GYM-001, GYM-005, GYM-008, GYM-019
 function renderSession() {
   byId('sessionName').textContent = session().name;
-  byId('sessionFocus').textContent = `${session().focus} · ${fullDate(sessionDate)}${sessionDate > todayDate ? ' · Planned preview' : ''}`;
+  byId('sessionFocus').textContent = [session().focus, fullDate(sessionDate), sessionDate > todayDate ? 'Planned preview' : ''].filter(Boolean).join(' · ');
   const done = session().exercises.reduce((sum, item) => sum + completed(item), 0);
   const total = session().exercises.reduce((sum, item) => sum + item.sets.length, 0);
   byId('sessionCount').textContent = `${done} / ${total} working sets done`;
@@ -132,7 +132,11 @@ function selectExercise(index) {
 function setRow(set, index, kind) {
   const label = kind === 'warmups' ? 'Warm-up' : 'Working set';
   const remove = kind === 'warmups' && session().state !== 'finished' ? `<button class="md-icon-button warmup-remove" data-remove="${index}" aria-label="Remove warm-up ${index + 1}">${buttonIcon('trash')}</button>` : '';
-  return `<div class="set-row ${kind === 'warmups' ? 'warmup-row' : ''} ${set.done ? 'complete' : ''}"><span class="set-kind"><small>${kind === 'warmups' ? 'WARM-UP' : 'WORKING'}</small><b>${index + 1}</b>${remove}</span><input aria-label="${label} ${index + 1} repetitions" type="number" min="0" step="1" required value="${set.reps}" data-kind="${kind}" data-set="${index}" data-field="reps"><input aria-label="${label} ${index + 1} weight in kilograms" type="number" min="0" step="any" required value="${set.weight}" data-kind="${kind}" data-set="${index}" data-field="weight"><button class="md-icon-button md-toggle" aria-label="${label} ${index + 1} complete" aria-pressed="${set.done}" data-kind="${kind}" data-toggle="${index}">${buttonIcon('check')}</button></div>`;
+  // GYM-025: terminal review exposes a status, not a disabled interactive-looking toggle.
+  const completion = session().state === 'finished'
+    ? `<span class="set-status ${set.done ? 'is-complete' : ''}" role="img" aria-label="${label} ${index + 1} ${set.done ? 'complete' : 'not logged'}">${set.done ? buttonIcon('check') : '<span aria-hidden="true">—</span>'}</span>`
+    : `<button class="md-icon-button md-toggle" aria-label="${label} ${index + 1} complete" aria-pressed="${set.done}" data-kind="${kind}" data-toggle="${index}">${buttonIcon('check')}</button>`;
+  return `<div class="set-row ${kind === 'warmups' ? 'warmup-row' : ''} ${set.done ? 'complete' : ''}"><span class="set-kind"><small>${kind === 'warmups' ? 'WARM-UP' : 'WORKING'}</small><b>${index + 1}</b>${remove}</span><input aria-label="${label} ${index + 1} repetitions" type="number" min="0" step="1" required value="${set.reps}" data-kind="${kind}" data-set="${index}" data-field="reps"><input aria-label="${label} ${index + 1} weight in kilograms" type="number" min="0" step="any" required value="${set.weight}" data-kind="${kind}" data-set="${index}" data-field="weight">${completion}</div>`;
 }
 function renderSets() {
   byId('setCount').textContent = `${completed(exercise())} of ${exercise().sets.length} complete`;
@@ -354,9 +358,14 @@ let planMessage = '';
 const ensureDraft = () => { if (!planDraft) planDraft = GymPlan.clone(GymData.program); };
 const templateDraft = () => planDraft.sessions.find(item => item.id === editingTemplateId);
 const assignmentOptions = first => `<option value="${first}">${first === 'weekly' ? 'Use weekly pattern' : 'No session'}</option>${first === 'weekly' ? '<option value="none">No session</option>' : ''}${planDraft.sessions.map(item => `<option value="${item.id}">${escapeHtml(item.name)} (${item.label})</option>`).join('')}`;
+// GYM-025: Save indicates a pending change instead of offering a no-op.
+function syncSaveActions() {
+  document.querySelectorAll('.save-plan').forEach(button => { button.disabled = !planDirty; });
+}
 function markPlanDirty() {
   planDirty = true;
   planMessage = 'Unsaved changes';
+  syncSaveActions();
   byId('planFeedback').textContent = planMessage;
   byId('templateFeedback').textContent = planMessage;
 }
@@ -367,6 +376,7 @@ function renderDateAssignment() {
 }
 function renderPlan() {
   ensureDraft();
+  syncSaveActions();
   const today = GymCalendar.today();
   draftDate = draftDate < today ? today : draftDate;
   byId('planDate').min = today;
@@ -387,6 +397,7 @@ function prescriptionSummary(item, index) {
   return `${index + 1}. ${escapeHtml(name)} · ${item.setCount} × ${reps}`;
 }
 function renderTemplate() {
+  syncSaveActions();
   const template = templateDraft();
   byId('templateHeading').textContent = 'Edit session';
   byId('templateName').value = template.name;
@@ -537,7 +548,7 @@ renderProgram();
 
 // GYM-022–024: all exports use current state, not the selected chart or a saved demo fixture.
 GymSettings.mount({
-  open: () => showView('settings', 'settingsNav'),
+  show: showView,
   input: () => {
     todayDate = GymCalendar.today();
     capturePastPlans();

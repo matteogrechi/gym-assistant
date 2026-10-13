@@ -10,15 +10,15 @@ python3 -m http.server 8080
 
 Visit http://localhost:8080/ . On a phone, use the computer's LAN address and the same port.
 
-The screens focus on the next action: compact workout timers and set entry, one Save action per plan editor, expandable scheduling/settings, and performance charts before attendance. Metric definitions and comparison rules remain available through disclosures.
+Secondary screens use consistent Back icons; Save reflects pending changes; finished logs show static status rather than editing controls. The screens focus on the next action: compact workout timers and set entry, one Save action per plan editor, expandable scheduling/settings, and performance charts before attendance. Metric definitions and comparison rules remain available through disclosures.
 
-The bottom navigation separates four activities:
+The bottom navigation separates three activities:
 
 - **Train:** the calendar and dated workout execution. Tap a day to update the top card; all seven days fit across the screen. Sessions move between Ready, In progress, Paused, and Finished using Start, Pause, Resume, and Finish. Pause retains entries for Resume; Finish stops timers and preserves a read-only log, even for a partial workout. Past sessions without recorded attendance remain available to catch up unless explicitly Finished, with their original planned dates.
 - **Plan:** edit the sample program, session templates, exercises/order, prescribed sets and rep ranges, and weekly/date assignments. Changes remain drafts until Save plan. New workouts use the saved plan; started, recorded, or reordered workouts keep their own targets and order.
 - **Progress:** fictional exercise-performance history stays independent of current edits. Attendance separately shows logged/planned visits, on-time and delayed sessions, not-yet-logged sessions, and average delay for the previous 28 complete planned days, updated through today. Attendance uses fictional visits plus this visit’s working-set logs.
 
-**Settings** previews System/English/Italian language choices (Settings and navigation only), System/Light/Dark appearance across all screens, and a save-folder choice. Folder access is a labeled Android preview; JSON status, CSV statistics, and TXT recovery-guide downloads are real browser downloads. JSON includes raw logs, original prescriptions, settings, drafts, and paused timer snapshots without changing live state; CSV retains the current sample-performance/attendance boundaries. [File format and recovery contract](../../docs/architecture/data-formats.md). Nothing is auto-saved or imported, and choices still reset on reload.
+The top-right **⋮ → Settings** menu previews System/English/Italian language choices (Settings and navigation only), System/Light/Dark appearance across all screens, and a save-folder choice. Folder access is a labeled Android preview; JSON status, CSV statistics, and TXT recovery-guide downloads are real browser downloads. JSON includes raw logs, original prescriptions, settings, drafts, and paused timer snapshots without changing live state; CSV retains the current sample-performance/attendance boundaries. [File format and recovery contract](../../docs/architecture/data-formats.md). Back returns to the previous screen and scroll position with drafts, logs, and timers retained. Nothing is auto-saved or imported, and choices still reset on reload.
 
 Move exercises up/down in the Train session list when machines are busy. Only that dated workout changes; sets, notes, and timers stay with each exercise. Start/Resume follows the chosen order.
 

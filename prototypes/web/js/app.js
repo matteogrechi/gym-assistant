@@ -72,7 +72,7 @@ function showView(id, focusId) {
   document.querySelectorAll('[data-view]').forEach(view => { view.hidden = view.id !== id; });
   if (id === 'progress') progressExploration?.resize();
   ['programNav', 'planNav', 'progressNav'].forEach(navId => byId(navId).removeAttribute('aria-current'));
-  if (id !== 'settings') byId(id === 'progress' ? 'progressNav' : id === 'plans' || id === 'plan' || id === 'planSession' ? 'planNav' : 'programNav').setAttribute('aria-current', 'page');
+  if (id !== 'settings') byId(id === 'progress' ? 'progressNav' : ['plans', 'plan', 'planSession', 'exerciseLibrary', 'exerciseDefinition'].includes(id) ? 'planNav' : 'programNav').setAttribute('aria-current', 'page');
   if (focusId) byId(focusId).focus();
   document.querySelector('.screen-area').scrollTop = 0;
 }
@@ -462,6 +462,53 @@ function renderPlans() {
     return `<div class="plan-library-row"><button class="exercise-card" data-edit-plan="${escapeHtml(item.id)}"><span><strong>${escapeHtml(item.name)}</strong><small>${item.sessions.length} ${item.sessions.length === 1 ? 'session' : 'sessions'}${dirty ? ' · Unsaved changes' : ''}</small>${active ? '<span class="active-plan-tag">Active</span>' : ''}</span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button></div>`;
   }).join('');
 }
+// GYM-028, GYM-015: sibling planning sections share one navigation component.
+let planningSection = 'plans';
+let definitionId = null;
+const planningTabs = [
+  ['planningTabs', 'plansTab', 'exercisesTab'],
+  ['exerciseLibraryTabs', 'libraryPlansTab', 'libraryExercisesTab']
+].map(([container, plansId, exercisesId]) => GymSegments.mount(byId(container), {
+  navigation: true, label: 'Planning sections', value: planningSection,
+  options: [
+    { value: 'plans', label: 'Plans', attributes: { id: plansId, 'aria-controls': 'savedPlans' } },
+    { value: 'exercises', label: 'Exercises', attributes: { id: exercisesId, 'aria-controls': 'exerciseLibraryList' } }
+  ],
+  onChange: next => showPlanning(next, true)
+}));
+function showPlanning(next = planningSection, focusTab = false) {
+  retainDraft();
+  planningSection = next;
+  planningTabs.forEach(tabs => tabs.select(next));
+  if (next === 'exercises') {
+    renderExerciseLibrary();
+    showView('exerciseLibrary', focusTab ? 'libraryExercisesTab' : 'planNav');
+  } else {
+    renderPlans();
+    showView('plans', focusTab ? 'plansTab' : 'planNav');
+  }
+}
+function renderExerciseLibrary() {
+  byId('exerciseLibraryList').innerHTML = GymData.catalog.map(item => `<div class="plan-library-row"><button class="exercise-card" data-catalog-exercise="${escapeHtml(item.id)}"><span><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.machine)}</small></span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button></div>`).join('');
+}
+function focusLibraryExercise(id) {
+  byId('exerciseLibraryList').querySelector(`[data-catalog-exercise="${CSS.escape(id)}"]`)?.focus();
+}
+byId('exerciseLibraryList').addEventListener('click', event => {
+  const row = event.target.closest('[data-catalog-exercise]');
+  if (!row) return;
+  const definition = GymData.catalog.find(item => item.id === row.dataset.catalogExercise);
+  if (!definition) return;
+  definitionId = definition.id;
+  byId('definitionName').textContent = definition.name;
+  byId('definitionMachine').textContent = definition.machine;
+  byId('definitionSeat').textContent = definition.seat || 'Not set';
+  showView('exerciseDefinition', 'backExerciseLibrary');
+});
+byId('backExerciseLibrary').addEventListener('click', () => {
+  showPlanning('exercises');
+  focusLibraryExercise(definitionId);
+});
 const templateDraft = () => planDraft.sessions.find(item => item.id === editingTemplateId);
 const assignmentOptions = first => `<option value="${first}">${first === 'weekly' ? 'Use weekly pattern' : 'No session'}</option>${first === 'weekly' ? '<option value="none">No session</option>' : ''}${planDraft.sessions.map(item => `<option value="${item.id}">${escapeHtml(item.name)} (${item.label})</option>`).join('')}`;
 // GYM-025: Save indicates a pending change instead of offering a no-op.
@@ -595,8 +642,8 @@ function savePlan(event) {
   renderProgram();
   showView('plan', 'planNav');
 }
-byId('planNav').addEventListener('click', () => { renderPlans(); showView('plans', 'planNav'); });
-byId('backToPlans').addEventListener('click', () => { renderPlans(); showView('plans', 'planNav'); });
+byId('planNav').addEventListener('click', () => showPlanning());
+byId('backToPlans').addEventListener('click', () => showPlanning('plans'));
 byId('savedPlans').addEventListener('click', event => {
   const edit = event.target.closest('[data-edit-plan]');
   if (edit) openPlan(edit.dataset.editPlan);
@@ -649,16 +696,21 @@ byId('confirmDiscardDraft').addEventListener('click', () => {
   if (!id || !GymPrograms.discardDraft(GymData.library, planDrafts, id)) return;
   planDraft = null; editingTemplateId = null; planDirty = false; planMessage = ''; planEditing = false;
   editingPlanId = GymData.library.activePlanId;
-  renderPlans(); showView('plans', 'addPlan');
+  showPlanning('plans'); byId('addPlan').focus();
 });
 // GYM-028: catalog saving is explicit and never silently inserts or saves a prescription.
-byId('createExercise').addEventListener('click', () => {
-  if (!planEditing) return;
+let exerciseCreationOrigin = null;
+function openExerciseCreator(origin) {
+  if (origin === 'session' && !planEditing) return;
+  exerciseCreationOrigin = origin;
   byId('createExerciseForm').reset();
   byId('createExerciseFeedback').textContent = '';
   byId('createExerciseForm').querySelectorAll('input').forEach(field => field.setCustomValidity(''));
   GymDialogs.open(byId('createExerciseDialog'));
-});
+}
+byId('createExercise').addEventListener('click', () => openExerciseCreator('session'));
+byId('addCatalogExercise').addEventListener('click', () => openExerciseCreator('library'));
+byId('createExerciseDialog').addEventListener('close', () => { exerciseCreationOrigin = null; });
 byId('cancelCreateExercise').addEventListener('click', () => byId('createExerciseDialog').close());
 byId('createExerciseForm').addEventListener('input', event => {
   event.target.setCustomValidity?.('');
@@ -666,7 +718,8 @@ byId('createExerciseForm').addEventListener('input', event => {
 });
 byId('createExerciseForm').addEventListener('submit', event => {
   event.preventDefault();
-  if (!planEditing) return;
+  const origin = exerciseCreationOrigin;
+  if (!origin || (origin === 'session' && !planEditing)) return;
   for (const id of ['customExerciseName', 'customExerciseMachine']) {
     const field = byId(id);
     if (!field.value.trim()) {
@@ -681,11 +734,16 @@ byId('createExerciseForm').addEventListener('submit', event => {
       name: byId('customExerciseName').value, machine: byId('customExerciseMachine').value, seat: byId('customExerciseSeat').value
     }, `custom-${crypto.randomUUID()}`);
   } catch (error) { byId('createExerciseFeedback').textContent = error.message; return; }
-  const expanded = new Set([...byId('plannedExercises').querySelectorAll('[data-sort-item]')].filter(row => row.querySelector('details').open).map(row => row.dataset.sortItem));
+  const expanded = origin === 'session' ? new Set([...byId('plannedExercises').querySelectorAll('[data-sort-item]')].filter(row => row.querySelector('details').open).map(row => row.dataset.sortItem)) : null;
   byId('createExerciseDialog').close();
+  refreshProgressCatalog();
+  if (origin === 'library') {
+    showPlanning('exercises');
+    focusLibraryExercise(definition.id);
+    return;
+  }
   renderTemplate(expanded);
   byId('exerciseToAdd').value = definition.id;
-  refreshProgressCatalog();
   byId('templateFeedback').textContent = `${definition.name} saved. Add it to this session.`;
   byId('exerciseToAdd').focus();
 });

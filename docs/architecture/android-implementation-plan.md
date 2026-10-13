@@ -1,6 +1,6 @@
 # Android implementation plan — gym assystant
 
-Status: design presented before native coding, 13 October 2026; specification revision 30. The user has requested implementation and entirely offline operation. No Android sources, manifest, Gradle scaffold, database, player or APK exists yet. Two isolated planning reviewers examined data durability and native runtime/UI; the coordinator owns these recommendations and their scope decisions.
+Status: design presented before native coding, 13 October 2026; specification revision 31. The user has requested implementation and entirely offline operation. No Android sources, manifest, Gradle scaffold, database, player or APK exists yet. Two isolated planning reviewers examined data durability and native runtime/UI; the coordinator owns these recommendations and their scope decisions.
 
 The [specification](../product/spec.md) remains the product source of truth. [Traceability](../product/traceability.md) distinguishes implemented browser evidence from planned Android work. The reviewed mockup supplies interaction/layout references, not production code. No WebView conversion is planned.
 
@@ -135,7 +135,7 @@ The [draft native v3 contract](native-data-v3.md) distinguishes genuine data, se
 | --- | --- | --- |
 | Video content | Local import first; bundled library only with supplied/cleared clips. | User preference requested; basic offline playback follows GYM-002/027, catalogue content is unresolved. |
 | Real-history inclusion | Qualifying completed working sets appear immediately, including unfinished/partial workouts; Finish locks them. | User preference requested; alternative Finished-only documented. |
-| Local exercise creation | Create name, stable machine/movement identity and optional default setup within planning (GYM-028). No new tab, definition editing/deletion or implied video import. | Approved in revision 30; working mockup, native source not started. |
+| Local exercise creation | Plan → Exercises shared list/read-only details and the same creator available independently or from a session (GYM-028). Create name, stable machine/movement identity and optional default setup. No new tab, definition editing/deletion or implied video import. | Creation approved in revision 30; library placement in revision 31. Working mockup, native source not started. |
 | Restore UI | Local whole-dataset restore with preview and replacement confirmation, to make backups useful after reinstall. | Proposed native scope extension; explicit preference requested. |
 | Device range | Android 8/API26 and later. | Proposed technical baseline; change if the user's device is older. |
 | Reboot clocks | Pause at last durable checkpoint and explain recovery; do not claim exact powered-off timing. | Recommended implementation policy, presented for review. |

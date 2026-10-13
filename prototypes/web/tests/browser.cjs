@@ -1216,7 +1216,7 @@ const fs = require('node:fs/promises');
       assert.equal(bounds.selectable, 'text');
     };
     const registered = await page.locator('[data-view],dialog,#overflowMenu').evaluateAll(elements => elements.map(el => el.dataset.mockupRef));
-    assert.deepEqual([...registered].sort(), Array.from({length:15}, (_, index) => `VIEW-${String(index+1).padStart(3,'0')}`));
+    assert.deepEqual([...registered].sort(), Array.from({length:17}, (_, index) => `VIEW-${String(index+1).padStart(3,'0')}`));
     await reference('VIEW-001');
     await page.locator('#planNav').click(); await reference('VIEW-004');
     await page.locator('[data-edit-plan="foundations"]').click(); await reference('VIEW-005');
@@ -1837,6 +1837,107 @@ const fs = require('node:fs/promises');
       await page.keyboard.press('Escape');
       assert.deepEqual(errors, []);
       console.log('PASS: isolated new-draft discard/export, whole-session incomplete Finish guard with Cancel/Enter/Escape/live clocks and partial/empty/direct full Finish, custom exercise identity/default setup/zero logs/safe labels/no fabricated history/JSON, all three dialog references and 320/390/430px phone containment.');
+    }
+    {
+      // GYM-028/015: exercise management is available before any plan editor is opened.
+      await page.setViewportSize({width:390,height:844}); await page.emulateMedia({colorScheme:'light'}); await page.reload();
+      await page.locator('#planNav').click();
+      await expect(page.locator('#plansTab')).toHaveAttribute('aria-selected','true');
+      await expect(page.locator('#planningTabs')).toHaveAttribute('role','tablist');
+      await expect(page.locator('#exercisesTab')).toHaveAttribute('role','tab');
+      await page.locator('#plansTab').focus(); await page.keyboard.press('ArrowRight');
+      await expect(page.locator('#exerciseLibrary')).toBeVisible();
+      await expect(page.locator('#libraryExercisesTab')).toBeFocused();
+      await expect(page.locator('#libraryExercisesTab')).toHaveAttribute('aria-selected','true');
+      await expect(page.locator('#libraryPlansTab')).toHaveAttribute('tabindex','-1');
+      await expect(page.locator('#libraryExercisesTab')).toHaveAttribute('tabindex','0');
+      await expect(page.locator('#libraryExercisesTab')).not.toHaveAttribute('aria-pressed');
+      await expect(page.locator('#planNav')).toHaveAttribute('aria-current','page');
+      await expect(page.locator('#mockupReferenceId')).toHaveText('VIEW-016');
+      await expect(page.locator('#exerciseLibraryList [data-catalog-exercise]')).toHaveCount(3);
+      const unchangedPlans = await page.evaluate(()=>JSON.stringify({plans:GymData.library,drafts:[...planDrafts],editor:planDraft}));
+      await page.locator('#addCatalogExercise').click(); await page.locator('#cancelCreateExercise').click();
+      await expect(page.locator('#addCatalogExercise')).toBeFocused();
+      await expect(page.locator('#mockupReferenceId')).toHaveText('VIEW-016');
+      await page.locator('#addCatalogExercise').click();
+      await page.locator('#customExerciseName').fill('Cable row <ñ>');
+      await page.locator('#customExerciseMachine').fill('Station 02');
+      await page.locator('#customExerciseSeat').fill('Seat 5');
+      await page.locator('#createExerciseForm [type="submit"]').click();
+      const libraryId = await page.evaluate(()=>GymData.catalog.at(-1).id);
+      const libraryRow = page.locator(`[data-catalog-exercise="${libraryId}"]`);
+      await expect(libraryRow).toBeFocused();
+      assert.equal(await page.evaluate(()=>JSON.stringify({plans:GymData.library,drafts:[...planDrafts],editor:planDraft})),unchangedPlans);
+      await page.screenshot({path:path.join(previews,'exercise-library.png')});
+      await libraryRow.click(); await expect(page.locator('#mockupReferenceId')).toHaveText('VIEW-017');
+      await expect(page.locator('#definitionName')).toHaveText('Cable row <ñ>');
+      await expect(page.locator('#definitionMachine')).toHaveText('Station 02');
+      await expect(page.locator('#definitionSeat')).toHaveText('Seat 5');
+      await expect(page.locator('#exerciseDefinition input')).toHaveCount(0);
+      await expect(page.locator('#planNav')).toHaveAttribute('aria-current','page');
+      await page.screenshot({path:path.join(previews,'exercise-definition.png')});
+      await page.locator('#backExerciseLibrary').click(); await expect(libraryRow).toBeFocused();
+      await page.locator('#programNav').click(); await page.locator('#planNav').click();
+      await expect(page.locator('#exerciseLibrary')).toBeVisible();
+      await openSettings(); await page.locator('#settingsBack').click();
+      await expect(page.locator('#exerciseLibrary')).toBeVisible();
+      await page.locator('#libraryExercisesTab').focus(); await page.keyboard.press('Home');
+      await expect(page.locator('#plans')).toBeVisible(); await expect(page.locator('#plansTab')).toBeFocused();
+      await page.locator('#addPlan').click(); await page.locator('#planName').fill('Retained through library');
+      const newPlanId = await page.evaluate(()=>editingPlanId);
+      await page.locator('[data-edit-template]').first().click();
+      await page.locator('#exerciseToAdd').selectOption(libraryId); await page.locator('#addPlanExercise').click();
+      await page.locator('#createExercise').click();
+      await page.locator('#customExerciseName').fill('Contextual creation');
+      await page.locator('#customExerciseMachine').fill('Station 03');
+      await page.locator('#createExerciseForm [type="submit"]').click();
+      const contextualId = await page.evaluate(()=>GymData.catalog.at(-1).id);
+      await expect(page.locator('#planSession')).toBeVisible();
+      await expect(page.locator('#exerciseToAdd')).toHaveValue(contextualId);
+      const draftBeforeTabs = await page.evaluate(()=>JSON.stringify(planDraft));
+      await page.locator('#planNav').click(); await page.locator('#exercisesTab').click();
+      await expect(page.locator(`[data-catalog-exercise="${contextualId}"]`)).toBeVisible();
+      await page.locator('#libraryPlansTab').click();
+      await page.locator(`[data-edit-plan="${newPlanId}"]`).click();
+      assert.equal(await page.evaluate(()=>JSON.stringify(planDraft)),draftBeforeTabs);
+      assert.equal(await page.evaluate(()=>GymData.library.activePlanId),'foundations');
+      await page.locator('#backToPlans').click(); await page.screenshot({path:path.join(previews,'plans.png')});
+      // Browsing definitions never rewrites occurrence notes or running clocks.
+      await page.locator('#programNav').click(); await page.locator('#openSelectedSession').click(); await page.locator('#startSession').click();
+      await page.locator('#seatInput').fill('Occurrence-only setup'); await page.locator('#seatInput').press('Tab');
+      await page.locator('#timerToggle').click();
+      const liveWorkout = await page.evaluate(()=>JSON.stringify(session()));
+      await page.locator('#planNav').click(); await page.locator('#exercisesTab').click();
+      await page.locator('[data-catalog-exercise="leg"]').click();
+      await expect(page.locator('#definitionSeat')).toHaveText('Seat 4 · backrest 2');
+      assert.equal(await page.evaluate(()=>JSON.stringify(session())),liveWorkout);
+      await page.locator('#backExerciseLibrary').click();
+      // Long labels must wrap without squeezing the decorative chevron outside the row.
+      await page.locator('#addCatalogExercise').click();
+      await page.locator('#customExerciseName').fill('N'.repeat(80));
+      await page.locator('#customExerciseMachine').fill('M'.repeat(80));
+      await page.locator('#customExerciseSeat').fill('S'.repeat(160));
+      await page.locator('#createExerciseForm [type="submit"]').click();
+      const libraryLongId=await page.evaluate(()=>GymData.catalog.at(-1).id);
+      for (const theme of ['light','dark']) {
+        await page.emulateMedia({colorScheme:theme});
+        for (const width of [320,390,430]) {
+          await page.setViewportSize({width,height:844});
+          assert(await page.locator('#exerciseLibrary').evaluate(el=>el.scrollWidth<=el.clientWidth));
+          for (const control of await page.locator('#exerciseLibrary button:visible').all()) {
+            const bounds=await control.boundingBox(); assert(bounds.width>=48&&bounds.height>=48);
+          }
+          await page.locator(`[data-catalog-exercise="${libraryLongId}"]`).click();
+          assert(await page.locator('#exerciseDefinition').evaluate(el=>el.scrollWidth<=el.clientWidth));
+          await page.locator('#backExerciseLibrary').click();
+        }
+      }
+      await page.setViewportSize({width:390,height:844});
+      await page.screenshot({path:path.join(previews,'exercise-library-dark.png')});
+      await page.locator(`[data-catalog-exercise="${libraryId}"]`).click();
+      await page.screenshot({path:path.join(previews,'exercise-definition-dark.png')});
+      assert.deepEqual(errors,[]);
+      console.log('PASS: Plan sibling tab semantics/keyboard/visible focus, independent library creation, shared contextual creator, stable list/details/default setup, retained navigation/Settings section and plan drafts, untouched active workout/clocks, new references and light/dark 320/390/430px targets.');
     }
     console.log(`Previews: ${previews}`);
   } finally { await browser.close(); }

@@ -1,8 +1,9 @@
-// GYM-015: shared text-only, single-choice segmented selector.
+// GYM-015, GYM-028: shared text-only choices and secondary navigation tabs.
 const GymSegments = (() => {
-  function mount(container, { label, options, value, onChange }) {
-    container.classList.add('segmented-selector');
-    container.setAttribute('role', 'group');
+  function mount(container, { label, options, value, onChange, navigation = false }) {
+    container.classList.remove(navigation ? 'segmented-selector' : 'secondary-tabs');
+    container.classList.add(navigation ? 'secondary-tabs' : 'segmented-selector');
+    container.setAttribute('role', navigation ? 'tablist' : 'group');
     container.setAttribute('aria-label', label);
 
     const buttons = options.map(option => {
@@ -11,7 +12,8 @@ const GymSegments = (() => {
         button.setAttribute(name, attribute);
       });
       button.type = 'button';
-      button.className = 'md-segment';
+      button.className = navigation ? 'md-tab' : 'md-segment';
+      if (navigation) button.setAttribute('role', 'tab');
       button.textContent = option.label;
       button.dataset.segmentValue = option.value;
       return button;
@@ -21,7 +23,13 @@ const GymSegments = (() => {
       const selected = buttons.find(button => button.dataset.segmentValue === next)
         || buttons[0];
       buttons.forEach(button => {
-        button.setAttribute('aria-pressed', String(button === selected));
+        if (navigation) {
+          button.removeAttribute('aria-pressed');
+          button.setAttribute('aria-selected', String(button === selected));
+          button.tabIndex = button === selected ? 0 : -1;
+        } else {
+          button.setAttribute('aria-pressed', String(button === selected));
+        }
       });
     }
 

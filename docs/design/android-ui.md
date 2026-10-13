@@ -9,7 +9,8 @@ Android distinguishes filled, filled tonal, outlined, and text buttons by emphas
 | App action | Material component choice |
 | --- | --- |
 | Open workout, Start/Resume/Finish session (Finish is outlined while Paused), timer Start/Pause/Resume, Save plan | Filled button |
-| Add session or catalog exercise | Filled tonal button |
+| Add session or existing catalog exercise to a plan | Filled tonal button |
+| Add exercise in the shared library | Filled button |
 | Inline Add warm-up | Text button beside the set heading |
 | Download status JSON | Filled button |
 | Change save folder; download statistics CSV | Outlined button |
@@ -65,3 +66,5 @@ Revision 26 centers the VIEW-003 time value vertically with its action buttons. 
 Revision 27 reuses `GymSegments.mount` for VIEW-003 timer modes and VIEW-007 metrics. The component creates the native button markup and handles selection plus Left/Right/Home/End focus; common CSS supplies shapes, state layers, centered labels and the same text-only selected treatment. Layout containers and domain callbacks remain separate, avoiding duplicate styles/handlers or coupling timer and performance state. The earlier timer check variant is replaced by the Progress treatment.
 
 Revision 28 follows the [all-view information review](../reviews/information-review.md): 11px title-case set types fit a 56px type column; working-only progress is explicit. Browsing uses collapsed prescription summaries and existing date exception text; editing keeps one persistent heading/action/status group with whole-plan Save wording and recoverable cross-field validation. Settings margins are tighter without reducing controls. Modal cards use the visible phone/viewport intersection while scrims remain phone-bound; the background cannot wheel-scroll beneath them. Missing chart targets no longer overlap the date lane, and dense initial selection is revealed once. Shared pressed/focus layers replace redundant gray browser tap flashes. These corrections preserve the existing component families, 48px controls, 56px disclosures, palette and bottom navigation.
+
+Revision 31 adds Plans / Exercises secondary navigation within Plan. The shared selector has a navigation mode with tablist/tab semantics, selected underline and roving keyboard focus, while timer/metric choices retain their existing group/pressed semantics and pill shapes. Secondary tabs have equal-width 48px targets, 14px labels and shared interaction layers. Library rows reuse the plan-list wrapper/divider and existing card controls. Read-only exercise details use the same Back/name heading and labelled values. [Android: secondary navigation](https://developer.android.com/design/ui/mobile/guides/layout-and-content/layout-and-nav-patterns).

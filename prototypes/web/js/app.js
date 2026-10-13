@@ -153,7 +153,21 @@ function renderSets() {
   byId('sets').innerHTML = exercise().warmups.map((set, index) => setRow(set, index, 'warmups')).join('') + exercise().sets.map((set, index) => setRow(set, index, 'sets')).join('');
   if (session().state === 'finished') byId('sets').querySelectorAll('input,button').forEach(control => { control.disabled = true; });
 }
-// GYM-001, GYM-003, GYM-008, GYM-009, GYM-012, GYM-017
+// GYM-025: wrapping values replace inactive text fields without changing data.
+function renderReadonlyValue(field, readonly) {
+  let preview = field.nextElementSibling;
+  if (!preview?.classList.contains('readonly-value')) {
+    if (!readonly) return;
+    preview = document.createElement('p');
+    preview.className = `readonly-value${field.classList.contains('plan-input') ? ' readonly-plan-value' : ''}`;
+    preview.dataset.readonlyFor = field.id;
+    field.after(preview);
+  }
+  field.hidden = readonly;
+  preview.hidden = !readonly;
+  preview.textContent = field.tagName === 'SELECT' ? field.selectedOptions[0]?.textContent ?? '' : field.value;
+}
+// GYM-001, GYM-003, GYM-008, GYM-009, GYM-012, GYM-017, GYM-025
 function renderExercise() {
   byId('exercise').classList.toggle('finished-review', session().state === 'finished');
   byId('exerciseName').textContent = exercise().name;
@@ -168,6 +182,7 @@ function renderExercise() {
   byId('finishExerciseSession').className = `md-button ${session().state === 'paused' ? 'md-outlined' : 'md-filled'}`;
   byId('seatInput').value = exercise().seat;
   byId('seatInput').disabled = session().state === 'finished';
+  renderReadonlyValue(byId('seatInput'), session().state === 'finished');
   byId('addWarmup').disabled = session().state === 'finished';
   byId('addWarmup').hidden = session().state === 'finished';
   renderSets();
@@ -228,7 +243,7 @@ function renderProgress() {
   byId('metricSubtitle').textContent = labels.subtitle;
   const dateLabel = (date, full = false) => GymCalendar.label(date, { day: 'numeric', month: 'short', ...(full ? { year: 'numeric' } : {}) });
   progressExploration = GymCharts.render(byId('chart'), model, {unit:labels.unit, selectedDate:progressDate, format:formatObservation, dateLabel, view:progressView, onInspect:selectProgressObservation});
-  byId('chartHelp').textContent = `${model.points.some(point=>point.value===null) ? '— No comparable set · ' : ''}Drag plot to inspect; swipe dates to pan. Scale starts at 0.`;
+  byId('chartHelp').textContent = `${model.points.some(point=>point.value===null) ? '— No comparable set · ' : ''}Drag plot to inspect; swipe dates to pan.`;
   byId('chartHelp').hidden = !model.points.length;
   selectProgressObservation(progressDate);
   byId('workingSets').textContent = GymMetrics.countSets(GymData.history, context);
@@ -442,6 +457,7 @@ function applyPlanMode() {
   for (const form of [byId('planForm'), byId('templateForm')]) {
     form.classList.toggle('plan-readonly', !planEditing);
     form.querySelectorAll('input,select').forEach(field => { field.disabled = !planEditing; });
+    form.querySelectorAll('input:not([type]),input[type="text"],select:not(#exerciseToAdd)').forEach(field => renderReadonlyValue(field, !planEditing));
     form.querySelectorAll('[data-sort-handle],[data-remove-entry],[data-delete-template],#addPlanSession,#addPlanExercise').forEach(action => {
       action.hidden = !planEditing;
       action.disabled = !planEditing || (action.matches('[data-delete-template]') && planDraft.sessions.length === 1) || (action.id === 'addPlanSession' && planDraft.sessions.length >= 7);
@@ -487,11 +503,11 @@ function renderPlan() {
   byId('planFeedback').textContent = planMessage;
   applyPlanMode();
 }
-// GYM-021: summaries retain targets while occasional editing stays on demand.
+// GYM-021, GYM-025: summaries retain targets and wrap complete prescription phrases.
 function prescriptionSummary(item, index) {
   const name = GymData.catalog.find(machine => machine.id === item.exerciseId)?.name ?? 'Choose exercise';
   const reps = item.minReps === item.maxReps ? item.minReps : `${item.minReps}–${item.maxReps}`;
-  return `${index + 1}. ${escapeHtml(name)} · ${item.setCount} × ${reps} · ${item.recoverySeconds ?? 90}s recovery`;
+  return `${index + 1}. ${escapeHtml(name)} <span class="prescription-group">· ${item.setCount} × ${reps}</span> <span class="prescription-group">· ${item.recoverySeconds ?? 90}s recovery</span>`;
 }
 function renderTemplate(expanded = null) {
   syncSaveActions();

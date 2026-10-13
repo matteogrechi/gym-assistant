@@ -78,14 +78,14 @@ h3 { font-size: 15px; margin: 0; }
 .quiet-note { border-left: 2px solid var(--accent); margin-top: 28px; padding-left: 13px; font-size: 12px; color: var(--on-surface-variant); line-height: 1.7; }
 .back { width: fit-content; margin: 0 0 18px -12px; }
 .prescription { font-size: 12px; background: var(--surface-container); padding: 10px 12px; border-radius: 9px; margin: 14px 0 22px; }
-.seat-input { width: 100%; padding: 14px; border: 1px solid var(--outline); background: var(--surface-container); border-radius: 4px; color: var(--on-surface); font-size: 14px; }
+.seat-input { width: 100%; padding: 14px; border: 1px solid var(--outline); background: var(--surface-container); border-radius: var(--shape-small); color: var(--on-surface); font-size: 14px; }
 .field-help { font-size: 11px; color: var(--on-surface-variant); margin: 8px 0 16px; }
 /* GYM-004, GYM-009: repetitions have the largest input and first position. */
 .set-labels, .set-row { display: grid; grid-template-columns: 48px 1.2fr .85fr 48px; gap: 10px; align-items: center; text-align: center; }
 .set-labels { font-size: 10px; letter-spacing: 1px; color: var(--on-surface-variant); margin-bottom: 9px; }
 .set-labels span:nth-child(2) { color: var(--on-surface); font-weight: 800; }
 .set-row { margin: 10px 0; font-size: 12px; }
-.set-row input { width: 100%; min-width: 0; height: 56px; border: 1px solid var(--outline); border-radius: 4px; text-align: center; background: var(--surface-bright); padding: 9px 2px; color: var(--on-surface); font-size: 17px; }
+.set-row input { width: 100%; min-width: 0; height: 56px; border: 1px solid var(--outline); border-radius: var(--shape-small); text-align: center; background: var(--surface-bright); padding: 9px 2px; color: var(--on-surface); font-size: 17px; }
 .set-row [data-field="reps"] { font-size: 25px; font-weight: 700; background: var(--reps-container); }
 
 .set-row.complete [data-toggle] { background: var(--success); border-color: var(--success); color: var(--on-success); }
@@ -248,7 +248,7 @@ input::placeholder { color: var(--on-surface-variant); opacity: 1; }
 .session-pause { flex-shrink: 0; }
 
 /* GYM-018: prescriptions and schedule editing have their own Plan destination. */
-.plan-input { display: block; width: 100%; margin-bottom: 18px; padding: 12px; border: 1px solid var(--outline); border-radius: 4px; color: var(--on-surface); background: var(--surface-bright); font-size: 14px; }
+.plan-input { display: block; width: 100%; margin-bottom: 18px; padding: 12px; border: 1px solid var(--outline); border-radius: var(--shape-small); color: var(--on-surface); background: var(--surface-bright); font-size: 14px; }
 .plan-session-row { display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--outline-variant); }
 .plan-session-row .exercise-card { flex: 1; min-width: 0; border-bottom: 0; }
 
@@ -260,7 +260,7 @@ input::placeholder { color: var(--on-surface-variant); opacity: 1; }
 .prescription-card select { background-color: var(--surface-bright); font-size: 14px; }
 .prescription-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 15px 0; }
 .prescription-fields label { min-width: 0; font-size: 10px; color: var(--on-surface-variant); }
-.prescription-fields input { display: block; width: 100%; min-width: 0; margin-top: 6px; padding: 8px 4px; border: 1px solid var(--outline); border-radius: 4px; background: var(--surface-bright); color: var(--on-surface); text-align: center; font-size: 18px; }
+.prescription-fields input { display: block; width: 100%; min-width: 0; margin-top: 6px; padding: 8px 4px; border: 1px solid var(--outline); border-radius: var(--shape-small); background: var(--surface-bright); color: var(--on-surface); text-align: center; font-size: 18px; }
 .prescription-actions { display: flex; gap: 8px; }
 
 .add-plan-exercise .small-button { margin-top: 12px; width: 100%; }
@@ -479,3 +479,19 @@ details[open] > summary .disclosure-icon svg { transform: rotate(180deg); }
 
 /* GYM-015: Progress metrics use a text-only selected treatment. */
 .metric-tabs .md-segment[aria-pressed="true"] { font-weight: 700; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 6px; }
+
+/* GYM-025: plain read-only values align with labels and retain all user text. */
+.readonly-value { min-width: 0; min-height: 48px; margin: 0; padding: 12px 0; font-size: 14px; line-height: 22px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.readonly-plan-value { margin-bottom: 18px; }
+.plan-readonly .plan-input { padding-inline: 0; }
+.prescription-fields label { display: flex; flex-direction: column; justify-content: space-between; gap: 6px; font-size: 12px; line-height: 16px; text-align: center; }
+.prescription-fields input { margin-top: 0; }
+.prescription-group { display: inline-block; white-space: nowrap; }
+.plan-readonly input[type="date"]::-webkit-calendar-picker-indicator { display: none; }
+.dialog-heading h2 { flex: 1; min-width: 0; margin: 0; }
+/* Preserve the plot and touch targets while fitting the complete Progress card. */
+#progress .sample-notice { margin-bottom: 8px; }
+#progress .metric-tabs { margin-block: 8px; }
+#progress .chart-card { padding-block: 12px 8px; }
+#progress #metricSubtitle { margin-top: 4px; }
+#progress .chart { margin-top: 4px; }

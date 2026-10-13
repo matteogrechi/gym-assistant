@@ -154,3 +154,30 @@ All 35 logic checks and the full Chromium suite passed. Interaction checks use r
 Removed the decorative selected check from Reps/Weight/Volume in VIEW-007. The [selected metric](previews/progress.png) now has centered heavier text and an underline with its tonal fill; [dark mode](previews/progress-dark.png) uses the same treatment. Pressed semantics and existing keyboard/metric interactions remain intact. The timer's check indicators retain their existing presentation.
 
 The full Chromium suite passed, including metric changes, exploration retention, keyboard/touch flows, light/dark narrow layouts and 48px targets. Reviewed both themes and refreshed the affected Progress previews. No calculation, export or app behavior changed.
+
+## Revision 25: full-screen graphical and component consistency audit
+
+Walked all 12 views through 67 light/dark screen/state captures before and after corrections: Train/calendar, session lifecycle, exercise execution/recovery/warm-ups/finished review, library/detail/edit/template/schedules, Progress and details, Settings/language/files, and every popup. Included 320/430px layouts and desktop phone/dialog presentation. A fresh-context reviewer independently inspected planning, Settings and popup artifacts; its findings were screenshot/source based, while the coordinator performed the live browser walkthrough and regression checks.
+
+| View | Reviewed elements and result |
+| --- | --- |
+| VIEW-001 Train | Fixed session card, fitted calendar, dates, pending/upcoming cards and bottom navigation retain aligned text and intentional selection styles. |
+| VIEW-002 Session | Back/title, subtitle, lifecycle buttons, counts, exercise rows and drag handles remain consistent in Ready/In progress/Paused/Finished. |
+| VIEW-003 Exercise | Unified set columns retain alignment and reps emphasis; editable fields now share 8px corners. Finished seat notes align with their label and wrap fully. |
+| VIEW-004 Plans | Name/count/Active badge, navigation chevrons and Add use their existing roles; no new activation shortcut. |
+| VIEW-005 Plan | Read-only names/schedule values align with labels and wrap; Edit restores original native fields/values. Read-only dates hide the inactive calendar affordance. |
+| VIEW-006 Plan session | Full names/focus/exercise values wrap; 12px centered prescription captions stay aligned above their inputs. Reps/recovery separator groups stay together at narrow widths. Read-only recovery loses the extra inset. |
+| VIEW-007 Progress | Compact spacing makes the complete 180px plot, date lane, zoom controls and concise gesture guidance visible on 390×844 entry; units/date/selection, gaps and exploration remain consistent. |
+| VIEW-008 Settings | Language/theme/folder/export groups, translated controls and disclosure rows retain consistent outlines, typography and target sizes. |
+| VIEW-009 Video | Title and Close now share a centered heading row; placeholder/text and modal surface remain inside the phone. |
+| VIEW-010 Folder | Heading, native styled dropdown/options, action row and short/desktop modal bounds remain consistent. |
+| VIEW-011 Overflow | Anchoring, 48px Settings row and keyboard/outside dismissal retain their intended presentation. |
+| VIEW-012 Activate plan | Wrapping current/target names, Cancel-first focus and separate confirmation action retain their existing deliberate flow. |
+
+The component check covered filled/tonal/outlined/text/icon buttons, timer and metric segments, set statuses, drag/delete actions, labels and editable/read-only inputs/selects, disclosure chevrons, cards, axes/readouts, calendar/navigation and modal surfaces. Contextual action roles, neutral disabled Save, static finished status and the calendar width exception remain intentional; consistency does not require identical shapes for different roles. No standard visible control measured below 48px in either 67-state walkthrough.
+
+Corrected the independent review's narrow separator/caption findings. Screenshot captures now wait for finite transitions to finish, avoiding mid-rotation chevrons; refreshed representative images rather than treating an unsettled capture as a confirmed runtime disappearance. The Chromium suite passed, including new long-name/focus wrapping/alignment, native-field edit restoration, centered video headings and full-card entry checks, plus all existing metrics/exports/timers, gestures, languages, modal bounds and narrow targets. No metric, data contract or Android implementation changed.
+
+Representative results: [read-only plan](previews/plan.png), [narrow prescriptions](previews/disclosures-template.png), [read-only session](previews/plan-session-readonly.png), [complete Progress card](previews/progress.png), [finished notes](previews/finished-log.png) and [aligned video heading](previews/video.png).
+
+Archived comparisons: [Progress before](history/consistency-before-progress.png) → [complete card after](previews/progress.png); [plan value inset before](history/consistency-before-plan.png) → [aligned value after](previews/plan.png); [narrow prescription captions before](history/consistency-before-prescriptions.png) → [legible aligned captions after](previews/disclosures-template.png).

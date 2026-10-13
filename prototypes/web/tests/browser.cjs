@@ -262,6 +262,7 @@ const fs = require('node:fs/promises');
     await page.locator('#watchVideo').click();
     await expect(page.locator('#videoTitle')).toHaveText('Leg press');
     await checkPhoneDialog('videoDialog');
+    assert(await page.evaluate(()=>{const title=document.querySelector('#videoTitle').getBoundingClientRect(),close=document.querySelector('#closeVideo').getBoundingClientRect();return Math.abs(title.top+title.height/2-close.top-close.height/2)<1;}),'Video title and close control share a heading center');
     // Both a narrow phone and a desktop frame use the app's bounds, never the page center.
     for (const viewport of [{width:320,height:844},{width:1440,height:980}]) {
       await page.setViewportSize(viewport); await checkPhoneDialog('videoDialog');
@@ -1472,6 +1473,32 @@ const fs = require('node:fs/promises');
         assert(await page.evaluate(() => document.documentElement.scrollWidth<=innerWidth));
       }
     }
+    // GYM-025: readonly names/focus align and wrap without changing editable data.
+    await page.locator('#planNav').click(); await page.locator('[data-edit-plan="foundations"]').click();
+    await page.locator('#editPlan').click();
+    const longPlanName = 'Training plan ' + 'P'.repeat(65);
+    await page.locator('#planName').fill(longPlanName); await page.locator('#planForm .save-plan').click();
+    for(const width of [320,390,430]) {
+      await page.setViewportSize({width,height:844});
+      await expect(page.locator('[data-readonly-for="planName"]')).toHaveText(longPlanName);
+      assert(await page.locator('[data-readonly-for="planName"]').evaluate(el=>{
+        const value=el.getBoundingClientRect(),label=document.querySelector('label[for="planName"]').getBoundingClientRect();
+        return Math.abs(value.left-label.left)<1 && el.scrollWidth<=el.clientWidth && value.right<=innerWidth && value.height>48;
+      }),`Readonly name wraps/aligned at ${width}px`);
+    }
+    await page.locator('#editPlan').click(); await expect(page.locator('#planName')).toBeVisible();
+    await expect(page.locator('#planName')).toHaveValue(longPlanName);
+    await expect(page.locator('[data-readonly-for="planName"]')).toBeHidden();
+    await page.locator('#backToPlans').click(); await page.locator('[data-edit-plan="foundations"]').click();
+    await page.locator('[data-edit-template="session-A"]').click();
+    await expect(page.locator('[data-readonly-for="templateName"]')).toHaveText(longSessionName);
+    if (!await page.locator('#templateNotes').evaluate(el=>el.open)) await page.locator('#templateNotes summary').click();
+    await expect(page.locator('[data-readonly-for="templateFocus"]')).toHaveText('F'.repeat(100));
+    assert(await page.locator('[data-readonly-for="templateFocus"]').evaluate(el=>el.scrollWidth<=el.clientWidth));
+    await page.setViewportSize({width:390,height:844}); await page.locator('#progressNav').click();
+    await page.locator('.screen-area').evaluate(el=>{el.scrollTop=0;});
+    assert(await page.locator('.chart-card').evaluate(el=>el.getBoundingClientRect().bottom<=document.querySelector('.main-nav').getBoundingClientRect().top),'Entire Progress card and guidance fit on entry');
+    console.log('PASS: readonly name/focus wrapping and alignment, edit restoration and complete Progress card on entry.');
     // GYM-006, GYM-015, GYM-025: exercise real native pickers, including options in dialogs.
     await page.reload();
     async function checkPicker(id) {

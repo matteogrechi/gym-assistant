@@ -148,13 +148,14 @@ function renderSets() {
   byId('sets').innerHTML = exercise().warmups.map((set, index) => setRow(set, index, 'warmups')).join('') + exercise().sets.map((set, index) => setRow(set, index, 'sets')).join('');
   if (session().state === 'finished') byId('sets').querySelectorAll('input,button').forEach(control => { control.disabled = true; });
 }
-// GYM-001, GYM-003, GYM-008, GYM-012
+// GYM-001, GYM-003, GYM-008, GYM-009, GYM-012, GYM-017
 function renderExercise() {
   byId('exercise').classList.toggle('finished-review', session().state === 'finished');
   byId('exerciseName').textContent = exercise().name;
   byId('prescription').textContent = `Target: ${exercise().sets.length} sets × ${exercise().target} reps`;
   byId('back').innerHTML = buttonIcon('back');
   byId('back').setAttribute('aria-label', `Back to ${session().name}`);
+  byId('exerciseSessionActions').hidden = session().state === 'ready';
   byId('exerciseSessionStatus').textContent = GymSession.labels[session().state];
   byId('exerciseSessionStatus').hidden = !['paused', 'finished'].includes(session().state);
   byId('pauseExerciseSession').hidden = session().state !== 'inProgress';

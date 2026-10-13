@@ -108,6 +108,7 @@ const fs = require('node:fs/promises');
     await page.locator('#openSelectedSession').click();
     await expect(page.locator('#startSession')).toHaveAccessibleName('Start session');
     await page.locator('[data-exercise="0"]').click();
+    await expect(page.locator('#exerciseSessionActions')).toBeHidden();
     await expect(page.locator('#seatInput')).toHaveValue('Seat 4 · backrest 2');
     await expect(page.locator('[data-kind="sets"][data-set="0"][data-field="reps"]')).toHaveValue('12');
     await page.locator('#programNav').click();
@@ -159,6 +160,7 @@ const fs = require('node:fs/promises');
     await expect(page.locator('#sessionName')).toHaveText('Session A');
     await page.locator('[data-exercise="0"]').click();
     await expect(page.locator('#prescription')).toContainText('3 sets');
+    await expect(page.locator('#exerciseSessionActions')).toBeVisible();
     // GYM-021: all working rows fit, including recovery mode; useful controls stay reachable.
     for (const mode of ['executionMode', 'recoveryMode']) {
       await page.locator(`#${mode}`).click();
@@ -381,6 +383,26 @@ const fs = require('node:fs/promises');
     assert.equal(scrolledBottom.y, bottom.y);
     for (const width of [320, 390, 430]) {
       await page.setViewportSize({ width, height: 844 });
+      // GYM-009: the screen title identifies the exercise beside Back, before the timers.
+      const heading = await page.evaluate(() => {
+        const title = document.querySelector('#exerciseName').getBoundingClientRect();
+        const back = document.querySelector('#back').getBoundingClientRect();
+        const timer = document.querySelector('#exercise .timer-panel').getBoundingClientRect();
+        return { aligned: Math.abs(title.top + title.height / 2 - back.top - back.height / 2) < 1,
+          beside: title.left >= back.right, fits: title.right <= innerWidth,
+          above: Math.max(title.bottom, back.bottom) <= timer.top };
+      });
+      assert.deepEqual(heading, { aligned: true, beside: true, fits: true, above: true }, `Exercise heading at ${width}px`);
+      const longTitle = await page.locator('#exerciseName').evaluate(el => {
+        const original = el.textContent;
+        el.textContent = 'Seated single-arm cable row with neutral grip';
+        const title = el.getBoundingClientRect();
+        const back = document.querySelector('#back').getBoundingClientRect();
+        const fits = title.left >= back.right && title.right <= innerWidth && title.bottom <= document.querySelector('#exercise .timer-panel').getBoundingClientRect().top;
+        el.textContent = original;
+        return fits;
+      });
+      assert(longTitle, `Long exercise name wraps above the timer at ${width}px`);
       const badControls = await page.evaluate(() => [...document.querySelectorAll('#exercise button,#exercise input')].filter(el => el.getClientRects().length).filter(el => { const r = el.getBoundingClientRect(); return r.height < 47.9 || r.width < 47.9 || r.left < 0 || r.right > innerWidth; }).map(el => el.id || el.className));
       assert.deepEqual(badControls, [], `Exercise controls fit and retain touch targets at ${width}px`);
     }

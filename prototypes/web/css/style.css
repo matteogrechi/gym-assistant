@@ -220,7 +220,6 @@ input::placeholder { color: var(--on-surface-variant); opacity: 1; }
 .session-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .session-actions #startSession { width: auto; flex: 1 1 170px; }
 .session-pause { flex-shrink: 0; }
-.exercise-navigation { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
 
 /* GYM-018: prescriptions and schedule editing have their own Plan destination. */
 .plan-input { display: block; width: 100%; margin-bottom: 18px; padding: 12px; border: 1px solid var(--outline); border-radius: 4px; color: var(--on-surface); background: var(--surface-bright); font-size: 14px; }
@@ -271,8 +270,7 @@ h2, h3, .exercise-card strong { overflow-wrap: anywhere; }
 .attendance-card .field-help:last-child { margin-bottom: 0; }
 
 /* GYM-017: both lifecycle actions fit narrow exercise screens. */
-.exercise-navigation { flex-wrap: wrap; }
-.exercise-session-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.exercise-session-actions { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 12px; }
 .session-actions #finishSession { flex: 1 1 170px; }
 /* GYM-017: preserve recorded-value contrast during read-only review. */
 .finished-review input:disabled { opacity: 1; }
@@ -286,7 +284,6 @@ h2, h3, .exercise-card strong { overflow-wrap: anywhere; }
 .session-start { margin-bottom: 12px; }
 #sessionStatus { font-size: 12px; margin-block: 10px 0; }
 #sessionFocus { margin-bottom: 16px; }
-.exercise-navigation { flex-wrap: nowrap; margin-bottom: 12px; }
 .exercise-session-actions { align-items: center; flex-wrap: nowrap; }
 .exercise-session-actions .md-button { padding-inline: 16px; }
 .exercise-session-actions .field-help { margin: 0; }
@@ -404,12 +401,11 @@ header { position: relative; z-index: 2; padding-bottom: 0; min-height: 48px; }
 .secondary-heading h2 { margin: 0; }
 @media (max-width: 350px) { header { gap: 4px; } .overflow-menu { right: 16px; } .header-actions { gap: 0; } }
 
-/* GYM-025: consistent secondary headings and explicit read-only presentation. */
+/* GYM-009, GYM-025: consistent Back/name headings and explicit read-only presentation. */
 .secondary-heading { justify-content: flex-start; gap: 4px; min-height: 48px; }
 .secondary-heading h2 { min-width: 0; flex: 1; }
 .page-heading.secondary-heading { gap: 4px; }
 .page-heading.secondary-heading .save-plan { flex-shrink: 0; }
-.exercise-navigation { margin-left: -12px; }
 .finished-review .set-row input:disabled, .finished-review .seat-input:disabled, .finished-review #recoverySeconds:disabled { border-color: transparent; background: transparent; }
 .set-status { display: grid; place-items: center; width: 48px; height: 48px; color: var(--on-surface-variant); font-size: 20px; }
 .set-status.is-complete { color: var(--success); }

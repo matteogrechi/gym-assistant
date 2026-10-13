@@ -386,3 +386,20 @@ input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
 input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .video-placeholder { border-radius: var(--shape-medium); }
 .video-placeholder svg { display: block; margin: auto; width: 48px; height: 48px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* GYM-021, GYM-025: obvious expand/collapse affordances; the entire row toggles. */
+summary, .prescription-card summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 56px; padding: 4px 8px; list-style: none;
+  border-radius: var(--shape-medium); font-size: 14px; font-weight: 500;
+  background: var(--surface-container);
+}
+summary::-webkit-details-marker { display: none; }
+summary::marker { content: ''; }
+summary > :first-child { min-width: 0; overflow-wrap: anywhere; }
+.disclosure-icon { display: grid; place-items: center; width: 48px; height: 48px; flex-shrink: 0; border-radius: var(--shape-full); background: var(--tonal-container); color: var(--on-surface); }
+details[open] > summary .disclosure-icon svg { transform: rotate(180deg); }
+.prescription-summary { font-weight: 500; }
+.settings-details, .metric-details { padding-block: 4px; }
+.prescription-card summary { padding-inline: 0; }
+@media (prefers-reduced-motion: no-preference) { .disclosure-icon svg { transition: transform 160ms ease; } }

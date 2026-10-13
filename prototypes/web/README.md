@@ -55,3 +55,5 @@ CHROMIUM_PATH=/usr/bin/chromium npm run test:browser
 ```
 
 Alternatively, run `npx playwright install chromium` and `npm run test:browser`. Browser checks write screenshots to the system temporary directory under `gym-assystant-previews`; set `PREVIEW_DIR` to change it. These checks validate the mockup, not real training content or Android background behavior.
+
+Dropdown fields share the app theme and retain native selection/keyboard behavior. Chromium and other browsers supporting `appearance: base-select` also show styled, phone-contained option menus. Other browsers retain functional native pickers. Read-only planning values remain disabled and have no dropdown chevron.

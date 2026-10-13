@@ -120,7 +120,27 @@ h3 { font-size: 15px; margin: 0; }
 /* GYM-010: dated observations, labelled scale and touch/keyboard inspection. */
 .sample-notice { padding: 12px 14px; border-radius: 10px; background: var(--surface-container); font-size: 11px; line-height: 1.6; margin-bottom: 22px; }
 .select-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 8px; }
-select { width: 100%; padding: 12px; color: var(--on-surface); border: 1px solid var(--outline); border-radius: 4px; background: var(--surface); font-size: 14px; }
+/* GYM-015, GYM-025: shared dropdown field; native-picker fallback remains usable. */
+select { width: 100%; min-width: 0; padding: 12px 44px 12px 16px; color: var(--on-surface); border: 1px solid var(--outline); border-radius: var(--shape-small); background-color: var(--surface-bright); font-size: 14px; line-height: 22px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6' fill='none' stroke='%2351676a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-size: 24px; background-repeat: no-repeat; background-position: right 12px center; }
+select:not(:disabled):hover { border-color: var(--on-surface); }
+select:disabled { cursor: default; opacity: .55; }
+select option { color: var(--on-surface); background: var(--surface-bright); }
+[data-theme="dark"] select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6' fill='none' stroke='%23b7ccca' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+/* GYM-006, GYM-025: native top-layer menus use the phone bounds from dropdowns.js. */
+@supports (appearance: base-select) {
+  select, select::picker(select) { appearance: base-select; }
+  select { display: flex; align-items: center; gap: 12px; padding-right: 12px; background-image: none !important; }
+  select::picker-icon { content: ''; width: 24px; height: 24px; flex-shrink: 0; background: currentColor; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
+  select:open { border-color: var(--focus); background-color: var(--surface-container); }
+  select:open::picker-icon { transform: rotate(180deg); }
+  select::picker(select) { position: fixed; position-area: none; position-try-fallbacks: none; inset: auto; left: var(--picker-left); top: var(--picker-top); bottom: var(--picker-bottom); width: var(--picker-width); min-width: 0; max-height: var(--picker-height, 320px); margin: 0; padding: 8px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; color: var(--on-surface); background: var(--surface-bright); border: 1px solid var(--outline-variant); border-radius: var(--shape-medium); box-shadow: 0 8px 24px #00000029; }
+  select option { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 12px; border-radius: var(--shape-small); font-size: 14px; line-height: 22px; white-space: normal; overflow-wrap: anywhere; }
+  select option:checked { background: var(--tonal-container); font-weight: 600; }
+  select option:hover { background: var(--surface-container); }
+  select option:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; background: var(--surface-container); }
+  select option::checkmark { order: 1; margin-left: auto; flex-shrink: 0; color: var(--focus); }
+  .plan-readonly select::picker-icon { display: none; }
+}
 .metric-tabs { margin: 18px 0; }
 .chart-card { background: var(--surface-container); padding: 20px 15px 12px; border-radius: var(--shape-medium); }
 .chart-card h3 { font-size: 14px; line-height: 20px; margin-bottom: 4px; }
@@ -228,10 +248,10 @@ input::placeholder { color: var(--on-surface-variant); opacity: 1; }
 
 .schedule-row { display: grid; grid-template-columns: 90px minmax(0, 1fr); align-items: center; gap: 10px; margin-bottom: 10px; }
 .schedule-row label { font-size: 12px; }
-.schedule-row select { font-size: 12px; }
+.schedule-row select { font-size: 14px; }
 .save-plan { width: 100%; margin-top: 20px; }
 .prescription-card { border: 1px solid var(--outline-variant); border-radius: var(--shape-medium); background: var(--surface-container); padding: 14px; margin-bottom: 18px; }
-.prescription-card select { background: var(--surface-bright); font-size: 13px; }
+.prescription-card select { background-color: var(--surface-bright); font-size: 14px; }
 .prescription-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 15px 0; }
 .prescription-fields label { min-width: 0; font-size: 10px; color: var(--on-surface-variant); }
 .prescription-fields input { display: block; width: 100%; min-width: 0; margin-top: 6px; padding: 8px 4px; border: 1px solid var(--outline); border-radius: 4px; background: var(--surface-bright); color: var(--on-surface); text-align: center; font-size: 18px; }
@@ -332,7 +352,7 @@ summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; bo
 .page-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
 .page-heading h2 { margin: 0; }
 .plan-readonly input, .plan-readonly select { opacity: 1; border-color: transparent; background: transparent; color: var(--on-surface); }
-.plan-readonly select { appearance: none; }
+.plan-readonly select { appearance: none; background-image: none; }
 .plan-readonly .prescription-actions, .plan-readonly .add-plan-exercise { display: none; }
 .page-heading .save-plan { width: auto; margin: 0; }
 .add-plan-exercise { display: flex; gap: 8px; align-items: center; margin-top: 14px; }

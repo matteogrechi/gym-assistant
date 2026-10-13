@@ -1396,6 +1396,69 @@ const fs = require('node:fs/promises');
         assert(await page.evaluate(() => document.documentElement.scrollWidth<=innerWidth));
       }
     }
+    // GYM-006, GYM-015, GYM-025: exercise real native pickers, including options in dialogs.
+    await page.reload();
+    async function checkPicker(id) {
+      const geometry = await page.locator(id).evaluate(el => {
+        const p = getComputedStyle(el, '::picker(select)');
+        const phone = document.querySelector('.phone').getBoundingClientRect();
+        const left = parseFloat(p.left), top = parseFloat(p.top), width = parseFloat(p.width), height = parseFloat(p.height);
+        return { open: el.matches(':open'), contained: left >= Math.max(0, phone.left) && left + width <= Math.min(innerWidth, phone.right) + .5 && top >= Math.max(0, phone.top) && top + height <= Math.min(innerHeight, phone.bottom) + .5,
+          targets: [...el.options].every(option => option.getBoundingClientRect().height >= 48), height };
+      });
+      assert(geometry.open && geometry.contained && geometry.targets, `Dropdown bounds/targets: ${id} ${JSON.stringify(geometry)}`);
+    }
+    for (const theme of ['light', 'dark']) {
+      await openSettings(); await page.locator('#appTheme').selectOption(theme);
+      for (const width of [320, 390, 430, 1440]) {
+        await page.setViewportSize({width, height: width === 1440 ? 980 : 844});
+        await page.locator('#appLanguage').tap(); await checkPicker('#appLanguage');
+        await page.keyboard.press('ArrowDown'); await page.keyboard.press('Escape');
+        await expect(page.locator('#appLanguage')).toHaveValue('system');
+        await expect(page.locator('#appLanguage')).toBeFocused();
+      }
+      await page.setViewportSize({width:390,height:844});
+      await page.locator('#appLanguage').tap();
+      await page.locator('#appLanguage option[value="es"]').click();
+      await expect(page.locator('#appLanguage')).toHaveValue('es');
+      await expect(page.locator('#settings h2')).toHaveText('Ajustes');
+      await page.locator('#appLanguage').tap(); await checkPicker('#appLanguage'); await page.keyboard.press('Escape');
+      await page.locator('#appLanguage').selectOption('system');
+      await page.locator('#changeFolder').click();
+      await page.locator('#folderChoice').tap(); await checkPicker('#folderChoice');
+      await page.locator('#folderChoice option[value="SD card/gym assystant"]').click();
+      await page.locator('#useFolder').click(); await expect(page.locator('#saveFolder')).toHaveText('SD card/gym assystant');
+      await page.locator('#changeFolder').click(); await page.setViewportSize({width:320,height:300});
+      await page.locator('#folderChoice').tap(); await checkPicker('#folderChoice'); await page.keyboard.press('Escape');
+      await page.setViewportSize({width:390,height:844}); await page.locator('#cancelFolder').click();
+      await page.locator('#progressNav').click(); await page.locator('#progressExercise').tap(); await checkPicker('#progressExercise');
+      await page.locator('#progressExercise option[value="1"]').click(); await expect(page.locator('#progressExercise')).toHaveValue('1');
+      await page.locator('#planNav').click(); await page.locator('[data-edit-plan="foundations"]').click();
+      await page.locator('#weeklyPlanDetails summary').click();
+      await expect(page.locator('#weekday-1')).toBeDisabled(); await page.locator('#weekday-1').dispatchEvent('click');
+      assert(!await page.locator('#weekday-1').evaluate(el=>el.matches(':open')));
+      await page.locator('#editPlan').click();
+      await page.locator('#weekday-1').tap(); await checkPicker('#weekday-1');
+      await page.keyboard.press('End'); await page.keyboard.press('Enter');
+      await expect(page.locator('#weekday-1')).toHaveValue('session-C');
+      await expect(page.locator('#planFeedback')).toContainText('Unsaved');
+      await page.locator('[data-edit-template="session-A"]').click();
+      const machine = page.locator('#plannedExercises select').first();
+      await machine.tap(); await checkPicker(`#${await machine.getAttribute('id')}`);
+      await page.keyboard.press('Escape');
+      await page.reload();
+    }
+    // Long lists wrap labels and scroll inside their bounded native menu.
+    await openSettings();
+    await page.locator('#appLanguage').evaluate(el => {
+      for (let n = 0; n < 12; n++) el.add(new Option(`Long illustrative language name ${n} with an extended regional label`, `test-${n}`));
+    });
+    await page.locator('#appLanguage').tap(); await checkPicker('#appLanguage');
+    assert(await page.locator('#appLanguage').evaluate(el => parseFloat(getComputedStyle(el,'::picker(select)').height) <= 320));
+    await page.locator('#settings h2').tap();
+    assert(!await page.locator('#appLanguage').evaluate(el => el.matches(':open')));
+    await expect(page.locator('#appLanguage')).toHaveValue('system');
+    console.log('PASS: styled native dropdowns, pointer/keyboard selection, Escape restoration, dynamic schedules, disabled read-only values, translated/dark/narrow/desktop/short-dialog menus and bounded long lists.');
     assert.deepEqual(errors, []);
     console.log('PASS: phone-contained video/folder overlays and cards, desktop/mobile resize/scroll, short-height internal scrolling, native modal focus/Escape/scrim dismissal; Spanish selection/system variants, translated controls, retained data and export preference, narrow layouts; multiple-plan browsing/creation/draft isolation/activation, original workout and future-order/timer retention, old-plan catch-up/cohort ownership, v2 library/draft exports and reload reset; consistent Back, Save/draft states, static finished status, empty-focus subtitle and numeric keyboard entry; top-right overflow menu, keyboard/outside dismissal and retained screen/scroll/drafts/timers, three bottom destinations; settings language/theme/system following, folder preview/cancel, JSON/CSV/guide downloads, complete non-mutating snapshots, unchanged metric exports, narrow Settings targets, reload reset; pending catch-up sessions and planned/actual attendance, single-count visits, preview/warm-up exclusion, protected denominators and past prescriptions, workout reordering with retained logs/running timers, plan/date isolation and reordered preview retention, session Start/Pause/Resume/Finish, paused timer isolation, selected-date card without popup, fitted seven-day week, separate plan editing, prescription snapshots, stable session IDs, today/future calendar, date assignment, week navigation, dated log isolation, program navigation, set logging/validation, unified warm-ups, timers, secondary video, progress metrics, state isolation, mobile widths, bottom navigation, standard 48px targets, reload reset.');
     console.log(`Previews: ${previews}`);

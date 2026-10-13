@@ -314,14 +314,13 @@ h2, h3, .exercise-card strong { overflow-wrap: anywhere; }
 .exercise-session-actions .md-button { padding-inline: 16px; }
 .exercise-session-actions .field-help { margin: 0; }
 .timer-panel { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 12px; margin-bottom: 16px; }
-.timer-tabs, #recoverySettings, #timerContext { grid-column: 1 / -1; }
+.timer-tabs, #timerContext { grid-column: 1 / -1; }
 .timer-tabs { grid-row: 1; }
-.timer-display { grid-column: 1; grid-row: 2; margin: 0; flex-direction: column; align-items: flex-start; gap: 4px; }
+.timer-display { grid-column: 1; grid-row: 2; margin: 0; align-self: center; flex-direction: column; align-items: flex-start; gap: 0; }
 .timer-actions { grid-column: 2; grid-row: 2; align-items: center; gap: 4px; }
 .timer-actions .md-button { padding-inline: 12px; }
 #timerValue { font-size: 32px; }
-#timerStatus.field-help { font-size: 10px; margin: 0; }
-#recoverySettings { margin: 0; }
+#timerStatus.field-help { grid-column: 1 / -1; font-size: 10px; margin: 0; }
 #timerContext { margin: 0; }
 .prescription { padding: 0; background: none; border-radius: 0; margin: 6px 0 12px; }
 .set-heading { margin: 8px 0; }
@@ -432,7 +431,7 @@ header { position: relative; z-index: 2; padding-bottom: 0; min-height: 48px; }
 .secondary-heading h2 { min-width: 0; flex: 1; }
 .page-heading.secondary-heading { gap: 4px; }
 .page-heading.secondary-heading .save-plan { flex-shrink: 0; }
-.finished-review .set-row input:disabled, .finished-review .seat-input:disabled, .finished-review #recoverySeconds:disabled { border-color: transparent; background: transparent; }
+.finished-review .set-row input:disabled, .finished-review .seat-input:disabled { border-color: transparent; background: transparent; }
 .set-status { display: grid; place-items: center; width: 48px; height: 48px; color: var(--on-surface-variant); font-size: 20px; }
 .set-status.is-complete { color: var(--success); }
 input[type="number"] { appearance: textfield; -moz-appearance: textfield; }

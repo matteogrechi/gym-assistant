@@ -161,10 +161,16 @@ const fs = require('node:fs/promises');
     await page.locator('[data-exercise="0"]').click();
     await expect(page.locator('#prescription')).toContainText('3 sets');
     await expect(page.locator('#exerciseSessionActions')).toBeVisible();
-    // GYM-021: all working rows fit, including recovery mode; useful controls stay reachable.
+    const timerCentersAligned = () => page.evaluate(() => {
+      const time=document.querySelector('#timerValue').getBoundingClientRect();
+      return ['timerToggle','timerReset'].every(id=>{const action=document.getElementById(id).getBoundingClientRect();return Math.abs(time.top+time.height/2-action.top-action.height/2)<1;});
+    });
+    // GYM-012, GYM-021: aligned time/actions, with three working rows still visible.
     for (const mode of ['executionMode', 'recoveryMode']) {
       await page.locator(`#${mode}`).click();
       await page.evaluate(() => { document.querySelector('.screen-area').scrollTop = 0; });
+      assert(await timerCentersAligned(), `Timer digits and actions share a vertical center in ${mode}`);
+      await expect(page.locator('#exercise')).not.toContainText('Planned recovery');
       assert(await page.locator('#sets .set-row').evaluateAll(rows => rows.every(row => row.getBoundingClientRect().bottom <= document.querySelector('.main-nav').getBoundingClientRect().top)));
     }
     await page.locator('#executionMode').click();
@@ -201,13 +207,14 @@ const fs = require('node:fs/promises');
     await page.evaluate(() => { window.clockOffset += 10000; });
     await expect(page.locator('#timerValue')).toHaveText('00:03');
     await page.locator('#recoveryMode').click();
-    await expect(page.locator('#recoverySeconds')).toHaveText('90');
+    assert.equal(await page.evaluate(() => exercise().timers.duration), 90);
     await expect(page.locator('#exercise input#recoverySeconds')).toHaveCount(0);
     await page.locator('#timerToggle').click();
-    await expect(page.locator('#recoverySeconds')).toHaveText('90');
+    assert.equal(await page.evaluate(() => exercise().timers.duration), 90);
     await page.evaluate(() => { window.clockOffset += 91000; });
     await expect(page.locator('#timerValue')).toHaveText('00:00');
     await expect(page.locator('#timerStatus')).toContainText('Recovery complete');
+    assert(await timerCentersAligned(), 'Completion feedback does not shift timer digits');
     await page.locator('#timerReset').click();
     await expect(page.locator('#timerValue')).toHaveText('01:30');
     await page.locator('#executionMode').click();
@@ -384,6 +391,7 @@ const fs = require('node:fs/promises');
     assert.equal(scrolledBottom.y, bottom.y);
     for (const width of [320, 390, 430]) {
       await page.setViewportSize({ width, height: 844 });
+      assert(await timerCentersAligned(), `Timer alignment at ${width}px`);
       // GYM-009: the screen title identifies the exercise beside Back, before the timers.
       const heading = await page.evaluate(() => {
         const title = document.querySelector('#exerciseName').getBoundingClientRect();
@@ -725,7 +733,7 @@ const fs = require('node:fs/promises');
     await page.evaluate(() => { window.clockOffset += 10000; });
     await expect(page.locator('#timerValue')).toHaveText(finishedElapsed);
     await page.locator('#recoveryMode').click();
-    await expect(page.locator('#recoverySeconds')).toHaveText('90');
+    assert.equal(await page.evaluate(() => exercise().timers.duration), 90);
     await page.locator('#back').click();
     await page.locator('[data-exercise="1"]').click();
     const otherFinishedElapsed = await page.locator('#timerValue').textContent();
@@ -1197,7 +1205,7 @@ const fs = require('node:fs/promises');
     await page.locator('#programNav').click(); await page.locator('#openSelectedSession').click(); await reference('VIEW-002');
     await page.locator('#startSession').click(); await reference('VIEW-003');
     await page.locator('#recoveryMode').click();
-    await expect(page.locator('#recoverySeconds')).toHaveText('120');
+    assert.equal(await page.evaluate(() => exercise().timers.duration), 120);
     await expect(page.locator('#timerValue')).toHaveText('02:00');
     await page.locator('#timerToggle').click();
     const runningRecovery = await page.evaluate(() => session().exercises[0].timers.recovery.startedAt);
@@ -1209,12 +1217,12 @@ const fs = require('node:fs/promises');
     await plannedRecovery.fill('45'); await page.locator('#templateForm .save-plan').click();
     await page.locator('#programNav').click(); await page.locator('#openSelectedSession').click();
     await page.locator('[data-exercise="0"]').click();
-    await expect(page.locator('#recoverySeconds')).toHaveText('120');
+    assert.equal(await page.evaluate(() => exercise().timers.duration), 120);
     assert.equal(await page.evaluate(() => exercise().timers.recovery.startedAt), runningRecovery);
     await page.locator('#programNav').click(); await page.locator('#nextWeek').click();
     await page.locator('#calendarDays [data-date="2026-10-19"]').click();
     await page.locator('#openSelectedSession').click(); await page.locator('[data-exercise="0"]').click();
-    await page.locator('#recoveryMode').click(); await expect(page.locator('#recoverySeconds')).toHaveText('45');
+    await page.locator('#recoveryMode').click(); assert.equal(await page.evaluate(() => exercise().timers.duration), 45);
     await expect(page.locator('#timerValue')).toHaveText('00:45');
     await page.locator('#programNav').click(); await page.locator('#calendarToday').click();
     await page.locator('#openSelectedSession').click();

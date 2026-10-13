@@ -308,8 +308,6 @@ function renderTimer() {
   byId('timerToggle').hidden = session().state === 'finished';
   byId('timerReset').hidden = session().state === 'finished';
   byId('timerToggle').textContent = running ? 'Pause' : state[mode].elapsed > 0 && !(mode === 'recovery' && seconds === 0) ? 'Resume' : 'Start';
-  byId('recoverySettings').hidden = mode !== 'recovery';
-  byId('recoverySeconds').textContent = state.duration;
   ['execution', 'recovery'].forEach(item => byId(`${item}Mode`).setAttribute('aria-pressed', mode === item));
   const other = mode === 'execution' ? 'recovery' : 'execution';
   byId('timerContext').textContent = session().state === 'paused' ? 'Resume the session to run timers.' : state[other].startedAt !== null ? `${other === 'execution' ? 'Execution' : 'Recovery'} is also running.` : '';

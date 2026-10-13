@@ -181,3 +181,9 @@ Corrected the independent review's narrow separator/caption findings. Screenshot
 Representative results: [read-only plan](previews/plan.png), [narrow prescriptions](previews/disclosures-template.png), [read-only session](previews/plan-session-readonly.png), [complete Progress card](previews/progress.png), [finished notes](previews/finished-log.png) and [aligned video heading](previews/video.png).
 
 Archived comparisons: [Progress before](history/consistency-before-progress.png) → [complete card after](previews/progress.png); [plan value inset before](history/consistency-before-plan.png) → [aligned value after](previews/plan.png); [narrow prescription captions before](history/consistency-before-prescriptions.png) → [legible aligned captions after](previews/disclosures-template.png).
+
+## Revision 26: aligned timer row without repeated recovery duration
+
+[VIEW-003](previews/exercise.png) now vertically centers the time value with Start/Pause/Resume and Reset. Moved completion feedback out of the digit container into its own row, so expired recovery messages cannot alter that alignment. Removed Planned recovery · 90 s from the [recovery view](previews/recovery.png); the initial countdown and Reset continue to use the prescribed duration, with no workout duration editor.
+
+Reviewed execution/recovery and [finished review](previews/finished-log.png), both themes and narrow captures; refreshed the affected exercise and underlying video previews. Chromium checks cover digit/action centers in both modes, after expiry and at 320/390/430px, removal of duplicate text, saved 120/45-second targets, protected workout duration, completion announcements, reset and existing session/timer workflows. No timer arithmetic or data contract changed.

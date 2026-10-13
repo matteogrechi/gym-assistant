@@ -149,12 +149,14 @@ select option { color: var(--on-surface); background: var(--surface-bright); }
 .metric-head span { font-size: 12px; }
 /* Padding contains 48px targets even for observations at axis edges. */
 .metric-head .metric-date { margin-left: auto; font-size: 12px; white-space: nowrap; color: var(--on-surface-variant); }
-.chart { display: grid; grid-template-columns: 44px minmax(0, 1fr); margin-top: 12px; padding-top: 24px; }
+.chart { display: grid; grid-template-columns: 44px minmax(0, 1fr); margin-top: 8px; padding-top: 24px; }
 .chart-scale { position: relative; height: 180px; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--on-surface-variant); }
 .chart-scale span { position: absolute; right: 8px; transform: translateY(-50%); }
 .chart-timeline { min-width: 0; overflow-x: auto; margin-top: -24px; overscroll-behavior-x: contain; scrollbar-width: thin; }
 .chart-timeline-content { width: 100%; padding-top: 24px; }
-.chart-plot { position: relative; height: 180px; margin-inline: 24px; }
+.chart-plot { position: relative; height: 180px; margin-inline: 24px; touch-action: pan-y pinch-zoom; cursor: crosshair; user-select: none; }
+.chart-plot.is-scrubbing { cursor: ew-resize; }
+.chart-inspection-guide { position: absolute; top: 0; bottom: 0; border-left: 1px dashed var(--on-surface-variant); pointer-events: none; }
 .chart-plot > svg { display: block; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 .chart-gridline, .chart-baseline { stroke: var(--outline-variant); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .chart-baseline { stroke: var(--outline); }
@@ -164,8 +166,12 @@ select option { color: var(--on-surface); background: var(--surface-bright); }
 .chart-point[aria-pressed="true"] .chart-point-mark { background: var(--on-surface); outline: 2px solid var(--on-surface); outline-offset: 4px; }
 .chart-point.is-gap .chart-point-mark { width: auto; height: auto; border-radius: 0; background: none; color: var(--on-surface-variant); font-size: 14px; }
 .chart-point.is-gap[aria-pressed="true"] .chart-point-mark { outline: none; font-weight: 800; text-decoration: underline; text-underline-offset: 4px; }
-.chart-date-axis { position: relative; height: 44px; margin: 8px 24px 0; font-size: 12px; color: var(--on-surface-variant); }
+.chart-date-axis { position: relative; height: 48px; margin: 8px 24px 0; font-size: 12px; color: var(--on-surface-variant); cursor: grab; user-select: none; touch-action: pan-x pan-y pinch-zoom; }
+.chart-date-axis.is-panning { cursor: grabbing; }
 .chart-date-axis span { position: absolute; top: 16px; transform: translateX(-50%); white-space: nowrap; }
+.chart-exploration { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; }
+.chart-exploration .md-icon-button { flex: 0 0 48px; }
+#chartZoomStatus { flex: 1; min-width: 0; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--on-surface-variant); text-align: center; }
 .chart-help { font-size: 11px; line-height: 16px; margin: 0; color: var(--on-surface-variant); }
 .chart-empty { grid-column: 1 / -1; font-size: 13px; margin: 0 0 16px; }
 .stat-row { display: flex; align-items: center; justify-content: space-between; padding: 20px 0 12px; font-size: 12px; gap: 15px; }

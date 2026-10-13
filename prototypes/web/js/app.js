@@ -12,6 +12,9 @@ let exerciseIndex = 0;
 let metric = 'reps';
 let progressDate = null;
 let progressPoints = [];
+let progressExercise = null;
+let progressView = { zoom: 1, scrollLeft: 0 };
+let progressExploration = null;
 let todayDate = GymCalendar.today();
 let selectedDate = todayDate;
 let displayedWeek = GymCalendar.week(todayDate)[0];
@@ -65,7 +68,9 @@ const executionAssignments = () => {
 const fullDate = date => GymCalendar.label(date, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 // GYM-006, GYM-008, GYM-010, GYM-015: view switching and keyboard focus.
 function showView(id, focusId) {
+  progressExploration?.cancelGesture();
   document.querySelectorAll('[data-view]').forEach(view => { view.hidden = view.id !== id; });
+  if (id === 'progress') progressExploration?.resize();
   ['programNav', 'planNav', 'progressNav'].forEach(navId => byId(navId).removeAttribute('aria-current'));
   if (id !== 'settings') byId(id === 'progress' ? 'progressNav' : id === 'plans' || id === 'plan' || id === 'planSession' ? 'planNav' : 'programNav').setAttribute('aria-current', 'page');
   if (focusId) byId(focusId).focus();
@@ -198,6 +203,14 @@ function openVideo() {
 }
 // GYM-010: fictional immutable historical observations, never today's editable samples.
 function renderProgress() {
+  progressExploration?.dispose();
+  progressExploration = null;
+  const exerciseId = byId('progressExercise').value;
+  if (exerciseId !== progressExercise) {
+    progressExercise = exerciseId;
+    progressDate = null;
+    progressView = { zoom: 1, scrollLeft: 0 };
+  }
   renderAttendance();
   const selected = GymData.catalog[Number(byId('progressExercise').value)];
   const context = GymData.context(selected);
@@ -214,8 +227,8 @@ function renderProgress() {
   byId('metricUnit').textContent = labels.unit;
   byId('metricSubtitle').textContent = labels.subtitle;
   const dateLabel = (date, full = false) => GymCalendar.label(date, { day: 'numeric', month: 'short', ...(full ? { year: 'numeric' } : {}) });
-  GymCharts.render(byId('chart'), model, {unit:labels.unit, selectedDate:progressDate, format:formatObservation, dateLabel});
-  byId('chartHelp').textContent = model.points.some(point=>point.value===null) ? '— No comparable set · tap a point. Scale starts at 0.' : 'Tap a point to inspect a session · scale starts at 0.';
+  progressExploration = GymCharts.render(byId('chart'), model, {unit:labels.unit, selectedDate:progressDate, format:formatObservation, dateLabel, view:progressView, onInspect:selectProgressObservation});
+  byId('chartHelp').textContent = `${model.points.some(point=>point.value===null) ? '— No comparable set · ' : ''}Drag plot to inspect; swipe dates to pan. Scale starts at 0.`;
   byId('chartHelp').hidden = !model.points.length;
   selectProgressObservation(progressDate);
   byId('workingSets').textContent = GymMetrics.countSets(GymData.history, context);
@@ -223,8 +236,8 @@ function renderProgress() {
   byId('metricExplanation').textContent = labels.explanation;
   document.querySelectorAll('[data-metric]').forEach(button => button.setAttribute('aria-pressed', button.dataset.metric === metric));
 }
-// GYM-010: inspecting a dated point changes only its readout and selected ring.
-function selectProgressObservation(date) {
+// GYM-010: inspection changes the readout/guide; rerenders retain independent pan.
+function selectProgressObservation(date, reveal = false) {
   const point = progressPoints.find(item => item.date === date);
   progressDate = point?.date ?? null;
   byId('metricValue').textContent = point?.value == null ? '—' : formatObservation(point.value);
@@ -232,25 +245,21 @@ function selectProgressObservation(date) {
   if (point) byId('metricDate').dateTime = point.date;
   else byId('metricDate').removeAttribute('datetime');
   byId('chart').querySelectorAll('[data-observation-date]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.observationDate===progressDate)));
-  requestAnimationFrame(() => {
-    const selected = byId('chart').querySelector('[aria-pressed="true"]');
-    const timeline = byId('chart').querySelector('.chart-timeline');
-    const scrolls = timeline && timeline.scrollWidth > timeline.clientWidth;
-    if (selected && scrolls) timeline.scrollLeft = selected.offsetLeft + 24 - timeline.clientWidth / 2;
-    if (timeline) byId('chartHelp').textContent = `${progressPoints.some(point=>point.value===null) ? '— No comparable set · ' : ''}${scrolls ? 'Swipe for dates; tap a point' : 'Tap a point to inspect a session'}. Scale starts at 0.`;
-  });
+  progressExploration?.select(progressDate);
+  if (reveal) progressExploration?.reveal();
 }
 byId('chart').addEventListener('click', event => {
   const point = event.target.closest('[data-observation-date]');
-  if (point) selectProgressObservation(point.dataset.observationDate);
+  if (point) selectProgressObservation(point.dataset.observationDate, true);
 });
 byId('chart').addEventListener('keydown', event => {
   const point = event.target.closest('[data-observation-date]');
-  if (!point || !['ArrowLeft','ArrowRight'].includes(event.key)) return;
+  if (!point || !['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
   event.preventDefault();
   const points = [...byId('chart').querySelectorAll('[data-observation-date]')];
-  const next = points[points.indexOf(point)+(event.key==='ArrowLeft'?-1:1)];
-  if (next) { next.focus(); selectProgressObservation(next.dataset.observationDate); }
+  const index = event.key === 'Home' ? 0 : event.key === 'End' ? points.length - 1 : points.indexOf(point)+(event.key==='ArrowLeft'?-1:1);
+  const next = points[index];
+  if (next) { next.focus({preventScroll:true}); selectProgressObservation(next.dataset.observationDate, true); }
 });
 // GYM-020: attendance describes recorded visits, never a strength penalty.
 function renderAttendance() {

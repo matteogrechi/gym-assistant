@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gym specification workflow"
+  short_description: "Keep gym changes scoped and traceable to requirements"
+  default_prompt: "Use $gym-spec-workflow to specify this gym assystant change and trace it to code and verification."

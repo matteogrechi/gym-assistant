@@ -11,6 +11,7 @@ An Android gym-session assistant being specified through an interactive browser 
 | [docs/design/](docs/design/android-ui.md) | Android UI conventions. |
 | [docs/reviews/](docs/reviews/interface-review.md) | Interface walkthrough and preview images. |
 | [docs/architecture/](docs/architecture/repository-layout.md) | Repository organization and future project boundaries. |
+| [.agents/skills/](AGENTS.md) | Project workflow skills for specification, mockup review and delivery. |
 
 ## Explore the prototype
 
@@ -45,3 +46,5 @@ The [text-file contract](docs/architecture/data-formats.md) documents versioned 
 ## Development boundary
 
 Update the specification before changing features and maintain traceability alongside code. Research proposals are not automatically authorized features. The next implementation phase belongs under `android/` after scope is agreed; the prototype is not production source. See the [repository layout](docs/architecture/repository-layout.md).
+
+Follow [CONTRIBUTING.md](CONTRIBUTING.md) for repository conventions, validation and **Conventional Commits**. [AGENTS.md](AGENTS.md) routes agents to the project skills under `.agents/skills/`.

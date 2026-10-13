@@ -7,7 +7,11 @@ This repository keeps the future Android project independent from the disposable
 ```text
 gym-assistant/
 ├── README.md
+├── CONTRIBUTING.md               # workflow, validation and Conventional Commits
+├── AGENTS.md                     # repository instructions and skill routing
 ├── .gitignore
+├── .agents/
+│   └── skills/                   # versioned project workflow skills
 ├── android/
 │   └── README.md                 # reserved project location, no implementation
 ├── prototypes/
@@ -42,6 +46,8 @@ Browser JavaScript, HTML/CSS, fictional fixtures, Node packages, and mockup test
 `docs/product/spec.md` remains the feature source of truth. `docs/product/traceability.md` maps requirement IDs to the browser prototype and its checks; Android delivery remains marked not started. New Android mappings must be added only when actual implementation exists.
 
 Research recommendations are evidence, not automatically authorized features. Design guidance and interface reviews are kept separate from requirements. Relative documentation links and source references must resolve after moves.
+
+Root [CONTRIBUTING.md](../../CONTRIBUTING.md) defines contributor workflow and Conventional Commits for new changes. Root [AGENTS.md](../../AGENTS.md) routes agents to the versioned skills in `.agents/skills/`: specification/traceability, mockup review and repository delivery. Each skill contains `SKILL.md` and UI metadata in `agents/openai.yaml`. These files are process guidance, not product requirements or Android source.
 
 ## Local files and build products
 

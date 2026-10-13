@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gym mockup review"
+  short_description: "Review gym mockup behavior and Android UI conventions"
+  default_prompt: "Use $gym-mockup-review to review this gym assystant mockup change through realistic user flows."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gym repository delivery"
+  short_description: "Follow repo layout, validation, and commit conventions"
+  default_prompt: "Use $gym-repo-delivery to validate and deliver this gym assystant change with Conventional Commits."

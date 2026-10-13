@@ -42,4 +42,4 @@ Save is now next to the heading on both Plan editors, with draft/error feedback 
 
 The video dialog keeps the exercise name, a clear close control, and one non-playable demo statement. Finished review hides actions that cannot be used, retaining values and timer-mode review. Reordering announcements and routine timer status remain available to screen readers.
 
-Verification: all 25 logic tests and the Chromium user-flow suite passed, including 320/390/430px controls/disclosures, both timer modes, full visible working rows, first-view chart, keyboard metric disclosure, collapsed-field validation, optional focus editing, and finished-action hiding. The [specification](spec.md) and [traceability](traceability.md) record the retained feature scope.
+Verification: all 25 logic tests and the Chromium user-flow suite passed, including 320/390/430px controls/disclosures, both timer modes, full visible working rows, first-view chart, keyboard metric disclosure, collapsed-field validation, optional focus editing, and finished-action hiding. The [specification](../product/spec.md) and [traceability](../product/traceability.md) record the retained feature scope.

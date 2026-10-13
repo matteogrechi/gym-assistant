@@ -19,7 +19,7 @@ const fs = require('node:fs/promises');
       window.clockOffset = 0;
       Date.now = () => fixtureNow + (realNow() - initialNow) + window.clockOffset;
     });
-    await page.goto(pathToFileURL(path.resolve(__dirname, '../mockup/index.html')).href);
+    await page.goto(pathToFileURL(path.resolve(__dirname, '../index.html')).href);
     // GYM-007, GYM-008, GYM-015: branding, three sessions, bottom navigation.
     await expect(page).toHaveTitle(/gym assystant/);
     await expect(page.locator('#calendarDays .calendar-day')).toHaveCount(7);

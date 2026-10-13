@@ -1,51 +1,45 @@
 # gym assystant
 
-An exploratory mockup for an Android training-program app. Android implementation has **not started**; scope is being refined through this prototype.
+An Android gym-session assistant being specified through an interactive browser prototype. Android implementation has **not started**.
 
-Open `mockup/index.html` in a browser, or run:
+| Location | Purpose |
+| --- | --- |
+| [android/](android/README.md) | Reserved Android Studio/Gradle project location; documentation only. |
+| [prototypes/web/](prototypes/web/README.md) | Disposable interactive mockup, its Node tooling, and its tests. |
+| [docs/product/](docs/product/spec.md) | Product specification and [bidirectional traceability](docs/product/traceability.md). |
+| [docs/research/](docs/research/progression-research.md) | Progression metrics and [motivating-brand evidence](docs/research/branding-research.md). |
+| [docs/design/](docs/design/android-ui.md) | Android UI conventions. |
+| [docs/reviews/](docs/reviews/interface-review.md) | Interface walkthrough and preview images. |
+| [docs/architecture/](docs/architecture/repository-layout.md) | Repository organization and future project boundaries. |
+
+## Explore the prototype
+
+Open [prototypes/web/index.html](prototypes/web/index.html) directly, or run from the repository root:
 
 ```sh
 python3 -m http.server 8080
 ```
 
-Visit http://localhost:8080/mockup/ . On a phone, use the computer's LAN address and the same port.
+Visit http://localhost:8080/prototypes/web/ . All data is fictional; edits reset on reload. Detailed usage is in the [prototype README](prototypes/web/README.md).
 
-The screens focus on the next action: compact workout timers and set entry, one Save action per plan editor, expandable scheduling/settings, and performance charts before attendance. Metric definitions and comparison rules remain available through disclosures.
+## Verify the prototype
 
-The bottom navigation separates three activities:
-
-- **Train:** the calendar and dated workout execution. Tap a day to update the top card; all seven days fit across the screen. Sessions move between Ready, In progress, Paused, and Finished using Start, Pause, Resume, and Finish. Pause retains entries for Resume; Finish stops timers and preserves a read-only log, even for a partial workout. Past sessions without recorded attendance remain available to catch up unless explicitly Finished, with their original planned dates.
-- **Plan:** edit the sample program, session templates, exercises/order, prescribed sets and rep ranges, and weekly/date assignments. Changes remain drafts until Save plan. New workouts use the saved plan; started, recorded, or reordered workouts keep their own targets and order.
-- **Progress:** fictional exercise-performance history stays independent of current edits. Attendance separately shows logged/planned visits, on-time and delayed sessions, not-yet-logged sessions, and average delay for the previous 28 complete planned days, updated through today. Attendance uses fictional visits plus this visit’s working-set logs.
-
-Move exercises up/down in the Train session list when machines are busy. Only that dated workout changes; sets, notes, and timers stay with each exercise. Start/Resume follows the chosen order.
-
-Reps and weights, warm-up/working-set completion, seat notes, and execution/recovery timers belong to Train. Template prescriptions contain no actual logged sets or timers. Video access remains a secondary placeholder. The sample starts with A on Monday, B on Wednesday, and C on Friday. Logging at least one valid working set records attendance on the actual training day; Start, warm-ups, and future previews alone do not. A logged visit can be partial and is counted once. Past plans survive template edits/removal, and future dates keep their schedule. Unlogged sessions do not become zero strength observations. Everything resets on reload.
-
-The preview uses Material 3 button families: filled primary actions, tonal Add actions, outlined Pause, text actions, and consistent icon controls. Timer/metric segments include a selected check. Shapes, interaction states, bottom navigation, and touch targets follow the documented Android guidance. It is a browser prototype, not a native Android app. No build step or runtime package dependencies are needed. Google Fonts are optional; system fonts are the fallback.
-
-- [Specification](docs/spec.md): stable requirement IDs and acceptance criteria.
-- [Traceability](docs/traceability.md): spec ↔ source ↔ verification.
-- [Progression literature](docs/progression-research.md): performance versus workload, formulas and evidence limitations.
-- [Branding and psychological literature](docs/branding-research.md): “Your pace. Your progress.” and evidence for motivation.
-- [Android UI guidance](docs/android-ui.md): sources and preview component conventions.
-- [Interface review](docs/interface-review.md): user walkthrough findings and before/after measurements.
-
-Every feature change must update the specification before code and update traceability alongside it. Research proposals remain separate from delivered scope.
-
-## Verification
-
-Logic checks require Node and no dependencies:
+From the repository root, run the existing logic checks:
 
 ```sh
-node tests/logic.test.cjs
+node prototypes/web/tests/logic.test.cjs
 ```
 
-For browser interaction/layout checks, install development dependencies, then use a local Chromium or install Playwright's browser:
+Install and run browser checks within the prototype project:
 
 ```sh
+cd prototypes/web
 npm ci
 CHROMIUM_PATH=/usr/bin/chromium npm run test:browser
 ```
 
-Alternatively, run `npx playwright install chromium` and `npm run test:browser`. Browser checks write screenshots to the system temporary directory under `gym-assystant-previews`; set `PREVIEW_DIR` to change it. These checks validate the mockup, not real training content or Android background behavior.
+Alternatively, install Playwright's browser with `npx playwright install chromium` and run `npm run test:browser`. Screenshots are written to the system temporary directory; set `PREVIEW_DIR` to override it. These checks validate the browser mockup, not an Android app.
+
+## Development boundary
+
+Update the specification before changing features and maintain traceability alongside code. Research proposals are not automatically authorized features. The next implementation phase belongs under `android/` after scope is agreed; the prototype is not production source. See the [repository layout](docs/architecture/repository-layout.md).

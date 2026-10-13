@@ -105,6 +105,10 @@ The pending default is a mockup design assumption pending user preference. The p
 
 Statistics, attendance tracking with pending catch-up sessions, timers, calendar planning, and a separate plan manager are now in scope, superseding earlier exclusions. Social features, subscriptions, coaching, and notifications remain outside scope. No load-increase advice or personalized training prescription is implemented.
 
+## Repository locations
+
+The disposable mockup and its checks live in `prototypes/web/`. The future Android project location is `android/`, which currently contains documentation only. Specifications, research, design guidance, and review artifacts have distinct folders under `docs/`. The [repository layout](../architecture/repository-layout.md) records this organizational decision; it adds no product feature and starts no Android implementation.
+
 ## Change and traceability rules
 
 Write or update requirement IDs before changing features. Code anchors, `data-req` attributes, and [traceability.md](traceability.md) provide both mapping directions and verification. Tests check meaningful behavior, not merely presence of IDs. Traceability supports review; it cannot guarantee correctness by itself. Android delivery remains distinct from mockup delivery.

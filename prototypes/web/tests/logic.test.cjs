@@ -1,8 +1,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const data = require('../mockup/data.js');
-const metrics = require('../mockup/metrics.js');
-const timers = require('../mockup/timers.js');
+const data = require('../js/data.js');
+const metrics = require('../js/metrics.js');
+const timers = require('../js/timers.js');
 const context = data.context(data.catalog[0]);
 
 // GYM-010: expected outcomes derive from the spec's sample records and formulas.
@@ -91,7 +91,7 @@ test('GYM-012: recovery duration validates bounds and cannot change while runnin
 });
 
 // GYM-016: actual calendar outcomes rather than DOM presence.
-const calendar = require('../mockup/calendar.js');
+const calendar = require('../js/calendar.js');
 test('GYM-016: Monday-first weeks cross month, year, leap-day and DST boundaries', () => {
   assert.deepEqual(calendar.week('2026-10-12'), ['2026-10-12', '2026-10-13', '2026-10-14', '2026-10-15', '2026-10-16', '2026-10-17', '2026-10-18']);
   assert.equal(calendar.week('2027-01-01')[0], '2026-12-28');
@@ -125,8 +125,8 @@ test('GYM-016: an empty planning horizon produces an empty agenda', () => {
   assert.deepEqual(calendar.upcoming('2026-10-12', data.schedule, overrides), []);
 });
 
-const plan = require('../mockup/plan.js');
-const lifecycle = require('../mockup/session.js');
+const plan = require('../js/plan.js');
+const lifecycle = require('../js/session.js');
 test('GYM-017: state diagram admits only Start/Pause/Resume/Finish transitions', () => {
   const legal = { ready: { start: 'inProgress' }, inProgress: { pause: 'paused', finish: 'finished' }, paused: { resume: 'inProgress', finish: 'finished' }, finished: {} };
   for (const state of Object.keys(legal)) for (const action of ['start', 'pause', 'resume', 'finish']) {
@@ -175,7 +175,7 @@ test('GYM-017: partial Finish is terminal, preserves records without marking set
   assert.strictEqual(plan.openOccurrence(data.program, data.catalog, instance.date, 'session-A', instance), instance);
 });
 
-const attendance = require('../mockup/attendance.js');
+const attendance = require('../js/attendance.js');
 test('GYM-020: cohort excludes today/future, separates late visits, and retains original plans', () => {
   const definition = plan.clone(data.program);
   const records = attendance.planned(definition, '2026-10-12');

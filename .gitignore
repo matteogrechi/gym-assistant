@@ -1,1 +1,10 @@
+# Prototype dependencies
 node_modules/
+
+# Future Android local configuration and generated build files
+/android/.gradle/
+/android/.kotlin/
+/android/**/build/
+/android/local.properties
+/android/.idea/
+/android/**/*.iml

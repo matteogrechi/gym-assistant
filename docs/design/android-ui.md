@@ -10,7 +10,7 @@ Android distinguishes filled, filled tonal, outlined, and text buttons by emphas
 | --- | --- |
 | Open workout, Start/Resume/Finish session (Finish is outlined while Paused), timer Start/Pause/Resume, Save plan | Filled button |
 | Add session or existing catalog exercise to a plan | Filled tonal button |
-| Add exercise in the shared library | Filled button |
+| Add exercise in the shared library | Filled tonal button, same plus-icon component as Add plan |
 | Inline Add warm-up | Text button beside the set heading |
 | Download status JSON | Filled button |
 | Change save folder; download statistics CSV | Outlined button |

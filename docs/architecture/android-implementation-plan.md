@@ -1,6 +1,6 @@
 # Android implementation plan — gym assystant
 
-Status: design presented before native coding, 13 October 2026; specification revision 32. The user has requested implementation and entirely offline operation. No Android sources, manifest, Gradle scaffold, database, player or APK exists yet. Two isolated planning reviewers examined data durability and native runtime/UI; the coordinator owns these recommendations and their scope decisions.
+Status: design presented before native coding, 13 October 2026; specification revision 33. The user has requested implementation and entirely offline operation. No Android sources, manifest, Gradle scaffold, database, player or APK exists yet. Two isolated planning reviewers examined data durability and native runtime/UI; the coordinator owns these recommendations and their scope decisions.
 
 The [specification](../product/spec.md) remains the product source of truth. [Traceability](../product/traceability.md) distinguishes implemented browser evidence from planned Android work. The reviewed mockup supplies interaction/layout references, not production code. No WebView conversion is planned.
 

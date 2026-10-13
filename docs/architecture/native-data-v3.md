@@ -1,6 +1,6 @@
 # Native portable data contract — draft version 3
 
-Status: pre-implementation proposal linked to [the Android plan](android-implementation-plan.md), specification revision 32. No native serializer, importer, migration or database is implemented. The browser keeps emitting the existing [version-2 contract](data-formats.md). Format version 3, if finalized, is independent of app and Room schema versions.
+Status: pre-implementation proposal linked to [the Android plan](android-implementation-plan.md), specification revision 33. No native serializer, importer, migration or database is implemented. The browser keeps emitting the existing [version-2 contract](data-formats.md). Format version 3, if finalized, is independent of app and Room schema versions.
 
 ## Why a new version
 

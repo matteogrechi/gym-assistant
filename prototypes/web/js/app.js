@@ -1,5 +1,5 @@
 'use strict';
-/* global GymData, GymExerciseCatalog, GymMetrics, GymTimers, GymCalendar, GymPlan, GymAttendance, GymSession, GymSettings, GymPrograms, GymDialogs, GymSorting, GymCharts, GymSegments */
+/* global GymData, GymExerciseCatalog, GymMetrics, GymTimers, GymCalendar, GymPlan, GymAttendance, GymSession, GymSettings, GymPrograms, GymDialogs, GymSorting, GymCharts, GymSegments, GymPlanningUI */
 const byId = id => document.getElementById(id);
 // GYM-015: uniform decorative SVGs; the surrounding button provides its action name.
 const buttonIcon = name => {
@@ -422,6 +422,13 @@ byId('confirmFinishSession').addEventListener('click', () => {
   byId('finishSessionDialog').close();
   if (target) completeSession(target);
 });
+// GYM-015, GYM-025, GYM-026, GYM-028: both planning destinations use one shell.
+[
+  ['plans', 'addPlan', 'Add plan', 'planningTabs', 'savedPlans', 'plansTab'],
+  ['exerciseLibrary', 'addCatalogExercise', 'Add exercise', 'exerciseLibraryTabs', 'exerciseLibraryList', 'libraryExercisesTab']
+].forEach(([view, actionId, actionLabel, tabsId, listId, labelledBy]) => {
+  GymPlanningUI.mount(byId(view), { actionId, actionLabel, tabsId, listId, labelledBy, icon: buttonIcon });
+});
 // GYM-018, GYM-026: the selected editor uses its retained per-plan draft, separate from Train.
 let planDraft = null;
 let editingPlanId = GymData.library.activePlanId;
@@ -450,11 +457,11 @@ function renderPlans() {
   retainDraft();
   const savedIds = new Set(GymData.library.plans.map(item => item.id));
   const plans = [...GymData.library.plans, ...[...planDrafts.values()].filter(item => !savedIds.has(item.draft.id)).map(item => item.draft)];
-  byId('savedPlans').innerHTML = plans.map(item => {
-    const active = item.id === GymData.library.activePlanId;
-    const dirty = planDrafts.get(item.id)?.dirty;
-    return `<div class="plan-library-row"><button class="exercise-card" data-edit-plan="${escapeHtml(item.id)}"><span><strong>${escapeHtml(item.name)}</strong><small>${item.sessions.length} ${item.sessions.length === 1 ? 'session' : 'sessions'}${dirty ? ' · Unsaved changes' : ''}</small>${active ? '<span class="active-plan-tag">Active</span>' : ''}</span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button></div>`;
-  }).join('');
+  GymPlanningUI.renderList(byId('savedPlans'), plans.map(item => ({
+    id: item.id, title: item.name,
+    description: `${item.sessions.length} ${item.sessions.length === 1 ? 'session' : 'sessions'}${planDrafts.get(item.id)?.dirty ? ' · Unsaved changes' : ''}`,
+    badge: item.id === GymData.library.activePlanId ? 'Active' : null
+  })), { attribute: 'data-edit-plan', icon: buttonIcon });
 }
 // GYM-028, GYM-015: sibling planning sections share one navigation component.
 let planningSection = 'plans';
@@ -483,7 +490,9 @@ function showPlanning(next = planningSection, focusTab = false) {
   }
 }
 function renderExerciseLibrary() {
-  byId('exerciseLibraryList').innerHTML = GymData.catalog.map(item => `<div class="plan-library-row"><button class="exercise-card" data-catalog-exercise="${escapeHtml(item.id)}"><span><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.machine)}</small></span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button></div>`).join('');
+  GymPlanningUI.renderList(byId('exerciseLibraryList'), GymData.catalog.map(item => ({
+    id: item.id, title: item.name, description: item.machine
+  })), { attribute: 'data-catalog-exercise', icon: buttonIcon });
 }
 function focusLibraryExercise(id) {
   byId('exerciseLibraryList').querySelector(`[data-catalog-exercise="${CSS.escape(id)}"]`)?.focus();

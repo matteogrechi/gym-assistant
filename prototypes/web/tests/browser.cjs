@@ -1852,10 +1852,20 @@ const fs = require('node:fs/promises');
       await page.setViewportSize({width:390,height:844}); await page.emulateMedia({colorScheme:'light'}); await page.reload();
       await page.locator('#planNav').click();
       await expect(page.locator('#plansTab')).toHaveAttribute('aria-selected','true');
+      const addStyle = async id => page.locator('#'+id).evaluate(button => {
+        const css=getComputedStyle(button), header=button.closest('.page-heading').getBoundingClientRect();
+        const tabs=button.closest('[data-view]').querySelector('[role="tablist"]').getBoundingClientRect();
+        return {background:css.backgroundColor,color:css.color,borderRadius:css.borderRadius,height:button.getBoundingClientRect().height,font:css.font,padding:css.padding,gap:css.gap,headerHeight:header.height,tabsOffset:tabs.top-header.top,icons:button.querySelectorAll('svg.button-icon').length};
+      });
+      await expect(page.locator('#addPlan')).toHaveAccessibleName('Add plan');
+      const planAddStyle=await addStyle('addPlan');
       await expect(page.locator('#planningTabs')).toHaveAttribute('role','tablist');
       await expect(page.locator('#exercisesTab')).toHaveAttribute('role','tab');
       await page.locator('#plansTab').focus(); await page.keyboard.press('ArrowRight');
       await expect(page.locator('#exerciseLibrary')).toBeVisible();
+      await expect(page.locator('#addCatalogExercise')).toHaveAccessibleName('Add exercise');
+      assert.deepEqual(await addStyle('addCatalogExercise'),planAddStyle,'Sibling Add controls share appearance, icon and shell geometry');
+      assert.equal(planAddStyle.icons,1);
       await expect(page.locator('#libraryExercisesTab')).toBeFocused();
       await expect(page.locator('#libraryExercisesTab')).toHaveAttribute('aria-selected','true');
       await expect(page.locator('#libraryPlansTab')).toHaveAttribute('tabindex','-1');
@@ -1930,8 +1940,13 @@ const fs = require('node:fs/promises');
       const libraryLongId=await page.evaluate(()=>GymData.catalog.at(-1).id);
       for (const theme of ['light','dark']) {
         await page.emulateMedia({colorScheme:theme});
+        await expect.poll(()=>page.locator('html').getAttribute('data-theme')).toBe(theme);
         for (const width of [320,390,430]) {
           await page.setViewportSize({width,height:844});
+          const exerciseAddStyle=await addStyle('addCatalogExercise');
+          await page.locator('#libraryPlansTab').click();
+          assert.deepEqual(await addStyle('addPlan'),exerciseAddStyle,'Coherent sibling actions and tabs at each theme/width');
+          await page.locator('#exercisesTab').click();
           assert(await page.locator('#exerciseLibrary').evaluate(el=>el.scrollWidth<=el.clientWidth));
           for (const control of await page.locator('#exerciseLibrary button:visible').all()) {
             const bounds=await control.boundingBox(); assert(bounds.width>=48&&bounds.height>=48);

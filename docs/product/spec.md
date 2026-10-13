@@ -1,6 +1,6 @@
 # gym assystant — draft specification
 
-Status: revision 32, session actions confined to the session screen. The user has requested Android implementation and a detailed design plan before coding, with entirely offline operation. This revision simplifies exercise logging by confining session actions to VIEW-002 and retains the native design plan; Android code remains not started. The browser mockup is design evidence, not native implementation coverage.
+Status: revision 33, coherent shared planning libraries. The user has requested Android implementation and a detailed design plan before coding, with entirely offline operation. This revision aligns VIEW-004 and VIEW-016 with shared planning components and retains the native design plan; Android code remains not started. The browser mockup is design evidence, not native implementation coverage.
 
 ## Purpose
 
@@ -81,6 +81,12 @@ Navigation: Train/calendar → dated Session → Exercise; Plan → plan library
 The [Android implementation plan](../architecture/android-implementation-plan.md) selects the proposed stack, architecture, reusable UI, offline storage/media, timers, metrics, data durability, release boundaries and milestone verification. GYM-001–026 retain their reviewed UX and invariants; browser-only fixtures, reload resets, preview folders and placeholder playback do not define production persistence or real measurements.
 
 The offline requirement is authorized. Video source, real-history inclusion and explicit restore UI are separately identified product choices in the plan, with recommendations; unanswered choices are proposals, not delivered or implicitly approved features. The [draft native data contract](../architecture/native-data-v3.md) documents the proposed real-data format and migration boundaries before native serializers are written. Existing mockup version-2 downloads remain unchanged.
+
+## Revision 33: coherent planning library components
+
+GYM-015/025/026/028: VIEW-004 and VIEW-016 use one reusable library shell for the Plan heading, Add action, secondary-tab placement and content panel, plus one reusable navigation-row renderer. Both Add actions use the same filled-tonal button component with the same decorative 24px plus icon, 48px height, typography, padding, shape and interaction states. Retain explicit Add plan / Add exercise labels and accessible names; widths may follow label length. Reuse existing shared tab semantics and styles. Rows share title/metadata spacing, flat divider, trailing chevron and wrapping; only their meaningful content differs (session count/draft/Active versus machine variant). No additional badges or instructions are introduced.
+
+Preserve creation, safe browsing/activation, contextual exercise creation, retained drafts/section, details Back focus, and running workout data/clocks. Keep all existing view IDs and data/export meanings. Validate both screens side by side in light/dark at 320/390/430px, including matching Add appearance and header/tab alignment, keyboard focus and creation routes. This is a consistency/component change, not new product scope or Android implementation.
 
 ## Revision 32: session actions stay in Session
 

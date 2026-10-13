@@ -1,6 +1,15 @@
 # gym assystant repository instructions
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository. Keep the exact app name **gym assystant**. The current product artifact is a disposable browser mockup; native Android implementation is not started and begins only when the user authorizes that phase.
+Read the relevant sections of [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository. Keep the exact app name **gym assystant**. The current product artifact is a disposable browser mockup; native Android implementation is not started and begins only when the user authorizes that phase.
+
+## Focused context and subagents
+
+- For each distinct task, build a small working brief from the current request, standing constraints, relevant repository evidence and unfinished obligations. Preserve mid-task steering and existing authorization; omit unrelated completed-task history.
+- Read only applicable skill entrypoints and affected requirement/source/review sections. Search before expanding context, and keep tool/agent output concise.
+- The user authorizes selective subagents: use isolated context for independent, bounded work, disjoint file ownership and one integration/delivery coordinator. Keep trivial or tightly coupled changes local; reuse workers only for dependent follow-ups and close them when done.
+- Before a context transition, preserve a short handoff with changed paths, verified results and next actions. Do not claim chat history was cleared when the runtime cannot do that.
+
+For delegation, long-conversation task boundaries or handoffs, read the [context and delegation workflow](.agents/skills/gym-repo-delivery/references/task-context.md).
 
 ## Project skills
 

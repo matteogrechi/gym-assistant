@@ -7,6 +7,8 @@ description: "Use when changing or reviewing gym assystant browser screens, inte
 
 Paths below assume installation at `.agents/skills/gym-mockup-review/`; run commands from the repository root unless noted.
 
+Start from the current request/view IDs and standing constraints. Search and read affected sections rather than entire historical reviews or research. For delegation or handoffs, use [task-context.md](../gym-repo-delivery/references/task-context.md); a fresh reviewer receives the request, raw affected artifacts and constraints, without the implementation author’s conclusions. Review work must not overlap implementation writes.
+
 Read the affected requirements in [spec.md](../../../docs/product/spec.md), [android-ui.md](../../../docs/design/android-ui.md) and relevant findings in [interface-review.md](../../../docs/reviews/interface-review.md). For new Android design questions, verify current official Android/Material guidance. Read [branding-research.md](../../../docs/research/branding-research.md) only for branding changes; do not claim that a color alone guarantees gym attendance.
 
 ## Review as a person using the app

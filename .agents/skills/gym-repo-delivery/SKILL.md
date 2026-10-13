@@ -1,11 +1,15 @@
 ---
 name: gym-repo-delivery
-description: "Use when organizing gym assystant repository files, changing contributor guidance or project skills, selecting validation, or preparing commits and delivery. Follow project boundaries, protect existing work, use Conventional Commits and publish within existing user authorization."
+description: "Use when organizing gym assystant repository files, changing contributor guidance or project skills, managing task context/delegation, selecting validation, or preparing commits and delivery. Follow project boundaries, protect existing work, use Conventional Commits and publish within existing user authorization."
 ---
 
 # Gym repository delivery
 
-Read [CONTRIBUTING.md](../../../CONTRIBUTING.md) for commit syntax, types and verification rules, and [repository-layout.md](../../../docs/architecture/repository-layout.md) for file ownership. Paths assume installation at `.agents/skills/gym-repo-delivery/`.
+Read relevant sections of [CONTRIBUTING.md](../../../CONTRIBUTING.md) for commit syntax, types and verification rules, and [repository-layout.md](../../../docs/architecture/repository-layout.md) for file ownership. Paths assume installation at `.agents/skills/gym-repo-delivery/`.
+
+## Keep task context focused
+
+Build a brief from the current request, relevant repository evidence and standing constraints; retain unfinished work and authorization. Load only applicable sections/skills. For a distinct request after a long conversation, delegation or a context handoff, read [task-context.md](references/task-context.md). Prefer fresh isolated workers for independent bounded work, disjoint writes and one coordinator; simple tightly coupled edits remain local. Do not claim to clear chat history without runtime support.
 
 ## Work within repository boundaries
 

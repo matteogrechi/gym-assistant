@@ -61,7 +61,7 @@ Choose verification appropriate to the change:
 | Change | Verification |
 | --- | --- |
 | Mockup data, metrics, sessions or timers | Existing logic checks plus browser flows affected by the behavior. |
-| UI or interaction | Chromium browser suite and visual inspection of affected screens/states; refresh affected images in `docs/reviews/previews/`. Keep historical comparisons under `docs/reviews/history/`. |
+| UI or interaction | Chromium browser suite and visual inspection of affected screens/states; refresh affected images in `docs/reviews/previews/` when their documented appearance changes. Keep historical comparisons under `docs/reviews/history/`. |
 | Durable file contract or export | Relevant logic/browser checks and recovery with standard JSON/CSV readers. |
 | Documentation, file moves or skills | Resolve links/source paths; validate skill frontmatter/UI YAML where affected; check routing and removal of placeholders. Runtime moves also need affected runtime checks. |
 | Native Android, once authorized | Checks provided by the actual Android project; document device/emulator coverage and gaps. |
@@ -84,6 +84,12 @@ Install dependencies only when needed. Alternative browser setup and temporary s
 
 Before committing, inspect the actual worktree, branch and remote, review the diff, run `git diff --check` and stage explicit files. Preserve unrelated user changes and protected metadata. Push within existing user authorization to the verified `matteogrechi/gym-assistant` remote; use ordinary pushes and integrate remote advances without dropping work. Report the commit, delivery result, actual checks and any material gaps.
 
+## Task context and delegation
+
+Start distinct requests with a compact brief using the current request and relevant repository evidence. Retain standing instructions, authorization and unfinished work; load only affected sections. Use fresh-context subagents for independent work when delegation saves effort or provides a useful independent check, with disjoint file ownership and one coordinator responsible for integration and delivery. Small edits can stay local.
+
+The [context and delegation workflow](.agents/skills/gym-repo-delivery/references/task-context.md) defines delegation briefs, agent reuse/closure, handoffs and runtime limitations. Temporary task notes and full agent transcripts do not belong in tracked project documentation.
+
 ## Project skills
 
-The [AGENTS.md routing table](AGENTS.md) links three self-contained skills stored in `.agents/skills/`. Each has `SKILL.md` and optional UI metadata in `agents/openai.yaml`; the repository is their source of truth. Agents can read the linked instructions directly even when their client does not expose repository skills in its picker. No global installation is required. Skill structure follows the [official skill documentation](https://developers.openai.com/codex/skills/).
+The [AGENTS.md routing table](AGENTS.md) links three focused skills stored in `.agents/skills/`. Each has `SKILL.md` and optional UI metadata in `agents/openai.yaml`; the repository is their source of truth. Agents can read the linked instructions directly even when their client does not expose repository skills in its picker. No global installation is required. Skill structure follows the [official skill documentation](https://developers.openai.com/codex/skills/).

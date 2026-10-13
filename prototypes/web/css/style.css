@@ -437,8 +437,9 @@ details[open] > summary .disclosure-icon svg { transform: rotate(180deg); }
 .plan-library-row .exercise-card > span:first-child { min-width: 0; }
 .plan-library-row small { display: block; }
 .active-plan-tag { display: inline-block; margin-top: 8px; border-radius: var(--shape-full); padding: 4px 10px; background: var(--tonal-container); color: var(--on-surface); font-size: 11px; font-weight: 600; }
-.use-plan { flex-shrink: 0; padding-inline: 16px; }
-#libraryFeedback:empty { display: none; }
+.plan-activation { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--outline-variant); }
+.plan-activation .field-help { margin: 0; }
+#planActivationStatus:empty { display: none; }
 
 /* GYM-006, GYM-015: the native dialog's outer surface is a clipped phone-sized scrim. */
 .phone-modal {

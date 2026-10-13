@@ -383,7 +383,6 @@ byId('finishExerciseSession').addEventListener('click', finishSession);
 let planDraft = null;
 let editingPlanId = GymData.library.activePlanId;
 const planDrafts = new Map();
-let libraryMessage = '';
 let draftDate = selectedDate;
 let editingTemplateId = null;
 let planDirty = false;
@@ -408,11 +407,10 @@ function renderPlans() {
   retainDraft();
   const savedIds = new Set(GymData.library.plans.map(item => item.id));
   const plans = [...GymData.library.plans, ...[...planDrafts.values()].filter(item => !savedIds.has(item.draft.id)).map(item => item.draft)];
-  byId('libraryFeedback').textContent = libraryMessage;
   byId('savedPlans').innerHTML = plans.map(item => {
     const active = item.id === GymData.library.activePlanId;
     const dirty = planDrafts.get(item.id)?.dirty;
-    return `<div class="plan-library-row"><button class="exercise-card" data-edit-plan="${escapeHtml(item.id)}"><span><strong>${escapeHtml(item.name)}</strong><small>${item.sessions.length} ${item.sessions.length === 1 ? 'session' : 'sessions'}${dirty ? ' · Unsaved changes' : ''}</small>${active ? '<span class="active-plan-tag">Active</span>' : ''}</span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button>${!active && savedIds.has(item.id) ? `<button class="md-button md-outlined use-plan" data-use-plan="${escapeHtml(item.id)}" aria-label="Use ${escapeHtml(item.name)} as active plan">Use plan</button>` : ''}</div>`;
+    return `<div class="plan-library-row"><button class="exercise-card" data-edit-plan="${escapeHtml(item.id)}"><span><strong>${escapeHtml(item.name)}</strong><small>${item.sessions.length} ${item.sessions.length === 1 ? 'session' : 'sessions'}${dirty ? ' · Unsaved changes' : ''}</small>${active ? '<span class="active-plan-tag">Active</span>' : ''}</span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button></div>`;
   }).join('');
 }
 const templateDraft = () => planDraft.sessions.find(item => item.id === editingTemplateId);
@@ -421,6 +419,14 @@ const assignmentOptions = first => `<option value="${first}">${first === 'weekly
 function syncSaveActions() {
   document.querySelectorAll('.save-plan').forEach(button => { button.disabled = !planDirty || !planEditing; button.hidden = !planEditing; });
   ['editPlan', 'editTemplate'].forEach(id => { byId(id).hidden = planEditing; });
+  // GYM-026: activation is separate from library browsing and draft editing.
+  const saved = GymData.library.plans.some(item => item.id === editingPlanId);
+  const active = editingPlanId === GymData.library.activePlanId;
+  byId('planActivation').hidden = planEditing || !saved;
+  byId('planActivationStatus').textContent = active ? 'Active plan' : planDirty ? 'Save changes before making this plan active.' : '';
+  byId('makePlanActive').hidden = active;
+  byId('makePlanActive').disabled = planDirty;
+  byId('makePlanActive').setAttribute('aria-label', `Make ${planDraft.name} the active plan`);
 }
 // GYM-026: leave preview/navigation usable while hiding mutation controls.
 function applyPlanMode() {
@@ -506,7 +512,6 @@ function savePlan(event) {
   planDirty = false;
   planEditing = false;
   planMessage = 'Plan saved';
-  libraryMessage = '';
   retainDraft();
   renderPlan();
   renderProgram();
@@ -516,18 +521,16 @@ byId('planNav').addEventListener('click', () => { renderPlans(); showView('plans
 byId('backToPlans').addEventListener('click', () => { renderPlans(); showView('plans', 'planNav'); });
 byId('savedPlans').addEventListener('click', event => {
   const edit = event.target.closest('[data-edit-plan]');
-  if (edit) { openPlan(edit.dataset.editPlan); return; }
-  const use = event.target.closest('[data-use-plan]');
-  if (!use) return;
+  if (edit) openPlan(edit.dataset.editPlan);
+});
+// GYM-026: only a saved, clean, inactive plan in read-only detail can request activation.
+byId('makePlanActive').addEventListener('click', () => {
   retainDraft();
-  const target = GymData.library.plans.find(item => item.id === use.dataset.usePlan);
-  if (planDrafts.get(target.id)?.dirty) {
-    libraryMessage = 'Save this plan’s changes before using it.';
-    byId('libraryFeedback').textContent = libraryMessage;
-    return;
-  }
+  const target = GymData.library.plans.find(item => item.id === editingPlanId);
+  if (!target || planEditing || planDirty || target.id === GymData.library.activePlanId) return;
   pendingPlanId = target.id;
-  byId('activatePlanTitle').textContent = `Use ${target.name}?`;
+  byId('activatePlanTitle').textContent = `Make ${target.name} active?`;
+  byId('currentActivePlan').textContent = `Current plan: ${GymData.program.name}`;
   GymDialogs.open(byId('activatePlanDialog'));
 });
 // GYM-026: only this explicit confirmation changes the active plan.
@@ -538,9 +541,12 @@ byId('confirmPlanActivation').addEventListener('click', () => {
   try {
     GymPrograms.activate(GymData.library, id, planDrafts.get(id)?.dirty);
     byId('activatePlanDialog').close();
-    libraryMessage = ''; renderProgram(); renderPlans();
-    byId('savedPlans').querySelector(`[data-edit-plan="${id}"]`).focus();
-  } catch (error) { byId('activatePlanDialog').close(); libraryMessage = error.message; byId('libraryFeedback').textContent = libraryMessage; }
+    renderProgram(); renderPlan();
+    byId('backToPlans').focus();
+  } catch (error) {
+    byId('activatePlanDialog').close();
+    planMessage = error.message; byId('planFeedback').textContent = planMessage;
+  }
 });
 byId('addPlan').addEventListener('click', () => {
   retainDraft();

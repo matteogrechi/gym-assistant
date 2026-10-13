@@ -22,11 +22,11 @@ Android distinguishes filled, filled tonal, outlined, and text buttons by emphas
 | Remove session template | Standard icon button with a trash icon |
 | Set completion | Toggle icon button with checked fill and pressed semantics |
 | Inspect a dated performance point | Circular 48px target with selected ring, pressed semantics and keyboard support |
-| Execution/Recovery and progress metric selection | Joined single-choice segmented buttons with a selected check and tonal fill |
+| Execution/Recovery and progress metric selection | Joined single-choice segmented buttons: timer check/tonal fill; Progress tonal fill, heavier label and underline |
 
 Icon actions use consistent 24-pixel SVGs, 48-pixel targets, and accessible names. The completion control preserves its binary pressed state. [Android: Icon buttons](https://developer.android.com/develop/ui/compose/components/icon-button)
 
-Timer and metric choices form single-choice groups. Each selected segment shows a check as well as a tonal background, so selection is not conveyed by color alone. [Android: Segmented buttons](https://developer.android.com/develop/ui/compose/components/segmented-button)
+Timer and metric choices form single-choice groups. Timer selections show a check with tonal fill. Progress metric selections omit the check at the user’s request and use tonal fill, a heavier centered label and an inset underline, so their selection is not conveyed by color alone. Both retain pressed semantics. [Android: Segmented buttons](https://developer.android.com/develop/ui/compose/components/segmented-button)
 
 Lists, the calendar, and bottom navigation retain their own component shapes rather than adopting action-button pills. The theme scale is 8, 12, 16, and 28 CSS pixels plus full rounding. [Android: Material components](https://developer.android.com/design/ui/mobile/guides/components/material-overview)
 

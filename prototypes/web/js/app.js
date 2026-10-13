@@ -1,5 +1,5 @@
 'use strict';
-/* global GymData, GymMetrics, GymTimers, GymCalendar, GymPlan, GymAttendance, GymSession, GymSettings, GymPrograms, GymDialogs, GymSorting, GymCharts */
+/* global GymData, GymMetrics, GymTimers, GymCalendar, GymPlan, GymAttendance, GymSession, GymSettings, GymPrograms, GymDialogs, GymSorting, GymCharts, GymSegments */
 const byId = id => document.getElementById(id);
 // GYM-015: uniform decorative SVGs; the surrounding button provides its action name.
 const buttonIcon = name => {
@@ -249,7 +249,7 @@ function renderProgress() {
   byId('workingSets').textContent = GymMetrics.countSets(GymData.history, context);
   byId('comparisonContext').textContent = `${selected.machine} · ${selected.seat}. Sample history uses the same movement and 2 reps in reserve (estimated reps left). Warm-ups excluded.`;
   byId('metricExplanation').textContent = labels.explanation;
-  document.querySelectorAll('[data-metric]').forEach(button => button.setAttribute('aria-pressed', button.dataset.metric === metric));
+  metricSegments.select(metric);
 }
 // GYM-010: inspection changes the readout/guide; rerenders retain independent pan.
 function selectProgressObservation(date, reveal = false) {
@@ -308,7 +308,7 @@ function renderTimer() {
   byId('timerToggle').hidden = session().state === 'finished';
   byId('timerReset').hidden = session().state === 'finished';
   byId('timerToggle').textContent = running ? 'Pause' : state[mode].elapsed > 0 && !(mode === 'recovery' && seconds === 0) ? 'Resume' : 'Start';
-  ['execution', 'recovery'].forEach(item => byId(`${item}Mode`).setAttribute('aria-pressed', mode === item));
+  timerSegments.select(mode);
   const other = mode === 'execution' ? 'recovery' : 'execution';
   byId('timerContext').textContent = session().state === 'paused' ? 'Resume the session to run timers.' : state[other].startedAt !== null ? `${other === 'execution' ? 'Execution' : 'Recovery'} is also running.` : '';
 }
@@ -654,7 +654,12 @@ byId('templateForm').addEventListener('submit', savePlan);
 byId('progressNav').addEventListener('click', () => { renderProgress(); showView('progress', 'progressNav'); });
 byId('progressExercise').innerHTML = GymData.catalog.map((item, index) => `<option value="${index}">${item.name}</option>`).join('');
 byId('progressExercise').addEventListener('change', renderProgress);
-document.querySelectorAll('[data-metric]').forEach(button => button.addEventListener('click', () => { metric = button.dataset.metric; renderProgress(); }));
+// GYM-010, GYM-015: reuse the same selector as timer modes; callbacks own domain state.
+const metricSegments = GymSegments.mount(byId('progressMetrics'), {
+  label: 'Progress metric', value: metric,
+  options: ['reps', 'weight', 'volume'].map(value => ({ value, label: { reps: 'Reps', weight: 'Weight', volume: 'Volume' }[value], attributes: { 'data-metric': value } })),
+  onChange(value) { metric = value; renderProgress(); }
+});
 // GYM-003
 byId('seatInput').addEventListener('input', event => { if (session().state !== 'finished') { exercise().seat = event.target.value; session().hasEntries = true; } });
 // GYM-004, GYM-005, GYM-014
@@ -675,8 +680,12 @@ byId('addWarmup').addEventListener('click', () => {
   renderSets();
   byId('sets').querySelector(`[data-kind="warmups"][data-set="${exercise().warmups.length - 1}"][data-field="reps"]`).focus();
 });
-// GYM-012
-['execution', 'recovery'].forEach(mode => byId(`${mode}Mode`).addEventListener('click', () => { exercise().timers.mode = mode; renderTimer(); }));
+// GYM-012, GYM-015: use the shared single-choice component without merging timer state.
+const timerSegments = GymSegments.mount(byId('timerModes'), {
+  label: 'Timer type', value: 'execution',
+  options: [{ value: 'execution', label: 'Execution', attributes: { id: 'executionMode' } }, { value: 'recovery', label: 'Recovery', attributes: { id: 'recoveryMode' } }],
+  onChange(value) { exercise().timers.mode = value; renderTimer(); }
+});
 byId('timerToggle').addEventListener('click', () => {
   if (['paused', 'finished'].includes(session().state)) return;
   session().hasEntries = true;

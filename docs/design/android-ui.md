@@ -22,11 +22,11 @@ Android distinguishes filled, filled tonal, outlined, and text buttons by emphas
 | Remove session template | Standard icon button with a trash icon |
 | Set completion | Toggle icon button with checked fill and pressed semantics |
 | Inspect a dated performance point | Circular 48px target with selected ring, pressed semantics and keyboard support |
-| Execution/Recovery and progress metric selection | Joined single-choice segmented buttons: timer check/tonal fill; Progress tonal fill, heavier label and underline |
+| Execution/Recovery and progress metric selection | Shared text-only single-choice selector with tonal fill, heavier label and underline |
 
 Icon actions use consistent 24-pixel SVGs, 48-pixel targets, and accessible names. The completion control preserves its binary pressed state. [Android: Icon buttons](https://developer.android.com/develop/ui/compose/components/icon-button)
 
-Timer and metric choices form single-choice groups. Timer selections show a check with tonal fill. Progress metric selections omit the check at the user’s request and use tonal fill, a heavier centered label and an inset underline, so their selection is not conveyed by color alone. Both retain pressed semantics. [Android: Segmented buttons](https://developer.android.com/develop/ui/compose/components/segmented-button)
+Timer and metric choices use one shared single-choice component. Both omit checkmarks and use tonal fill, a heavier centered label and an inset underline, so selection is not conveyed by color alone. The shared renderer and keyboard/selection handler retain pressed semantics; view-specific spacing and timer/metric callbacks remain outside the component. [Android: Segmented buttons](https://developer.android.com/develop/ui/compose/components/segmented-button)
 
 Lists, the calendar, and bottom navigation retain their own component shapes rather than adopting action-button pills. The theme scale is 8, 12, 16, and 28 CSS pixels plus full rounding. [Android: Material components](https://developer.android.com/design/ui/mobile/guides/components/material-overview)
 
@@ -61,3 +61,5 @@ Revision 23 makes VIEW-007's dated plot explorable through continuous horizontal
 Revision 25 reviews all views and shared control families in both themes. Read-only text/select values now use wrapping text aligned with their labels, while native disabled fields retain their values for edit restoration. Editable text/number/select fields share the 8px small corner token. Prescription captions use centered 12px text with aligned input rows; summary separators stay with their reps/recovery phrase. Popup heading rows remove residual title margins so Close aligns with the title. Compact Progress spacing and concise guidance fit the complete card above bottom navigation at 390×844, retaining the 180px plot and 48px controls. Filled/tonal/outlined/text action roles, timer checks, text-only metric selection, static finished status and the fitted-calendar exception remain intentional distinctions.
 
 Revision 26 centers the VIEW-003 time value vertically with its action buttons. Meaningful completion feedback occupies a separate full-width row, preventing it from shifting the digits. Removed the duplicate Planned recovery duration line: the saved plan still supplies the initial countdown and Reset target. Both timer modes retain their top position, selected-state treatment and 48px controls.
+
+Revision 27 reuses `GymSegments.mount` for VIEW-003 timer modes and VIEW-007 metrics. The component creates the native button markup and handles selection plus Left/Right/Home/End focus; common CSS supplies shapes, state layers, centered labels and the same text-only selected treatment. Layout containers and domain callbacks remain separate, avoiding duplicate styles/handlers or coupling timer and performance state. The earlier timer check variant is replaced by the Progress treatment.

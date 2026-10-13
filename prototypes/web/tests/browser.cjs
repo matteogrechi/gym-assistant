@@ -161,6 +161,19 @@ const fs = require('node:fs/promises');
     await page.locator('[data-exercise="0"]').click();
     await expect(page.locator('#prescription')).toContainText('3 sets');
     await expect(page.locator('#exerciseSessionActions')).toBeVisible();
+    // GYM-015: the shared timer selector chooses/focuses options without running timers.
+    await page.locator('#executionMode').focus(); await page.keyboard.press('ArrowRight');
+    await expect(page.locator('#recoveryMode')).toHaveAttribute('aria-pressed','true');
+    await expect(page.locator('#recoveryMode')).toBeFocused();
+    await expect(page.locator('#timerValue')).toHaveText('01:30');
+    await page.keyboard.press('Home');
+    await expect(page.locator('#executionMode')).toHaveAttribute('aria-pressed','true');
+    await expect(page.locator('#timerValue')).toHaveText('00:00');
+    const selectedSelectorStyle = locator => locator.evaluate(el=>{
+      const s=getComputedStyle(el);return {font:s.fontSize,weight:s.fontWeight,line:s.lineHeight,color:s.color,fill:s.backgroundColor,decoration:s.textDecorationLine,height:el.getBoundingClientRect().height};
+    });
+    const timerSelectorStyle = await selectedSelectorStyle(page.locator('#executionMode'));
+
     const timerCentersAligned = () => page.evaluate(() => {
       const time=document.querySelector('#timerValue').getBoundingClientRect();
       return ['timerToggle','timerReset'].every(id=>{const action=document.getElementById(id).getBoundingClientRect();return Math.abs(time.top+time.height/2-action.top-action.height/2)<1;});
@@ -325,6 +338,16 @@ const fs = require('node:fs/promises');
     await expect(page.locator('#workingSets')).toHaveText('12');
     // GYM-010: inspect observations by touch and keyboard without changing history.
     const historyBeforeInspection = await page.evaluate(() => JSON.stringify(GymData.history));
+    // The same component gives Progress identical selection styles and keyboard behavior.
+    assert.deepEqual(await selectedSelectorStyle(page.locator('[data-metric="reps"]')),timerSelectorStyle);
+    await page.locator('[data-metric="reps"]').focus(); await page.keyboard.press('ArrowRight');
+    await expect(page.locator('[data-metric="weight"]')).toHaveAttribute('aria-pressed','true');
+    await expect(page.locator('#metricTitle')).toHaveText('Weight at 10 reps');
+    await expect(page.locator('[data-metric="weight"]')).toBeFocused();
+    await page.keyboard.press('End'); await expect(page.locator('[data-metric="volume"]')).toHaveAttribute('aria-pressed','true');
+    await expect(page.locator('#metricTitle')).toHaveText('Volume load');
+    await page.keyboard.press('Home'); await expect(page.locator('[data-metric="reps"]')).toHaveAttribute('aria-pressed','true');
+    await expect(page.locator('#progressMetrics [aria-pressed="true"]')).toHaveCount(1);
     const attendanceBeforeInspection = await page.locator('#attendanceTotal').textContent();
     await expect(page.locator('#metricDate')).toHaveAttribute('datetime','2026-10-05');
     await expect(page.locator('#chart [data-observation-date]')).toHaveCount(4);

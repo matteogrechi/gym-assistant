@@ -84,3 +84,9 @@ Verified switching with original workout reps/weights, warm-ups, setup, running 
 ## Revision 15: Spanish language preview
 
 Added Español to Settings and the native language scope. The mockup translates Settings, folder preview, overflow labels, Back and bottom navigation; other demo screens retain their explicit English-preview boundary. Checked manual Spanish and system es-ES/es-MX, 320/390/430px controls, retained workout entries/timers, untouched user-authored plan/draft names, disclosure indicators and JSON language preference. [Spanish Settings](previews/settings-spanish.png) shows the preview.
+
+## Revision 16: dialogs stay inside the phone
+
+Video and folder dialogs previously lived outside the phone and were centered over the browser presentation. Each is now a phone-owned native modal with a clipped, phone-sized scrim and a centered card. The desktop introduction remains undimmed. Cards retain at least 16px display margins and scroll internally on short displays; native modal blocking/Escape and close focus restoration remain, with explicit Tab wrapping for the single-action video dialog. Resize and actual page scrolling preserve frame alignment.
+
+Reviewed [desktop video](previews/video-desktop-contained.png), [desktop folder preview](previews/folder-desktop-contained.png), [phone folder preview](previews/folder-contained.png), and [dark folder preview](previews/folder-contained-dark.png). Browser checks passed for phone/card bounds, resizing between 320px/390px and desktop, actual page scrolling, a 320 × 260 short viewport, internal scrolling to actions, native modal state, Tab/Shift+Tab, Escape/button/scrim dismissal, folder cancellation, trigger focus and the existing full app workflows. The top-right overflow remains inside the header. Android implementation remains deferred.

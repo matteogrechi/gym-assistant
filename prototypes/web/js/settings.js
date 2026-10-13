@@ -1,5 +1,5 @@
 'use strict';
-/* global GymExports */
+/* global GymExports, GymDialogs */
 // GYM-022–024: Settings preview; real text downloads, with explicit native-storage boundaries.
 const GymSettings = (() => {
   const state = { language: 'system', theme: 'system', saveFolderPreview: null };
@@ -78,7 +78,7 @@ const GymSettings = (() => {
     byId('appTheme').addEventListener('change', event => { state.theme = event.target.value; applyTheme(); });
     byId('changeFolder').addEventListener('click', () => {
       byId('folderChoice').value = state.saveFolderPreview ?? 'Documents/gym assystant';
-      byId('folderDialog').showModal();
+      GymDialogs.open(byId('folderDialog'));
     });
     byId('cancelFolder').addEventListener('click', () => byId('folderDialog').close());
     byId('useFolder').addEventListener('click', () => {

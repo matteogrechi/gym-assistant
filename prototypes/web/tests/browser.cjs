@@ -20,6 +20,26 @@ const fs = require('node:fs/promises');
       Date.now = () => fixtureNow + (realNow() - initialNow) + window.clockOffset;
     });
     await page.goto(pathToFileURL(path.resolve(__dirname, '../index.html')).href);
+    // GYM-006: dialog surface and dimming layer belong to the simulated app window.
+    const checkPhoneDialog = async id => {
+      await expect(page.locator(`#${id}`)).toBeVisible();
+      assert(await page.locator(`#${id}`).evaluate(el => el.matches(':modal')));
+      await expect.poll(async () => page.evaluate(id => {
+        const phone = document.querySelector('.phone');
+        const p = phone.getBoundingClientRect(), d = document.getElementById(id).getBoundingClientRect();
+        return Math.max(Math.abs(d.left-(p.left+phone.clientLeft)),Math.abs(d.top-(p.top+phone.clientTop)),Math.abs(d.width-phone.clientWidth),Math.abs(d.height-phone.clientHeight));
+      },id)).toBeLessThan(1);
+      const geometry = await page.evaluate(id => {
+        const dialog=document.getElementById(id),d=dialog.getBoundingClientRect(),card=dialog.querySelector('.dialog-card'),c=card.getBoundingClientRect();
+        return {margin:Math.min(c.left-d.left,c.top-d.top,d.right-c.right,d.bottom-c.bottom),centerOffset:Math.abs((c.left+c.right)/2-(d.left+d.right)/2)};
+      },id);
+      assert(geometry.margin>=15.9,JSON.stringify(geometry));
+      assert(geometry.centerOffset<1);
+      await page.keyboard.press('Tab');
+      assert(await page.evaluate(id=>document.activeElement.closest('dialog')?.id===id,id));
+      await page.keyboard.press('Shift+Tab');
+      assert(await page.evaluate(id=>document.activeElement.closest('dialog')?.id===id,id));
+    };
     const openSettings = async () => {
       await page.locator('#overflowButton').click();
       await page.locator('#settingsMenuItem').click();
@@ -226,8 +246,27 @@ const fs = require('node:fs/promises');
     assert(await page.evaluate(() => document.getElementById('sets').compareDocumentPosition(document.getElementById('watchVideo')) & Node.DOCUMENT_POSITION_FOLLOWING));
     await page.locator('#watchVideo').click();
     await expect(page.locator('#videoTitle')).toHaveText('Leg press');
+    await checkPhoneDialog('videoDialog');
+    // Both a narrow phone and a desktop frame use the app's bounds, never the page center.
+    for (const viewport of [{width:320,height:844},{width:1440,height:980}]) {
+      await page.setViewportSize(viewport); await checkPhoneDialog('videoDialog');
+    }
+    await page.screenshot({path:path.join(previews,'video-desktop-contained.png')});
+    await page.evaluate(()=>{document.body.style.paddingBottom='240px';window.scrollTo(0,40);});
+    assert(await page.evaluate(()=>window.scrollY>=40));
+    await checkPhoneDialog('videoDialog');
+    await page.evaluate(()=>{window.scrollTo(0,0);document.body.style.paddingBottom='';});
+    await page.setViewportSize({width:390,height:844});
+    await checkPhoneDialog('videoDialog');
+    await page.screenshot({path:path.join(previews,'video.png')});
     await page.keyboard.press('Escape');
     await expect(page.locator('#videoDialog')).not.toBeVisible();
+    await expect(page.locator('#watchVideo')).toBeFocused();
+    await page.locator('#watchVideo').click();
+    const videoScrim = await page.locator('#videoDialog').boundingBox();
+    await page.mouse.click(videoScrim.x+8,videoScrim.y+8);
+    await expect(page.locator('#videoDialog')).not.toBeVisible();
+    await expect(page.locator('#watchVideo')).toBeFocused();
     // GYM-001, GYM-003, GYM-014: exercise/session state isolation and retention.
     await page.locator('#back').click();
     await expect(page.locator('#sessionCount')).toHaveText('1 / 9 working sets done');
@@ -692,6 +731,17 @@ const fs = require('node:fs/promises');
     await page.locator('#changeFolder').click();
     await expect(page.locator('#folderTitle')).toHaveText('Vista previa de carpeta');
     await expect(page.locator('#cancelFolder')).toHaveText('Cancelar');
+    await checkPhoneDialog('folderDialog');
+    await page.screenshot({path:path.join(previews,'folder-contained.png')});
+    await page.setViewportSize({width:320,height:260});
+    await checkPhoneDialog('folderDialog');
+    await page.locator('#useFolder').scrollIntoViewIfNeeded();
+    await expect(page.locator('#useFolder')).toBeInViewport();
+    assert(await page.locator('#folderDialog .dialog-card').evaluate(el=>el.scrollHeight>el.clientHeight));
+    await page.setViewportSize({width:1440,height:980});
+    await checkPhoneDialog('folderDialog');
+    await page.screenshot({path:path.join(previews,'folder-desktop-contained.png')});
+    await page.setViewportSize({width:390,height:844});
     await page.locator('#cancelFolder').click();
     assert.deepEqual(await page.evaluate(() => structuredClone([...sessionInstances.values()])), beforeSpanish);
     for (const width of [320,390,430]) {
@@ -723,9 +773,16 @@ const fs = require('node:fs/promises');
     await page.setViewportSize({ width: 390, height: 844 });
     await page.locator('#changeFolder').click();
     await page.locator('#folderChoice').selectOption('SD card/gym assystant');
+    await checkPhoneDialog('folderDialog');
+    await page.screenshot({path:path.join(previews,'folder-contained-dark.png')});
     await page.keyboard.press('Escape');
     await expect(page.locator('#saveFolder')).toHaveText('Nessuna cartella selezionata');
     await expect(page.locator('#changeFolder')).toBeFocused();
+    await page.locator('#changeFolder').click();
+    const folderScrim = await page.locator('#folderDialog').boundingBox();
+    await page.mouse.click(folderScrim.x+8,folderScrim.y+8);
+    await expect(page.locator('#folderDialog')).not.toBeVisible();
+    await expect(page.locator('#saveFolder')).toHaveText('Nessuna cartella selezionata');
     await page.locator('#changeFolder').click();
     await page.locator('#folderChoice').selectOption('Documents/gym assystant');
     await page.locator('#useFolder').click();
@@ -1019,7 +1076,7 @@ const fs = require('node:fs/promises');
     await expect(page.locator('[data-edit-plan]')).toHaveCount(2);
     await expect(page.locator('[data-edit-plan="foundations"]')).toContainText('Active');
     assert.deepEqual(errors, []);
-    console.log('PASS: Spanish selection/system variants, translated controls, retained data and export preference, narrow layouts; multiple-plan browsing/creation/draft isolation/activation, original workout and future-order/timer retention, old-plan catch-up/cohort ownership, v2 library/draft exports and reload reset; consistent Back, Save/draft states, static finished status, empty-focus subtitle and numeric keyboard entry; top-right overflow menu, keyboard/outside dismissal and retained screen/scroll/drafts/timers, three bottom destinations; settings language/theme/system following, folder preview/cancel, JSON/CSV/guide downloads, complete non-mutating snapshots, unchanged metric exports, narrow Settings targets, reload reset; pending catch-up sessions and planned/actual attendance, single-count visits, preview/warm-up exclusion, protected denominators and past prescriptions, workout reordering with retained logs/running timers, plan/date isolation and reordered preview retention, session Start/Pause/Resume/Finish, paused timer isolation, selected-date card without popup, fitted seven-day week, separate plan editing, prescription snapshots, stable session IDs, today/future calendar, date assignment, week navigation, dated log isolation, program navigation, set logging/validation, unified warm-ups, timers, secondary video, progress metrics, state isolation, mobile widths, bottom navigation, standard 48px targets, reload reset.');
+    console.log('PASS: phone-contained video/folder overlays and cards, desktop/mobile resize/scroll, short-height internal scrolling, native modal focus/Escape/scrim dismissal; Spanish selection/system variants, translated controls, retained data and export preference, narrow layouts; multiple-plan browsing/creation/draft isolation/activation, original workout and future-order/timer retention, old-plan catch-up/cohort ownership, v2 library/draft exports and reload reset; consistent Back, Save/draft states, static finished status, empty-focus subtitle and numeric keyboard entry; top-right overflow menu, keyboard/outside dismissal and retained screen/scroll/drafts/timers, three bottom destinations; settings language/theme/system following, folder preview/cancel, JSON/CSV/guide downloads, complete non-mutating snapshots, unchanged metric exports, narrow Settings targets, reload reset; pending catch-up sessions and planned/actual attendance, single-count visits, preview/warm-up exclusion, protected denominators and past prescriptions, workout reordering with retained logs/running timers, plan/date isolation and reordered preview retention, session Start/Pause/Resume/Finish, paused timer isolation, selected-date card without popup, fitted seven-day week, separate plan editing, prescription snapshots, stable session IDs, today/future calendar, date assignment, week navigation, dated log isolation, program navigation, set logging/validation, unified warm-ups, timers, secondary video, progress metrics, state isolation, mobile widths, bottom navigation, standard 48px targets, reload reset.');
     console.log(`Previews: ${previews}`);
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

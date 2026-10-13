@@ -1,5 +1,5 @@
 'use strict';
-/* global GymData, GymMetrics, GymTimers, GymCalendar, GymPlan, GymAttendance, GymSession, GymSettings, GymPrograms */
+/* global GymData, GymMetrics, GymTimers, GymCalendar, GymPlan, GymAttendance, GymSession, GymSettings, GymPrograms, GymDialogs */
 const byId = id => document.getElementById(id);
 // GYM-015: uniform decorative SVGs; the surrounding button provides its action name.
 const buttonIcon = name => {
@@ -188,7 +188,7 @@ function toggleSet(index, kind) {
 // GYM-002
 function openVideo() {
   byId('videoTitle').textContent = exercise().name;
-  byId('videoDialog').showModal();
+  GymDialogs.open(byId('videoDialog'));
 }
 // GYM-010: fictional immutable historical observations, never today's editable samples.
 function renderProgress() {
@@ -587,10 +587,6 @@ setInterval(() => {
 // GYM-002, GYM-006
 byId('watchVideo').addEventListener('click', openVideo);
 byId('closeVideo').addEventListener('click', () => byId('videoDialog').close());
-byId('videoDialog').addEventListener('click', event => {
-  const bounds = event.currentTarget.getBoundingClientRect();
-  if (event.target === event.currentTarget && (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom)) event.currentTarget.close();
-});
 renderProgram();
 
 // GYM-022–024: all exports use current state, not the selected chart or a saved demo fixture.

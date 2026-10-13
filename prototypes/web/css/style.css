@@ -135,7 +135,7 @@ select { width: 100%; padding: 12px; color: var(--on-surface); border: 1px solid
 .stat-row { display: flex; align-items: center; justify-content: space-between; padding: 20px 0 12px; font-size: 12px; gap: 15px; }
 .stat-row strong { font-size: 23px; }
 dialog { border: 0; border-radius: var(--shape-extra-large); padding: 25px; width: min(380px, calc(100% - 32px)); color: var(--on-surface); background: var(--surface); box-shadow: 0 20px 80px #0004; }
-dialog::backdrop { background: var(--scrim); backdrop-filter: blur(5px); }
+dialog::backdrop { background: transparent; }
 dialog h2 { font-size: 24px; }
 dialog p { font-size: 13px; }
 .video-placeholder { background: var(--on-surface); border-radius: 13px; color: var(--accent); text-align: center; padding: 30px 10px; margin-bottom: 23px; }
@@ -319,7 +319,7 @@ summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; bo
 .dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .dialog-heading h2 { margin: 0; }
 #videoDialog .video-placeholder { margin: 12px 0 16px; }
-#videoDialog > p { margin-bottom: 0; }
+#videoDialog .dialog-card > p { margin-bottom: 0; }
 
 .finished-review .set-row [data-toggle]:disabled { opacity: 1; }
 
@@ -412,3 +412,13 @@ details[open] > summary .disclosure-icon svg { transform: rotate(180deg); }
 .active-plan-tag { display: inline-block; margin-top: 8px; border-radius: var(--shape-full); padding: 4px 10px; background: var(--tonal-container); color: var(--on-surface); font-size: 11px; font-weight: 600; }
 .use-plan { flex-shrink: 0; padding-inline: 16px; }
 #libraryFeedback:empty { display: none; }
+
+/* GYM-006, GYM-015: the native dialog's outer surface is a clipped phone-sized scrim. */
+.phone-modal {
+  position: fixed; inset: auto; left: var(--modal-left); top: var(--modal-top);
+  width: var(--modal-width); height: var(--modal-height); max-width: none; max-height: none;
+  margin: 0; border: 0; padding: 16px; border-radius: var(--modal-radius);
+  background: var(--scrim); box-shadow: none; overflow: hidden;
+}
+.phone-modal[open] { display: grid; grid-template-rows: minmax(0, 1fr); place-items: center; }
+.dialog-card { width: min(360px, 100%); min-width: 0; min-height: 0; max-height: 100%; overflow-y: auto; padding: 24px; border-radius: var(--shape-extra-large); background: var(--surface); box-shadow: 0 12px 32px #0004; overscroll-behavior: contain; }

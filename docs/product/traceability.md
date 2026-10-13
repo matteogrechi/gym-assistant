@@ -1,6 +1,6 @@
 # Bidirectional traceability
 
-Revision 15. All Android delivery is **not started**. “Covered” below means the disposable mockup meets the acceptance criteria in [spec.md](spec.md), not that the Android product is implemented. Search a requirement ID in source comments or `data-req` attributes to trace code back to scope.
+Revision 16. All Android delivery is **not started**. “Covered” below means the disposable mockup meets the acceptance criteria in [spec.md](spec.md), not that the Android product is implemented. Search a requirement ID in source comments or `data-req` attributes to trace code back to scope.
 
 | Requirement | Source anchors / artifact | Verification | Mockup state |
 | --- | --- | --- | --- |
@@ -9,7 +9,7 @@ Revision 15. All Android delivery is **not started**. “Covered” below means 
 | GYM-003 | `app.js`: `seatInput`, `renderExercise`; `app.js`: `getSession`; `plan.js`: `openOccurrence` | Browser: edits retained; other exercises/sessions isolated | Covered |
 | GYM-004 | `app.js`: `setRow`, `updateSet`; `index.html`: `sets`; CSS: rep emphasis | Browser: rep/weight edits, negative/fractional/empty rejection, navigation retention | Covered |
 | GYM-005 | `app.js`: `toggleSet`, `completed`, `renderSession`, `renderSets` | Browser: working-set count changes, warm-up completion does not inflate it | Covered; production behavior proposed |
-| GYM-006 | `index.html`: shell/disclosures/dialog; `style.css`; `app.js`: `showView` | Browser: 320/390/430px, focus/navigation, reload reset, no page errors | Covered |
+| GYM-006 | `index.html`: phone-owned dialog shells/cards; `dialogs.js`: native modal opening and resize/scroll alignment; `style.css`: clipped phone scrim and scrollable cards; `app.js`: `showView`/video opening; `settings.js`: folder opening | Browser: desktop/phone popup bounds, short-height internal scrolling, native focus/Escape/scrim dismissal and trigger return; 320/390/430px, focus/navigation, reload reset, no page errors | Covered |
 | GYM-007 | `index.html`: browser title, wordmarks | Browser: title and visible branding | Covered |
 | GYM-008 | `data.js`: program/session/prescription; `app.js`: `renderProgram`, `openSession`; `index.html`: program/bottom navigation | Browser: three session templates, distinct ordering and rep targets | Covered; template editing in GYM-018 |
 | GYM-009 | `index.html`: exercise order; CSS: set widths/font sizes | Browser: reps first, set log before secondary video; screenshot review confirms timer at the top | Covered |
@@ -45,7 +45,7 @@ JavaScript filenames above are under `prototypes/web/js/`; `index.html` is under
 | Metric selector, fictional histories, chart, counts, context/gaps | GYM-010 |
 | Execution/recovery selectors, clock state, duration, start/pause/reset/completion | GYM-012 |
 | Wordmark, promise, copy, palette and typography | GYM-007, GYM-013 |
-| Responsive shell, disclosures, keyboard focus and dialog dismissal | GYM-006 |
+| Responsive shell, phone-bounded modal surfaces/scrims, resize/scroll alignment, keyboard focus and dismissal | GYM-006 |
 | Shared button families, SVG icons, state layers, selected segment checks, bottom navigation, shape tokens, target dimensions | GYM-008, GYM-010, GYM-015 |
 | Selected-date card, fitted week, Plan date assignment and upcoming agenda; per-date session/timer state | GYM-016 |
 | Session Ready/In progress/Paused/Finished states, Start/Pause/Resume/Finish actions, terminal log review | GYM-017 |
@@ -99,3 +99,5 @@ Revision 13, 2026-10-13: enlarged all disclosure affordances under GYM-025 after
 Revision 14, 2026-10-13: specified GYM-026 before mockup changes, then added a program library with two fictional defaults, separate editors/draft caches, new-plan creation, and explicit saved-plan activation. All 32 logic checks and the Chromium regression suite passed. Verified inactive edits/saves do not activate; dirty targets cannot activate; new drafts/renames survive navigation; untouched dates follow the active schedule; original working/warm-up logs, seat notes, prescriptions, order and running timers survive activation; reordered future Ready snapshots remain pinned; old pending sessions retain program/date and attendance; a civil-date rollover preserves original cohort ownership. Version-2 JSON contains three saved plans and two distinct drafts in the exercised download; standard Python reads it and all 59 CSV rows with program IDs, 12 original planned sessions and seven logged visits. Library/editor targets fit 320/390/430px. Reviewed 52 light/dark screen/state captures, including the new library, without sub-48px standard controls. Updated recovery/migration documentation and previews. All Android delivery remains not started.
 
 Revision 15, 2026-10-13: updated GYM-022 before adding Español to the language picker and all Settings/navigation preview strings, including folder/overflow/Back labels and download feedback. System matching now resolves supported English/Italian/Spanish base languages across regional variants and falls back to English. Chromium verified manual Spanish, es-ES/es-MX, controls/labels and lang metadata, retained user data/names, disclosure indicators, exported `settings.language=es`, 320/390/430px targets and existing workflows. Added the Spanish Settings preview. Full native localization remains deferred with Android implementation.
+
+Revision 16, 2026-10-13: updated GYM-006 before moving both dialogs into the phone and adding `dialogs.js`. Native modal shells now provide a clipped phone-sized scrim, centered/scrollable cards and position updates on resize/page/visual-viewport changes; the page-wide backdrop is transparent. Preserved Escape, button/backdrop close and trigger focus, and added Tab wrapping. Chromium regression checks passed for desktop/mobile containment, 16px card margins, actual page scrolling, short-height internal scrolling, focus and existing functionality. Reviewed the new phone/desktop/dark dialog screenshots. No Android implementation was added.

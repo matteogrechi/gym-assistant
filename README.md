@@ -13,8 +13,10 @@ Visit http://localhost:8080/mockup/ . On a phone, use the computer's LAN address
 The bottom navigation separates three activities:
 
 - **Train:** the calendar and dated workout execution. Tap a day to update the top card; all seven days fit across the screen. Start, Continue, Stop, and Resume retain that workout’s logs and timers.
-- **Plan:** edit the sample program, session templates, exercises/order, prescribed sets and rep ranges, and weekly/date assignments. Changes remain drafts until Save plan. New workouts use the saved plan; sessions with recorded entries keep their original targets.
+- **Plan:** edit the sample program, session templates, exercises/order, prescribed sets and rep ranges, and weekly/date assignments. Changes remain drafts until Save plan. New workouts use the saved plan; started, recorded, or reordered workouts keep their own targets and order.
 - **Progress:** explicitly fictional historical performance, independent of current edits.
+
+Move exercises up/down in the Train session list when machines are busy. Only that dated workout changes; sets, notes, and timers stay with each exercise. Start/Continue/Resume follows the chosen order.
 
 Reps and weights, warm-up/working-set completion, seat notes, and execution/recovery timers belong to Train. Template prescriptions contain no actual logged sets or timers. Video access remains a secondary placeholder. The sample starts with A on Monday, B on Wednesday, and C on Friday. Everything resets on reload.
 

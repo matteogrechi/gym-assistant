@@ -1,6 +1,6 @@
 # Bidirectional traceability
 
-Revision 4. All Android delivery is **not started**. “Covered” below means the disposable mockup meets the acceptance criteria in [spec.md](spec.md), not that the Android product is implemented. Search a requirement ID in source comments or `data-req` attributes to trace code back to scope.
+Revision 5. All Android delivery is **not started**. “Covered” below means the disposable mockup meets the acceptance criteria in [spec.md](spec.md), not that the Android product is implemented. Search a requirement ID in source comments or `data-req` attributes to trace code back to scope.
 
 | Requirement | Source anchors / artifact | Verification | Mockup state |
 | --- | --- | --- | --- |
@@ -22,6 +22,7 @@ Revision 4. All Android delivery is **not started**. “Covered” below means t
 | GYM-016 | `calendar.js`: `today`, `week`, `plan`, `upcoming`; `data.js`: sample schedule; `app.js`: `renderCalendar`, `getSession`, date/open handlers; `index.html`: `sessionCard`, week/agenda; `app.js`: Plan scheduling controls | Logic: civil dates, week boundaries, one-date overrides, upcoming/empty state; browser: date taps update the top card without a popup; all seven dates fit; separate Plan assignments and isolated dated logs | Calendar covered; schedule editing in GYM-018; persistence deferred |
 | GYM-017 | `app.js`: `renderSession`, `startSession` handler, `stopSession`, per-date lifecycle state; `index.html`: session start action | Browser: Start/Continue select unfinished exercise; Stop pauses all occurrence timers and preserves entries; Resume retains them; stopped timers are disabled; dates and reload isolate/reset state | Covered in mockup |
 | GYM-018 | `plan.js`: `validate`, `apply`, `removeSession`, `openOccurrence`; `data.js`: prescribed templates; `app.js`: `renderPlan`, `renderTemplate`, `savePlan`, draft/schedule handlers, `plannedForDate`; `index.html`: Plan/Plan session views and Plan navigation | Logic/browser: draft validation, CRUD/reordering, schedule assignments, stable IDs, new/untouched previews reflect saves, recorded sessions survive edits/removal | Covered in mockup; multiple plans and persistence deferred |
+| GYM-019 | `plan.js`: `moveExercise`, `locked`; `app.js`: `renderSession`, exercise-list move handler, Start/Continue selection; `index.html`: execution-order help/status; CSS: `.workout-order-controls` | Logic/browser: data identity and running timer retention, plan/date isolation, boundary controls, adjusted Ready snapshots survive reopening/plan saves, Start/Continue/Resume follow order, 320/390/430px targets | Covered in mockup; persistence deferred |
 
 Source filenames above are under `mockup/`. Meaningful automated checks live in [logic.test.cjs](../tests/logic.test.cjs) and [browser.cjs](../tests/browser.cjs). `package.json` and its lockfile support those checks only; the mockup itself has no build or runtime package dependency.
 
@@ -42,6 +43,7 @@ Source filenames above are under `mockup/`. Meaningful automated checks live in 
 | Selected-date card, fitted week, Plan date assignment and upcoming agenda; per-date session/timer state | GYM-016 |
 | Session Start/Continue/Stop/Resume actions and isolated lifecycle state | GYM-017 |
 | Plan drafts, session/exercise CRUD and order, working-set/rep prescriptions, weekly/date assignments, immutable execution copies | GYM-018 |
+| Dated workout permutation, retained exercise identity and selection, order announcement | GYM-019 |
 | Research briefs and evidence boundaries | GYM-011, GYM-013, GYM-015 |
 
 No e1RM, RIR-entry, adherence statistics, multiple plans, persistent history, notifications, streaks, or recommendations have been added. Research proposals do not count as UI requirements.
@@ -59,3 +61,5 @@ Revision 3, 2026-10-12: 12 logic tests passed, including week/year/leap-day/DST 
 Calendar selection update, 2026-10-12: Chromium checks passed for direct top-card updates without a calendar popup, selected-date session navigation, inline assignment, empty days, Today/week/agenda navigation, and a seven-day row fully visible without scrolling at 320/360/390/430px. Standard controls retain 48px targets; narrow calendar cells follow the documented width exception. Previews were refreshed and reviewed.
 
 Revision 4, 2026-10-13: 16 logic tests passed, including plan/actual separation, stable identities, draft validation, preview refresh, and retention of recorded or stopped snapshots after template removal. Chromium checks passed for session/exercise editing and ordering, weekly/date assignments, Train/Plan/Progress navigation, save validation, updated future workouts, retained active logs, deletion cleanup, and narrow Plan layouts (320/390/430px) with standard touch targets. Plan and template-editor previews were added; existing previews were refreshed and reviewed.
+
+Revision 5, 2026-10-13: 18 logic tests passed. Chromium checks passed for dated workout permutation, preserved working/warm-up logs and seat notes, running timer continuity, Start/Continue/Resume using the selected order, reordering while stopped, disabled boundary controls, untouched plan/other dates, and reordered Ready previews surviving navigation and plan saves. Session controls retain 48px targets at 320/390/430px. The reordered-session preview was added and reviewed; existing previews were refreshed.

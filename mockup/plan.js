@@ -42,7 +42,17 @@ const GymPlan = (() => {
     for (const date of Object.keys(draft.dateAssignments)) if (draft.dateAssignments[date] === id) draft.dateAssignments[date] = null;
     return true;
   }
-  const locked = instance => instance && (instance.state !== 'ready' || instance.hasEntries);
+  const locked = instance => instance && (instance.state !== 'ready' || instance.hasEntries || instance.orderChanged);
+  // GYM-019: move the existing exercise object, retaining all occurrence data.
+  function moveExercise(instance, entryId, direction) {
+    const index = instance.exercises.findIndex(item => item.entryId === entryId);
+    const next = index + direction;
+    if (![1, -1].includes(direction) || index < 0 || next < 0 || next >= instance.exercises.length) return -1;
+    const [item] = instance.exercises.splice(index, 1);
+    instance.exercises.splice(next, 0, item);
+    instance.orderChanged = true;
+    return next;
+  }
   function openOccurrence(program, catalog, date, templateId, existing) {
     if (locked(existing)) return existing;
     const template = program.sessions.find(item => item.id === templateId);
@@ -50,7 +60,7 @@ const GymPlan = (() => {
     return {
       date, templateId, programName: program.name, planRevision: program.revision,
       name: template.name, focus: template.focus, label: template.label,
-      state: 'ready', hasEntries: false,
+      state: 'ready', hasEntries: false, orderChanged: false,
       exercises: template.exercises.map(item => {
         const machine = catalog.find(entry => entry.id === item.exerciseId);
         return {
@@ -61,6 +71,6 @@ const GymPlan = (() => {
       })
     };
   }
-  return { clone, validate, apply, removeSession, locked, openOccurrence };
+  return { clone, validate, apply, removeSession, locked, openOccurrence, moveExercise };
 })();
 if (typeof module !== 'undefined') module.exports = GymPlan;

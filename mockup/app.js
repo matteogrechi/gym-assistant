@@ -69,7 +69,7 @@ function openSession(templateId, date) {
   renderSession();
   showView('session', 'backProgram');
 }
-// GYM-001, GYM-005, GYM-008
+// GYM-001, GYM-005, GYM-008, GYM-019
 function renderSession() {
   byId('sessionName').textContent = session().name;
   byId('sessionProgramName').textContent = session().programName.toUpperCase();
@@ -81,7 +81,8 @@ function renderSession() {
   byId('startSession').innerHTML = `${action} <span aria-hidden="true">↗</span>`;
   byId('stopSession').hidden = session().state !== 'active';
   byId('sessionStatus').textContent = session().state === 'stopped' ? 'Stopped · your entries are kept' : session().state === 'active' ? (done === total ? 'All working sets logged · session active' : sessionDate > todayDate ? 'Preview in progress' : 'In progress') : 'Ready to start';
-  byId('exerciseList').innerHTML = session().exercises.map((item, index) => `<button class="exercise-card" data-exercise="${index}"><span class="exercise-number">0${index + 1}</span><span><strong>${escapeHtml(item.name)}</strong><small>${item.sets.length} × ${escapeHtml(item.target)} reps · ${completed(item)}/3 done</small></span><span class="chevron" aria-hidden="true">↗</span></button>`).join('');
+  byId('exerciseList').innerHTML = session().exercises.map((item, index) => `<div class="workout-exercise-row"><button class="exercise-card" data-exercise="${index}"><span class="exercise-number">${String(index + 1).padStart(2, '0')}</span><span><strong>${escapeHtml(item.name)}</strong><small>${item.sets.length} × ${escapeHtml(item.target)} reps · ${completed(item)}/${item.sets.length} done</small></span><span class="chevron" aria-hidden="true">↗</span></button><div class="workout-order-controls"><button data-move-exercise="${escapeHtml(item.entryId)}" data-direction="-1" aria-label="Move ${escapeHtml(item.name)} earlier" ${index === 0 ? 'disabled' : ''}>↑</button><button data-move-exercise="${escapeHtml(item.entryId)}" data-direction="1" aria-label="Move ${escapeHtml(item.name)} later" ${index === session().exercises.length - 1 ? 'disabled' : ''}>↓</button></div></div>`).join('');
+  byId('executionOrderStatus').textContent = '';
 }
 function selectExercise(index) {
   exerciseIndex = index;
@@ -176,6 +177,22 @@ function renderTimer() {
   byId('timerContext').textContent = session().state === 'stopped' ? 'Session stopped · resume from the session screen.' : state[other].startedAt !== null ? `Your ${other} timer is also running.` : 'For this exercise · manual controls';
 }
 byId('exerciseList').addEventListener('click', event => {
+  // GYM-019: only execution order changes; keep the selected object's identity.
+  const move = event.target.closest('[data-move-exercise]');
+  if (move) {
+    const selected = exercise();
+    const entryId = move.dataset.moveExercise;
+    const direction = Number(move.dataset.direction);
+    const next = GymPlan.moveExercise(session(), entryId, direction);
+    if (next < 0) return;
+    exerciseIndex = Math.max(0, session().exercises.indexOf(selected));
+    renderSession();
+    byId('executionOrderStatus').textContent = `${session().exercises[next].name} moved to position ${next + 1}. This workout only.`;
+    const row = byId('exerciseList').children[next];
+    const button = row.querySelector(`[data-direction="${direction}"]`);
+    (button.disabled ? row.querySelector('[data-exercise]') : button).focus();
+    return;
+  }
   const card = event.target.closest('[data-exercise]');
   if (card) selectExercise(Number(card.dataset.exercise));
 });

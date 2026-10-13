@@ -126,6 +126,45 @@ test('GYM-016: an empty planning horizon produces an empty agenda', () => {
 });
 
 const plan = require('../mockup/plan.js');
+test('GYM-019: permutation retains exercise identity, logs and running timers; plan and other date stay unchanged', () => {
+  const definition = plan.clone(data.program);
+  const workout = plan.openOccurrence(definition, data.catalog, '2026-10-12', 'session-A');
+  const other = plan.openOccurrence(definition, data.catalog, '2026-10-19', 'session-A');
+  const leg = workout.exercises[0];
+  leg.seat = 'Seat 7';
+  leg.sets[0] = { reps: 8, weight: 42.5, done: true };
+  leg.warmups = [{ reps: 15, weight: 20, done: true }];
+  leg.timers = timers.create();
+  timers.start(leg.timers, 'execution', 1000);
+  const before = plan.clone(definition);
+  assert.equal(plan.moveExercise(workout, 'A-leg', 1), 1);
+  assert.strictEqual(workout.exercises[1], leg);
+  assert.deepEqual(leg.sets[0], { reps: 8, weight: 42.5, done: true });
+  assert.equal(leg.seat, 'Seat 7');
+  assert.equal(leg.warmups[0].reps, 15);
+  assert.equal(timers.read(leg.timers, 'execution', 6000), 5);
+  assert.equal(leg.timers.execution.startedAt, 1000);
+  assert.deepEqual(definition, before);
+  assert.deepEqual(other.exercises.map(item => item.entryId), ['A-leg', 'A-chest', 'A-lat']);
+});
+
+test('GYM-019: reordered Ready preview survives reopening and plan saves; boundaries leave it untouched', () => {
+  const definition = plan.clone(data.program);
+  const preview = plan.openOccurrence(definition, data.catalog, '2026-10-19', 'session-A');
+  for (const [id, direction] of [['A-leg', -1], ['A-lat', 1], ['missing', 1], ['A-leg', 2]]) {
+    assert.equal(plan.moveExercise(preview, id, direction), -1);
+    assert.equal(preview.orderChanged, false);
+  }
+  assert.equal(plan.moveExercise(preview, 'A-chest', -1), 0);
+  const draft = plan.clone(definition);
+  draft.sessions[0].name = 'New plan name';
+  plan.apply(definition, draft, data.catalog);
+  assert.strictEqual(plan.openOccurrence(definition, data.catalog, preview.date, 'session-A', preview), preview);
+  assert.equal(preview.state, 'ready');
+  assert.equal(preview.name, 'Session A');
+  assert.equal(preview.exercises[0].entryId, 'A-chest');
+});
+
 test('GYM-018: actual reps and weights never mutate the prescribed plan', () => {
   const definition = plan.clone(data.program);
   const workout = plan.openOccurrence(definition, data.catalog, '2026-10-12', 'session-A');

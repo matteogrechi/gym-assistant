@@ -213,3 +213,10 @@ input::placeholder { color: var(--on-surface-variant); opacity: 1; }
 /* GYM-018: editable names wrap within the phone layout. */
 h2, h3, .exercise-card strong { overflow-wrap: anywhere; }
 .exercise-card > span:nth-child(2) { min-width: 0; }
+
+/* GYM-019, GYM-015: workout order controls keep 48px touch targets. */
+.workout-exercise-row { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--outline-variant); }
+.workout-exercise-row .exercise-card { flex: 1; min-width: 0; border-bottom: 0; gap: 10px; }
+.workout-order-controls { display: flex; flex-direction: column; gap: 4px; padding: 8px 0; }
+.workout-order-controls button { width: 48px; height: 48px; padding: 0; border: 1px solid var(--outline); border-radius: var(--shape-full); background: transparent; color: var(--primary); font-size: 20px; }
+.workout-order-controls button:disabled { opacity: .35; cursor: default; }

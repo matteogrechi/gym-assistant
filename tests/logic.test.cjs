@@ -126,6 +126,73 @@ test('GYM-016: an empty planning horizon produces an empty agenda', () => {
 });
 
 const plan = require('../mockup/plan.js');
+const attendance = require('../mockup/attendance.js');
+test('GYM-020: cohort excludes today/future, separates late visits, and retains original plans', () => {
+  const definition = plan.clone(data.program);
+  const records = attendance.planned(definition, '2026-10-12');
+  const observed = attendance.observations(data.attendanceHistory, []);
+  assert.deepEqual(attendance.summarize(records, observed, '2026-10-12'), { planned: 12, logged: 6, onTime: 4, late: 2, early: 0, unlogged: 6, percent: 50, meanDelay: 1.5 });
+  assert.equal(records[0].plannedDate, '2026-09-14');
+  assert.equal(records.at(-1).plannedDate, '2026-10-09');
+  assert.equal(attendance.pending(records, observed, '2026-10-12')[0].plannedDate, '2026-09-18');
+  plan.removeSession(definition, 'session-A');
+  definition.sessions[0].name = 'Renamed';
+  assert.equal(records[0].template.name, 'Session A');
+  assert.equal(records[0].template.exercises.length, 3);
+  assert.equal(attendance.summarize(records, observed, '2026-10-12').planned, 12);
+});
+
+test('GYM-020: valid working log catches up once on actual date, without altering strength history', () => {
+  const workout = plan.openOccurrence(data.program, data.catalog, '2026-09-18', 'session-C');
+  workout.state = 'active';
+  workout.exercises[0].warmups = [{ reps: 15, weight: 20, done: true }];
+  assert.equal(attendance.observe(workout, '2026-10-12'), false);
+  workout.exercises[0].sets[0] = { reps: 0, weight: 30, done: true };
+  assert.equal(attendance.observe(workout, '2026-10-12'), false);
+  workout.exercises[0].sets[0].reps = 12;
+  const before = plan.clone(data.history);
+  assert.equal(attendance.observe(workout, '2026-10-12'), true);
+  workout.state = 'stopped';
+  assert.equal(attendance.observe(workout, '2026-10-13'), false);
+  assert.equal(workout.attendedDate, '2026-10-12');
+  assert.equal(workout.date, '2026-09-18');
+  const records = attendance.planned(data.program, '2026-10-12');
+  const observed = attendance.observations(data.attendanceHistory, [workout, workout]);
+  const stats = attendance.summarize(records, observed, '2026-10-12');
+  assert.equal(stats.logged, 7);
+  assert.equal(stats.late, 3);
+  assert.equal(stats.unlogged, 5);
+  assert.equal(stats.meanDelay, 9);
+  assert.equal(attendance.pending(records, observed, '2026-10-12').length, 5);
+  assert.deepEqual(data.history, before);
+});
+
+test('GYM-020: preview is not attendance; no plans/late visits mean N/A; early visits and civil delays work', () => {
+  const future = plan.openOccurrence(data.program, data.catalog, '2026-10-19', 'session-A');
+  future.exercises[0].sets[0].done = true;
+  assert.equal(attendance.observe(future, '2026-10-12'), false);
+  const empty = attendance.summarize([], new Map(), '2026-10-12');
+  assert.equal(empty.percent, null);
+  assert.equal(empty.meanDelay, null);
+  const records = [{ id: 'test', plannedDate: '2026-10-24' }];
+  const observed = new Map([['test', { actualDate: '2026-10-26' }]]);
+  assert.equal(attendance.summarize(records, observed, '2026-10-27').meanDelay, 2);
+  observed.set('test', { actualDate: '2026-10-23' });
+  assert.equal(attendance.summarize(records, observed, '2026-10-27').early, 1);
+  observed.set('test', { actualDate: '2026-10-28' });
+  assert.equal(attendance.pending(records, observed, '2026-10-27').length, 1);
+  assert.equal(attendance.summarize(records, observed, '2026-10-27').logged, 0);
+});
+
+test('GYM-020: today stays outside the denominator until the next civil day', () => {
+  const records = attendance.planned(data.program, '2026-10-12', true);
+  const observed = attendance.observations([...data.attendanceHistory, { plannedDate: '2026-10-12', actualDate: '2026-10-12', templateId: 'session-A' }], []);
+  assert.equal(attendance.summarize(records, observed, '2026-10-12').logged, 6);
+  assert.equal(attendance.summarize(records, observed, '2026-10-13').logged, 6);
+  assert.equal(attendance.summarize(records, observed, '2026-10-13').planned, 12);
+  assert.equal(attendance.pending(records, observed, '2026-10-13').length, 6);
+});
+
 test('GYM-019: permutation retains exercise identity, logs and running timers; plan and other date stay unchanged', () => {
   const definition = plan.clone(data.program);
   const workout = plan.openOccurrence(definition, data.catalog, '2026-10-12', 'session-A');

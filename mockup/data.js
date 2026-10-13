@@ -28,6 +28,12 @@ const GymData = (() => {
       { reps: 8, weight: exercise.weight, done: true, warmup: false }
     ]
   })));
-  return { catalog, program, history, context, get schedule() { return program.schedule; } };
+  // GYM-020: additional Session B visits have attendance only, no invented set logs.
+  const attendanceHistory = [
+    ...dates.map(date => ({ plannedDate: date, actualDate: date, templateId: 'session-A' })),
+    { plannedDate: '2026-09-16', actualDate: '2026-09-17', templateId: 'session-B' },
+    { plannedDate: '2026-09-23', actualDate: '2026-09-25', templateId: 'session-B' }
+  ];
+  return { catalog, program, history, attendanceHistory, context, get schedule() { return program.schedule; } };
 })();
 if (typeof module !== 'undefined') module.exports = GymData;

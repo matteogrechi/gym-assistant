@@ -12,13 +12,13 @@ Visit http://localhost:8080/mockup/ . On a phone, use the computer's LAN address
 
 The bottom navigation separates three activities:
 
-- **Train:** the calendar and dated workout execution. Tap a day to update the top card; all seven days fit across the screen. Start, Continue, Stop, and Resume retain that workout’s logs and timers.
+- **Train:** the calendar and dated workout execution. Tap a day to update the top card; all seven days fit across the screen. Start, Continue, Stop, and Resume retain that workout’s logs and timers. Past sessions without recorded attendance remain available to catch up, with their original planned dates.
 - **Plan:** edit the sample program, session templates, exercises/order, prescribed sets and rep ranges, and weekly/date assignments. Changes remain drafts until Save plan. New workouts use the saved plan; started, recorded, or reordered workouts keep their own targets and order.
-- **Progress:** explicitly fictional historical performance, independent of current edits.
+- **Progress:** fictional exercise-performance history stays independent of current edits. Attendance separately shows logged/planned visits, on-time and delayed sessions, not-yet-logged sessions, and average delay for the previous 28 complete planned days, updated through today. Attendance uses fictional visits plus this visit’s working-set logs.
 
 Move exercises up/down in the Train session list when machines are busy. Only that dated workout changes; sets, notes, and timers stay with each exercise. Start/Continue/Resume follows the chosen order.
 
-Reps and weights, warm-up/working-set completion, seat notes, and execution/recovery timers belong to Train. Template prescriptions contain no actual logged sets or timers. Video access remains a secondary placeholder. The sample starts with A on Monday, B on Wednesday, and C on Friday. Everything resets on reload.
+Reps and weights, warm-up/working-set completion, seat notes, and execution/recovery timers belong to Train. Template prescriptions contain no actual logged sets or timers. Video access remains a secondary placeholder. The sample starts with A on Monday, B on Wednesday, and C on Friday. Logging at least one valid working set records attendance on the actual training day; Start, warm-ups, and future previews alone do not. A logged visit can be partial and is counted once. Past plans survive template edits/removal, and future dates keep their schedule. Unlogged sessions do not become zero strength observations. Everything resets on reload.
 
 The preview uses Material 3 button families: filled primary actions, tonal Add actions, outlined Stop, text actions, and consistent icon controls. Timer/metric segments include a selected check. Shapes, interaction states, bottom navigation, and touch targets follow the documented Android guidance. It is a browser prototype, not a native Android app. No build step or runtime package dependencies are needed. Google Fonts are optional; system fonts are the fallback.
 

@@ -1,6 +1,6 @@
 # Bidirectional traceability
 
-Revision 6. All Android delivery is **not started**. “Covered” below means the disposable mockup meets the acceptance criteria in [spec.md](spec.md), not that the Android product is implemented. Search a requirement ID in source comments or `data-req` attributes to trace code back to scope.
+Revision 7. All Android delivery is **not started**. “Covered” below means the disposable mockup meets the acceptance criteria in [spec.md](spec.md), not that the Android product is implemented. Search a requirement ID in source comments or `data-req` attributes to trace code back to scope.
 
 | Requirement | Source anchors / artifact | Verification | Mockup state |
 | --- | --- | --- | --- |
@@ -23,6 +23,7 @@ Revision 6. All Android delivery is **not started**. “Covered” below means t
 | GYM-017 | `app.js`: `renderSession`, `startSession` handler, `stopSession`, per-date lifecycle state; `index.html`: session start action | Browser: Start/Continue select unfinished exercise; Stop pauses all occurrence timers and preserves entries; Resume retains them; stopped timers are disabled; dates and reload isolate/reset state | Covered in mockup |
 | GYM-018 | `plan.js`: `validate`, `apply`, `removeSession`, `openOccurrence`; `data.js`: prescribed templates; `app.js`: `renderPlan`, `renderTemplate`, `savePlan`, draft/schedule handlers, `plannedForDate`; `index.html`: Plan/Plan session views and Plan navigation | Logic/browser: draft validation, CRUD/reordering, schedule assignments, stable IDs, new/untouched previews reflect saves, recorded sessions survive edits/removal | Covered in mockup; multiple plans and persistence deferred |
 | GYM-019 | `plan.js`: `moveExercise`, `locked`; `app.js`: `renderSession`, exercise-list move handler, Start/Continue selection; `index.html`: execution-order help/status; CSS: `.workout-order-controls` | Logic/browser: data identity and running timer retention, plan/date isolation, boundary controls, adjusted Ready snapshots survive reopening/plan saves, Start/Continue/Resume follow order, 320/390/430px targets | Covered in mockup; persistence deferred |
+| GYM-020 | `attendance.js`: `planned`, `observe`, `observations`, `pending`, `summarize`; `data.js`: `attendanceHistory`; `app.js`: past-plan capture, `getSession`, `plannedForDate`, pending selection, set-log observation, `renderAttendance`, date guard; `index.html`: pending list, planned/actual status, attendance panel; CSS: attendance card | Logic/browser: 28-day past cohort, actual date/delay, once-per-occurrence visits, partial sets, warm-up/Start/preview exclusion, zero-plan N/A, pending catch-up, plan-removal protection, unchanged strength history, date validation, reload reset | Covered in mockup; cross-reload persistence deferred |
 
 Source filenames above are under `mockup/`. Meaningful automated checks live in [logic.test.cjs](../tests/logic.test.cjs) and [browser.cjs](../tests/browser.cjs). `package.json` and its lockfile support those checks only; the mockup itself has no build or runtime package dependency.
 
@@ -44,9 +45,10 @@ Source filenames above are under `mockup/`. Meaningful automated checks live in 
 | Session Start/Continue/Stop/Resume actions and isolated lifecycle state | GYM-017 |
 | Plan drafts, session/exercise CRUD and order, working-set/rep prescriptions, weekly/date assignments, immutable execution copies | GYM-018 |
 | Dated workout permutation, retained exercise identity and selection, order announcement | GYM-019 |
+| Past obligations, pending catch-up, actual attendance dates, visit/delay metrics, protected denominators | GYM-020 |
 | Research briefs and evidence boundaries | GYM-011, GYM-013, GYM-015 |
 
-No e1RM, RIR-entry, adherence statistics, multiple plans, persistent history, notifications, streaks, or recommendations have been added. Research proposals do not count as UI requirements.
+No e1RM, RIR-entry, multiple plans, persistent history, full-prescription adherence, notifications, streaks, or recommendations have been added. Research proposals do not count as UI requirements.
 
 ## Verification record
 
@@ -65,3 +67,5 @@ Revision 4, 2026-10-13: 16 logic tests passed, including plan/actual separation,
 Revision 5, 2026-10-13: 18 logic tests passed. Chromium checks passed for dated workout permutation, preserved working/warm-up logs and seat notes, running timer continuity, Start/Continue/Resume using the selected order, reordering while stopped, disabled boundary controls, untouched plan/other dates, and reordered Ready previews surviving navigation and plan saves. Session controls retain 48px targets at 320/390/430px. The reordered-session preview was added and reviewed; existing previews were refreshed.
 
 Revision 6, 2026-10-13: reviewed official Android button, icon-button, segmented-button, and accessibility guidance. Applied shared button families, 14px centered labels, consistent SVG action icons, selected-segment checks, and hover/press/focus/disabled state layers. All 18 logic checks and the Chromium interaction suite passed. Exercise, session, and Plan controls fit 320/390/430px previews and retain 48px targets; the calendar retains its documented width exception. Refreshed previews; exercise, reordered-session, and template-editor screenshots were visually reviewed.
+
+Revision 7, 2026-10-13: 22 logic checks and the Chromium suite passed. Verified original planned dates and actual first-logged dates, late/early/on-time classification, 28-day cohort boundaries, N/A values, civil-day delay across DST, today entering the cohort only when past, partial attendance, future/Start/warm-up exclusion, once-per-occurrence recording, catch-up removing a pending item, past-date validation, pending prescription access after template deletion, stable denominators after plan removal, unchanged exercise metrics, and reload reset. Attendance layouts fit 320/390/430px. Added and reviewed the attendance preview; refreshed existing previews and reviewed Train home.

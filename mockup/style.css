@@ -239,3 +239,13 @@ h2, h3, .exercise-card strong { overflow-wrap: anywhere; }
 .workout-exercise-row { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--outline-variant); }
 .workout-exercise-row .exercise-card { flex: 1; min-width: 0; border-bottom: 0; gap: 10px; }
 .workout-order-controls { display: flex; flex-direction: column; gap: 4px; padding: 8px 0; }
+
+/* GYM-020: attendance is separate from rep/load performance. */
+.attendance-card { background: var(--surface-container); border-radius: var(--shape-medium); padding: 18px; margin: 20px 0; }
+.attendance-head { display: flex; align-items: center; gap: 16px; margin: 18px 0; }
+.attendance-head > strong { font-size: 32px; font-weight: 700; white-space: nowrap; }
+.attendance-head > span { font-size: 12px; line-height: 1.6; }
+.attendance-details { margin: 0; font-size: 12px; }
+.attendance-details > div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--outline-variant); }
+.attendance-details dd { margin: 0; font-weight: 700; white-space: nowrap; }
+.attendance-card .field-help:last-child { margin-bottom: 0; }

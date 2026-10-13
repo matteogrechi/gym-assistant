@@ -1,6 +1,6 @@
 # Progression metrics for gym assystant
 
-Research date: 12 October 2026. Supports GYM-010 and GYM-011. This is a focused literature review for product design, not an exhaustive systematic review or an individualized training prescription.
+Research date: 12 October 2026. Supports GYM-010, GYM-011, and GYM-020. Attendance update: 13 October 2026. This is a focused literature review for product design, not an exhaustive systematic review or an individualized training prescription.
 
 ## Recommendation
 
@@ -37,10 +37,16 @@ Eight relevant sources are summarized below. ACSM and Plotkin full texts were ac
 | Working-set count | Count completed non-warmup sets per exercise and stated date window. Later, weekly muscle-level counts would require direct/indirect-set rules. | **Included per exercise over displayed history.** Weekly muscle breakdown remains proposed. |
 | Estimated 1RM | Candidate Epley expression: `kg × (1 + reps / 30)` for eligible multi-rep sets. Measured single-rep maxima must remain separate. | **Proposed, not implemented.** Choose/validate equation and supported exercises first. Require known near-maximal effort and a conservative rep range; do not extrapolate arbitrary easy or high-rep sets. Formula convention is not validation. |
 | Effort context | Optional RIR: how many more technically comparable reps the user estimates they could perform. Compare similar effort; missing RIR stays unknown. | **Proposed, not implemented.** Useful context, subject to estimation error. Do not add estimated RIR into an e1RM formula without validating that model. |
-| Program adherence | Completed scheduled occurrences ÷ planned occurrences in an explicitly defined period. Show numerator/denominator; no scheduled sessions means N/A. | **Proposed, not implemented.** A consistency measure, not a physiological progression metric. Calendar planning is now included in GYM-016; adherence still requires a session-completion definition and persisted occurrences. |
+| Session attendance | Occurrences with a logged valid working set ÷ planned occurrences in the previous 28 complete days, observed through today. Show numerator/denominator; no plans means N/A. Keep original planned and actual first-logged dates; classify on-time/later/earlier/not logged and show mean positive delay. | **Included in mockup under GYM-020.** A record of logged visits, not full-program adherence, training quality, or a physiological outcome. Fictional attendance plus this visit’s logs; persistence remains deferred. |
 | Direct muscle-size measurement | Standardized longitudinal measurements, such as muscle ultrasound in research. Routine scale weight or kg·reps cannot substitute for this. | **Deferred.** The proposed app has no validated direct hypertrophy outcome. |
 
 The example formulas and display policies are product definitions. The studies motivate their interpretation and limitations; they do not validate these exact UI aggregation rules. In particular, picking the best set can be influenced by doing more attempts, so the accompanying working-set count matters.
+
+## Attendance update — 13 October 2026
+
+The [systematic review of mHealth resistance-training interventions](https://link.springer.com/article/10.1186/s12966-025-01868-8) reports varying adherence definitions, commonly sessions completed relative to sessions prescribed. Platform usage and self-report also appeared. That variation supports defining exactly what our app observes rather than calling a tap, a visit, and a completed prescription equivalent.
+
+GYM-020 uses an explicit product definition: at least one valid completed working set records attendance, even if the workout is partial. It does not establish adherence to all prescribed sets. Original planned dates remain immutable, while actual attendance dates explain delays. An unlogged occurrence is unknown attendance; it is not evidence of lost strength. Keeping overdue workouts pending and using the last 28 complete planned days are interface choices, not protocols validated by this review. No late-session penalty or attendance-adjusted strength score is justified here.
 
 ## Comparison rules for the eventual app
 
@@ -53,4 +59,4 @@ The example formulas and display policies are product definitions. The studies m
 
 ## Scope trace
 
-GYM-010 implements only the four explicitly included mockup metrics. GYM-011 covers this research artifact. GYM-012 introduces timers but not duration-based analytics. RIR entry, e1RM, adherence, muscle-level volume, automatic progression recommendations, and body measurements remain proposals until the specification is explicitly expanded.
+GYM-010 implements only the four explicitly included mockup metrics. GYM-011 covers this research artifact. GYM-012 introduces timers but not duration-based analytics. GYM-020 now includes attendance and delay statistics with pending overdue workouts. Full-prescription adherence, RIR entry, e1RM, muscle-level volume, automatic progression recommendations, and body measurements remain proposals.

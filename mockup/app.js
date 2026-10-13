@@ -1,5 +1,5 @@
 'use strict';
-/* global GymData, GymMetrics, GymTimers, GymCalendar, GymPlan */
+/* global GymData, GymMetrics, GymTimers, GymCalendar, GymPlan, GymAttendance */
 const byId = id => document.getElementById(id);
 // GYM-015: uniform decorative SVGs; the surrounding button provides its action name.
 const buttonIcon = name => {
@@ -13,11 +13,28 @@ let selectedDate = todayDate;
 let displayedWeek = GymCalendar.week(todayDate)[0];
 let sessionDate = null;
 const sessionInstances = new Map();
+// GYM-020: past obligations are snapshots; plan saves cannot rewrite attendance.
+const pastPlans = GymAttendance.planned(GymData.program, todayDate, true);
+let capturedThrough = todayDate;
+const observedAttendance = () => GymAttendance.observations(GymData.attendanceHistory, sessionInstances);
+function capturePastPlans() {
+  const current = GymAttendance.planned(GymData.program, todayDate, true);
+  current.filter(item => item.plannedDate > capturedThrough).forEach(item => pastPlans.push(item));
+  // Today remains editable until it has a recorded execution; once past, freeze it.
+  if (!recordedForDate(todayDate)) {
+    const index = pastPlans.findIndex(item => item.plannedDate === todayDate);
+    if (index >= 0) pastPlans.splice(index, 1);
+    current.filter(item => item.plannedDate === todayDate).forEach(item => pastPlans.push(item));
+  }
+  capturedThrough = todayDate;
+}
 // GYM-018: opening new previews copies the plan; recorded executions retain snapshots.
 function getSession(templateId, date) {
   const key = `${date}:${templateId}`;
   const previous = sessionInstances.get(key);
-  const instance = GymPlan.openOccurrence(GymData.program, GymData.catalog, date, templateId, previous);
+  const past = date < todayDate && pastPlans.find(item => item.plannedDate === date && item.templateId === templateId);
+  const definition = past ? { name: past.programName, revision: past.planRevision, sessions: [past.template] } : GymData.program;
+  const instance = GymPlan.openOccurrence(definition, GymData.catalog, date, templateId, previous);
   if (instance !== previous) instance.exercises.forEach(entry => { entry.timers = GymTimers.create(); entry.warmups = []; });
   sessionInstances.set(key, instance);
   return instance;
@@ -31,8 +48,9 @@ const escapeHtml = value => String(value).replaceAll('&', '&amp;').replaceAll('<
 const recordedForDate = date => [...sessionInstances.values()].find(item => item.date === date && GymPlan.locked(item));
 const plannedForDate = date => {
   const recorded = recordedForDate(date);
-  const sessionId = recorded?.templateId ?? GymCalendar.plan(date, GymData.program.schedule, GymData.program.dateAssignments);
-  return { sessionId, template: recorded ?? GymData.program.sessions.find(item => item.id === sessionId) ?? null };
+  const past = date < todayDate && pastPlans.find(item => item.plannedDate === date);
+  const sessionId = recorded?.templateId ?? past?.templateId ?? GymCalendar.plan(date, GymData.program.schedule, GymData.program.dateAssignments);
+  return { sessionId, template: recorded ?? past?.template ?? GymData.program.sessions.find(item => item.id === sessionId) ?? null };
 };
 const executionAssignments = () => {
   const assignments = { ...GymData.program.dateAssignments };
@@ -51,6 +69,7 @@ function showView(id, focusId) {
 // GYM-008, GYM-016: selected-date banner, fitted week, and upcoming agenda.
 function renderProgram() {
   todayDate = GymCalendar.today();
+  capturePastPlans();
   byId('trainProgramName').textContent = `${GymData.program.name.toUpperCase()} · SAMPLE PLAN`;
   renderCalendar();
 }
@@ -67,6 +86,10 @@ function renderCalendar() {
   }).join('');
   const upcoming = GymCalendar.upcoming(todayDate, GymData.program.schedule, executionAssignments());
   byId('upcomingSessions').innerHTML = upcoming.length ? upcoming.map(item => `<button class="exercise-card upcoming-card" data-planned-date="${item.date}"><span class="agenda-date"><strong>${GymCalendar.label(item.date, { day: 'numeric' })}</strong><small>${GymCalendar.label(item.date, { month: 'short' })}</small></span><span><strong>${escapeHtml(plannedForDate(item.date).template.name)}</strong><small>${GymCalendar.label(item.date, { weekday: 'long', day: 'numeric', month: 'short' })}</small></span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button>`).join('') : '<p class="empty-calendar">No sessions planned in the next 28 days.</p>';
+  // GYM-020: overdue workouts remain available, oldest first; dates do not move.
+  const pending = GymAttendance.pending(pastPlans, observedAttendance(), todayDate);
+  byId('pendingCount').textContent = `${pending.length} not yet logged`;
+  byId('pendingSessions').innerHTML = pending.slice(0, 3).map(item => `<button class="exercise-card" data-pending-date="${item.plannedDate}"><span class="agenda-date"><strong>${GymCalendar.label(item.plannedDate, { day: 'numeric' })}</strong><small>${GymCalendar.label(item.plannedDate, { month: 'short' })}</small></span><span><strong>${escapeHtml(item.template.name)}</strong><small>Planned ${GymCalendar.label(item.plannedDate, { weekday: 'short', day: 'numeric', month: 'short' })} · ready when you are</small></span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button>`).join('') || '<p class="empty-calendar">No pending sessions in the last 28 days.</p>';
 }
 function openSession(templateId, date) {
   sessionDate = date;
@@ -86,6 +109,8 @@ function renderSession() {
   byId('startSession').textContent = action;
   byId('stopSession').hidden = session().state !== 'active';
   byId('sessionStatus').textContent = session().state === 'stopped' ? 'Stopped · your entries are kept' : session().state === 'active' ? (done === total ? 'All working sets logged · session active' : sessionDate > todayDate ? 'Preview in progress' : 'In progress') : 'Ready to start';
+  const actual = session().attendedDate ?? observedAttendance().get(GymAttendance.key(sessionDate, session().templateId))?.actualDate;
+  byId('attendanceStatus').textContent = actual ? `Planned ${fullDate(sessionDate)} · logged ${fullDate(actual)}` : sessionDate > GymCalendar.today() ? 'Future preview · these entries do not record attendance.' : sessionDate < GymCalendar.today() ? 'This session is still available. Logging a working set today records today’s attendance.' : 'Attendance is recorded when you log a working set; Start alone does not count.';
   byId('exerciseList').innerHTML = session().exercises.map((item, index) => `<div class="workout-exercise-row"><button class="exercise-card" data-exercise="${index}"><span class="exercise-number">${String(index + 1).padStart(2, '0')}</span><span><strong>${escapeHtml(item.name)}</strong><small>${item.sets.length} × ${escapeHtml(item.target)} reps · ${completed(item)}/${item.sets.length} done</small></span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button><div class="workout-order-controls"><button class="md-icon-button md-icon-outlined" data-move-exercise="${escapeHtml(item.entryId)}" data-direction="-1" aria-label="Move ${escapeHtml(item.name)} earlier" ${index === 0 ? 'disabled' : ''}>${buttonIcon('up')}</button><button class="md-icon-button md-icon-outlined" data-move-exercise="${escapeHtml(item.entryId)}" data-direction="1" aria-label="Move ${escapeHtml(item.name)} later" ${index === session().exercises.length - 1 ? 'disabled' : ''}>${buttonIcon('down')}</button></div></div>`).join('');
   byId('executionOrderStatus').textContent = '';
 }
@@ -124,12 +149,14 @@ function updateSet(input) {
   }
   set[input.dataset.field] = Number(input.value);
   session().hasEntries = true;
+  if (input.dataset.kind === 'sets' && GymAttendance.validSet(set)) GymAttendance.observe(session(), GymCalendar.today());
 }
 // GYM-005, GYM-014
 function toggleSet(index, kind) {
   const set = exercise()[kind][index];
   set.done = !set.done;
   session().hasEntries = true;
+  if (kind === 'sets' && GymAttendance.validSet(set)) GymAttendance.observe(session(), GymCalendar.today());
   renderSets();
   document.querySelector(`[data-kind="${kind}"][data-toggle="${index}"]`).focus();
 }
@@ -140,6 +167,7 @@ function openVideo() {
 }
 // GYM-010: fictional immutable historical observations, never today's editable samples.
 function renderProgress() {
+  renderAttendance();
   const selected = GymData.catalog[Number(byId('progressExercise').value)];
   const context = GymData.context(selected);
   const series = GymMetrics.series(GymData.history, context, metric, selected.weight);
@@ -161,6 +189,21 @@ function renderProgress() {
   byId('comparisonContext').textContent = `${selected.machine} · ${selected.seat}. Sample history uses the same movement and 2 reps in reserve (estimated reps left). Warm-ups excluded.`;
   byId('metricExplanation').textContent = labels.explanation;
   document.querySelectorAll('[data-metric]').forEach(button => button.setAttribute('aria-pressed', button.dataset.metric === metric));
+}
+// GYM-020: attendance describes recorded visits, never a strength penalty.
+function renderAttendance() {
+  const today = GymCalendar.today();
+  todayDate = today;
+  capturePastPlans();
+  const stats = GymAttendance.summarize(pastPlans, observedAttendance(), today);
+  byId('attendanceWindow').textContent = `Planned ${GymCalendar.label(GymCalendar.addDays(today, -28), { day: 'numeric', month: 'short' })}–${GymCalendar.label(GymCalendar.addDays(today, -1), { day: 'numeric', month: 'short' })} · updated through ${GymCalendar.label(today, { day: 'numeric', month: 'short' })}`;
+  byId('attendanceTotal').textContent = `${stats.logged} / ${stats.planned}`;
+  byId('attendancePercent').textContent = stats.percent === null ? 'N/A' : `${Math.round(stats.percent)}%`;
+  byId('attendanceOnTime').textContent = stats.onTime;
+  byId('attendanceLate').textContent = stats.late;
+  byId('attendanceEarly').textContent = stats.early;
+  byId('attendanceUnlogged').textContent = stats.unlogged;
+  byId('attendanceDelay').textContent = stats.meanDelay === null ? 'N/A' : `${format(stats.meanDelay)} days`;
 }
 // GYM-012: render from clock time; timer does not depend on interval callback frequency.
 function renderTimer() {
@@ -236,6 +279,15 @@ byId('upcomingSessions').addEventListener('click', event => {
   if (byId('openSelectedSession')) byId('openSelectedSession').focus();
   document.querySelector('.screen-area').scrollTop = 0;
 });
+byId('pendingSessions').addEventListener('click', event => {
+  const card = event.target.closest('[data-pending-date]');
+  if (!card) return;
+  selectedDate = card.dataset.pendingDate;
+  displayedWeek = GymCalendar.week(selectedDate)[0];
+  renderCalendar();
+  byId('openSelectedSession').focus();
+  document.querySelector('.screen-area').scrollTop = 0;
+});
 ['previousWeek', 'nextWeek'].forEach(id => byId(id).addEventListener('click', () => {
   displayedWeek = GymCalendar.addDays(displayedWeek, id === 'previousWeek' ? -7 : 7);
   selectedDate = displayedWeek;
@@ -286,6 +338,9 @@ function renderDateAssignment() {
 }
 function renderPlan() {
   ensureDraft();
+  const today = GymCalendar.today();
+  draftDate = draftDate < today ? today : draftDate;
+  byId('planDate').min = today;
   byId('planName').value = planDraft.name;
   byId('planSessions').innerHTML = planDraft.sessions.map(item => `<div class="plan-session-row"><button type="button" class="exercise-card" data-edit-template="${item.id}"><span class="exercise-number">${item.label}</span><span><strong>${escapeHtml(item.name)}</strong><small>${item.exercises.length} exercises · ${item.exercises.reduce((sum, entry) => sum + (Number(entry.setCount) || 0), 0)} planned working sets</small></span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button><button class="md-icon-button delete-template" type="button" data-delete-template="${item.id}" aria-label="Remove ${escapeHtml(item.name)}" ${planDraft.sessions.length === 1 ? 'disabled' : ''}>${buttonIcon('trash')}</button></div>`).join('');
   byId('addPlanSession').disabled = planDraft.sessions.length >= 7;
@@ -331,7 +386,12 @@ byId('weeklySchedule').addEventListener('change', event => {
   planDraft.schedule[event.target.dataset.weekday] = event.target.value === 'none' ? null : event.target.value;
   markPlanDirty();
 });
-byId('planDate').addEventListener('change', event => { draftDate = event.target.value; renderDateAssignment(); });
+byId('planDate').addEventListener('change', event => {
+  // GYM-020: a draft must not remove past obligations from attendance metrics.
+  if (!event.target.checkValidity()) { event.target.reportValidity(); event.target.value = draftDate; return; }
+  draftDate = event.target.value;
+  renderDateAssignment();
+});
 byId('planDateSession').addEventListener('change', event => {
   if (!byId('planDate').checkValidity()) { byId('planDate').reportValidity(); return; }
   if (event.target.value === 'weekly') delete planDraft.dateAssignments[draftDate];

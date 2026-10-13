@@ -72,7 +72,6 @@ h3 { font-size: 15px; margin: 0; }
 .exercise-card small { color: var(--on-surface-variant); font-size: 11px; }
 .exercise-card .chevron { margin-left: auto; color: var(--primary); }
 .quiet-note { border-left: 2px solid var(--accent); margin-top: 28px; padding-left: 13px; font-size: 12px; color: var(--on-surface-variant); line-height: 1.7; }
-footer { font-size: 10px; text-align: center; color: var(--on-surface-variant); margin-top: 32px; }
 .back { width: fit-content; margin: 0 0 18px -12px; }
 .prescription { font-size: 12px; background: var(--surface-container); padding: 10px 12px; border-radius: 9px; margin: 14px 0 22px; }
 .seat-input { width: 100%; padding: 14px; border: 1px solid var(--outline); background: var(--surface-container); border-radius: 4px; color: var(--on-surface); font-size: 14px; }
@@ -85,7 +84,7 @@ footer { font-size: 10px; text-align: center; color: var(--on-surface-variant); 
 .set-row input { width: 100%; min-width: 0; height: 56px; border: 1px solid var(--outline); border-radius: 4px; text-align: center; background: var(--surface-bright); padding: 9px 2px; color: var(--on-surface); font-size: 17px; }
 .set-row [data-field="reps"] { font-size: 25px; font-weight: 700; background: var(--reps-container); }
 
-.set-row.complete button { background: var(--success); border-color: var(--success); color: var(--on-success); }
+.set-row.complete [data-toggle] { background: var(--success); border-color: var(--success); color: var(--on-success); }
 .set-row.complete input { border-color: var(--success); }
 /* GYM-014: warm-up and working rows share one list with explicit labels. */
 .set-kind { display: flex; flex-direction: column; align-items: center; gap: 4px; }
@@ -94,9 +93,7 @@ footer { font-size: 10px; text-align: center; color: var(--on-surface-variant); 
 .warmup-row .set-kind small { color: var(--on-warmup); }
 .warmup-row .set-kind { background: var(--warmup-container); border-radius: 8px; padding: 7px 2px; }
 .warmup-row [data-field="reps"] { background: var(--warmup-container); }
-.set-toolbar { margin-bottom: 17px; }
 .small-button { max-width: 100%; }
-.remove-warmup { margin: -5px 0 4px 44px; }
 /* GYM-009, GYM-012: timer controls sit at the top of the exercise screen. */
 .timer-panel { background: var(--surface-container); border-radius: var(--shape-medium); padding: 15px; margin: 0 0 24px; }
 .timer-tabs, .metric-tabs { display: flex; gap: 0; }
@@ -120,7 +117,6 @@ footer { font-size: 10px; text-align: center; color: var(--on-surface-variant); 
 
 /* GYM-010: readable raw observations and zero-baseline workload/performance chart. */
 .sample-notice { padding: 12px 14px; border-radius: 10px; background: var(--surface-container); font-size: 11px; line-height: 1.6; margin-bottom: 22px; }
-.sample-notice span { color: var(--on-surface-variant); }
 .select-label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 8px; }
 select { width: 100%; padding: 12px; color: var(--on-surface); border: 1px solid var(--outline); border-radius: 4px; background: var(--surface); font-size: 14px; }
 .metric-tabs { margin: 18px 0; }
@@ -136,7 +132,6 @@ select { width: 100%; padding: 12px; color: var(--on-surface); border: 1px solid
 .chart-bar { width: 70%; background: var(--chart); border-radius: 5px 5px 0 0; }
 .chart-column:last-child .chart-bar { background: var(--on-surface); }
 .chart-date { display: block; font-size: 10px; margin-top: 8px; color: var(--on-surface-variant); white-space: nowrap; }
-.chart-baseline { color: var(--on-surface-variant); font-size: 9px; margin: 14px 0 0; }
 .stat-row { display: flex; align-items: center; justify-content: space-between; padding: 20px 0 12px; font-size: 12px; gap: 15px; }
 .stat-row strong { font-size: 23px; }
 dialog { border: 0; border-radius: var(--shape-extra-large); padding: 25px; width: min(380px, calc(100% - 32px)); color: var(--on-surface); background: var(--surface); box-shadow: 0 20px 80px #0004; }
@@ -145,7 +140,6 @@ dialog h2 { font-size: 24px; }
 dialog p { font-size: 13px; }
 .video-placeholder { background: var(--on-surface); border-radius: 13px; color: var(--accent); text-align: center; padding: 30px 10px; margin-bottom: 23px; }
 .video-placeholder span { font-size: 48px; }
-.video-placeholder p { font-size: 10px; letter-spacing: 2px; }
 [hidden] { display: none !important; }
 @media (max-width: 1000px) { body { gap: 40px; } .intro { width: 300px; } h1 { font-size: 41px; } .brand { font-size: 28px; } }
 @media (max-width: 780px) { body { padding: 0; background: var(--surface); } .intro { display: none; } .phone { width: 100%; max-width: 430px; height: 100dvh; min-height: 0; border: 0; border-radius: 0; box-shadow: none; padding: 24px 0 0; } }
@@ -197,7 +191,6 @@ input::placeholder { color: var(--on-surface-variant); opacity: 1; }
 .calendar-day[aria-pressed="true"] { background: var(--accent); border-color: var(--focus); }
 .calendar-day.is-today { outline: 2px solid var(--focus); outline-offset: -3px; }
 .calendar-day.is-today span { font-weight: 700; }
-.calendar-legend { display: flex; justify-content: space-between; gap: 10px; color: var(--on-surface-variant); font-size: 9px; margin: 4px 0 18px; }
 .agenda-date { display: flex; flex-shrink: 0; width: 44px; min-height: 49px; flex-direction: column; align-items: center; justify-content: center; border-radius: var(--shape-medium); background: var(--surface-container); }
 .agenda-date strong { font-size: 17px; margin-bottom: 1px; }
 .agenda-date small { font-size: 10px; }
@@ -210,7 +203,6 @@ input::placeholder { color: var(--on-surface-variant); opacity: 1; }
 .session-actions #startSession { width: auto; flex: 1 1 170px; }
 .session-pause { flex-shrink: 0; }
 .exercise-navigation { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
-.exercise-navigation .back { margin-bottom: 0; }
 
 /* GYM-018: prescriptions and schedule editing have their own Plan destination. */
 .plan-input { display: block; width: 100%; margin-bottom: 18px; padding: 12px; border: 1px solid var(--outline); border-radius: 4px; color: var(--on-surface); background: var(--surface-bright); font-size: 14px; }
@@ -228,7 +220,6 @@ input::placeholder { color: var(--on-surface-variant); opacity: 1; }
 .prescription-fields input { display: block; width: 100%; min-width: 0; margin-top: 6px; padding: 8px 4px; border: 1px solid var(--outline); border-radius: 4px; background: var(--surface-bright); color: var(--on-surface); text-align: center; font-size: 18px; }
 .prescription-actions { display: flex; gap: 8px; }
 
-.prescription-actions button:last-child { flex: 1; }
 .add-plan-exercise .small-button { margin-top: 12px; width: 100%; }
 
 /* GYM-018: editable names wrap within the phone layout. */
@@ -256,3 +247,80 @@ h2, h3, .exercise-card strong { overflow-wrap: anywhere; }
 .session-actions #finishSession { flex: 1 1 170px; }
 /* GYM-017: preserve recorded-value contrast during read-only review. */
 .finished-review input:disabled { opacity: 1; }
+
+/* GYM-021: compact task screens; explanations remain available on demand. */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.field-help:empty { display: none; }
+.badge { white-space: nowrap; }
+.exercise-card { padding-block: 12px; }
+#trainProgramName { text-transform: none; letter-spacing: .3px; font-size: 12px; margin-bottom: 10px; }
+.session-start { margin-bottom: 12px; }
+#sessionStatus { font-size: 12px; margin-block: 10px 0; }
+#sessionFocus { margin-bottom: 16px; }
+.exercise-navigation { flex-wrap: nowrap; margin-bottom: 12px; }
+.exercise-session-actions { align-items: center; flex-wrap: nowrap; }
+.exercise-session-actions .md-button { padding-inline: 16px; }
+.exercise-session-actions .field-help { margin: 0; }
+.timer-panel { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 12px; margin-bottom: 16px; }
+.timer-tabs, #recoverySettings, #timerContext { grid-column: 1 / -1; }
+.timer-tabs { grid-row: 1; }
+.timer-display { grid-column: 1; grid-row: 2; margin: 0; flex-direction: column; align-items: flex-start; gap: 4px; }
+.timer-actions { grid-column: 2; grid-row: 2; align-items: center; gap: 4px; }
+.timer-actions .md-button { padding-inline: 12px; }
+#timerValue { font-size: 32px; }
+#timerStatus.field-help { font-size: 10px; margin: 0; }
+#recoverySettings { margin: 0; }
+#timerContext { margin: 0; }
+.prescription { padding: 0; background: none; border-radius: 0; margin: 6px 0 12px; }
+.set-heading { margin: 8px 0; }
+.set-heading h3 { margin-right: auto; }
+.set-heading #addWarmup { padding-inline: 8px; }
+.warmup-row .set-kind { padding: 0; gap: 0; }
+.seat-label { margin-top: 22px; }
+.video-link { margin-top: 12px; }
+.settings-details, .metric-details { border-bottom: 1px solid var(--outline-variant); }
+summary { min-width: 48px; min-height: 48px; padding: 14px 4px; font-size: 13px; cursor: pointer; line-height: 20px; }
+summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: var(--shape-small); }
+.settings-details[open] summary { margin-bottom: 8px; }
+#weeklyPlanDetails { margin-top: 16px; }
+.prescription-card { padding: 10px 12px; margin-bottom: 10px; }
+.prescription-card summary { padding: 14px 0; font-size: 12px; }
+.prescription-card[open] summary { margin-bottom: 8px; }
+.prescription-summary { font-weight: 500; }
+.prescription-actions { justify-content: flex-end; }
+#plannedExercises .prescription-fields { margin-block: 12px; }
+.sample-notice { background: none; border-radius: 0; padding: 0; margin: 4px 0 16px; }
+.metric-tabs { margin: 12px 0; }
+.chart-card { padding-top: 16px; }
+.chart-card .field-help { margin-bottom: 0; }
+.stat-row { padding-block: 12px; }
+.attendance-card { padding: 14px; margin-block: 18px 0; }
+.attendance-card #attendanceWindow { margin-bottom: 0; }
+.attendance-head { margin-block: 10px; }
+.attendance-head > strong { font-size: 28px; }
+.attendance-summary { display: flex; gap: 20px; font-size: 12px; }
+.attendance-card > .field-help { margin-bottom: 4px; }
+.attendance-card .metric-details { border-bottom: 0; }
+.dialog-close { margin: 0; flex-shrink: 0; }
+
+.page-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.page-heading h2 { margin: 0; }
+.page-heading .save-plan { width: auto; margin: 0; }
+.add-plan-exercise { display: flex; gap: 8px; align-items: center; margin-top: 14px; }
+.add-plan-exercise select { flex: 1; min-width: 0; }
+.add-plan-exercise .small-button { width: auto; margin: 0; }
+
+#progress .chart-card .eyebrow { margin-bottom: 4px; }
+#progress .chart { margin-top: 14px; }
+#progress .bar-track { height: 80px; }
+.attendance-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.attendance-title .field-help { font-size: 10px; margin: 0; }
+
+.dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dialog-heading h2 { margin: 0; }
+#videoDialog .video-placeholder { margin: 12px 0 16px; }
+#videoDialog > p { margin-bottom: 0; }
+
+.finished-review .set-row [data-toggle]:disabled { opacity: 1; }
+
+.session-actions #startSession, .session-actions #finishSession { flex: 1; }

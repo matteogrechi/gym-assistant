@@ -10,6 +10,8 @@ python3 -m http.server 8080
 
 Visit http://localhost:8080/mockup/ . On a phone, use the computer's LAN address and the same port.
 
+The screens focus on the next action: compact workout timers and set entry, one Save action per plan editor, expandable scheduling/settings, and performance charts before attendance. Metric definitions and comparison rules remain available through disclosures.
+
 The bottom navigation separates three activities:
 
 - **Train:** the calendar and dated workout execution. Tap a day to update the top card; all seven days fit across the screen. Sessions move between Ready, In progress, Paused, and Finished using Start, Pause, Resume, and Finish. Pause retains entries for Resume; Finish stops timers and preserves a read-only log, even for a partial workout. Past sessions without recorded attendance remain available to catch up unless explicitly Finished, with their original planned dates.
@@ -27,6 +29,7 @@ The preview uses Material 3 button families: filled primary actions, tonal Add a
 - [Progression literature](docs/progression-research.md): performance versus workload, formulas and evidence limitations.
 - [Branding and psychological literature](docs/branding-research.md): “Your pace. Your progress.” and evidence for motivation.
 - [Android UI guidance](docs/android-ui.md): sources and preview component conventions.
+- [Interface review](docs/interface-review.md): user walkthrough findings and before/after measurements.
 
 Every feature change must update the specification before code and update traceability alongside it. Research proposals remain separate from delivered scope.
 

@@ -70,7 +70,7 @@ function showView(id, focusId) {
 function renderProgram() {
   todayDate = GymCalendar.today();
   capturePastPlans();
-  byId('trainProgramName').textContent = `${GymData.program.name.toUpperCase()} · SAMPLE PLAN`;
+  byId('trainProgramName').textContent = GymData.program.name;
   renderCalendar();
 }
 function renderCalendar() {
@@ -85,12 +85,12 @@ function renderCalendar() {
     return `<button class="calendar-day ${date === todayDate ? 'is-today' : ''}" data-date="${date}" aria-label="${fullDate(date)}${date === todayDate ? ', today' : ''}: ${escapeHtml(item?.name ?? 'No session planned')}" aria-pressed="${date === selectedDate}"><span>${date === todayDate ? 'Today' : GymCalendar.label(date, { weekday: 'short' })}</span><strong>${GymCalendar.label(date, { day: 'numeric' })}</strong><small>${item?.label ?? '—'}</small></button>`;
   }).join('');
   const upcoming = GymCalendar.upcoming(todayDate, GymData.program.schedule, executionAssignments());
-  byId('upcomingSessions').innerHTML = upcoming.length ? upcoming.map(item => `<button class="exercise-card upcoming-card" data-planned-date="${item.date}"><span class="agenda-date"><strong>${GymCalendar.label(item.date, { day: 'numeric' })}</strong><small>${GymCalendar.label(item.date, { month: 'short' })}</small></span><span><strong>${escapeHtml(plannedForDate(item.date).template.name)}</strong><small>${GymCalendar.label(item.date, { weekday: 'long', day: 'numeric', month: 'short' })}</small></span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button>`).join('') : '<p class="empty-calendar">No sessions planned in the next 28 days.</p>';
+  byId('upcomingSessions').innerHTML = upcoming.length ? upcoming.map(item => `<button class="exercise-card upcoming-card" data-planned-date="${item.date}"><span class="agenda-date"><strong>${GymCalendar.label(item.date, { day: 'numeric' })}</strong><small>${GymCalendar.label(item.date, { month: 'short' })}</small></span><span><strong>${escapeHtml(plannedForDate(item.date).template.name)}</strong><small>${GymCalendar.label(item.date, { weekday: 'long' })}</small></span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button>`).join('') : '<p class="empty-calendar">No sessions planned in the next 28 days.</p>';
   // GYM-020: overdue workouts remain available, oldest first; dates do not move.
   const finishedIds = new Set([...sessionInstances.values()].filter(item => item.state === 'finished').map(item => GymAttendance.key(item.date, item.templateId)));
   const pending = GymAttendance.pending(pastPlans, observedAttendance(), todayDate).filter(item => !finishedIds.has(item.id));
   byId('pendingCount').textContent = `${pending.length} not yet logged`;
-  byId('pendingSessions').innerHTML = pending.slice(0, 3).map(item => `<button class="exercise-card" data-pending-date="${item.plannedDate}"><span class="agenda-date"><strong>${GymCalendar.label(item.plannedDate, { day: 'numeric' })}</strong><small>${GymCalendar.label(item.plannedDate, { month: 'short' })}</small></span><span><strong>${escapeHtml(item.template.name)}</strong><small>Planned ${GymCalendar.label(item.plannedDate, { weekday: 'short', day: 'numeric', month: 'short' })} · ready when you are</small></span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button>`).join('') || '<p class="empty-calendar">No pending sessions in the last 28 days.</p>';
+  byId('pendingSessions').innerHTML = pending.slice(0, 3).map(item => `<button class="exercise-card" data-pending-date="${item.plannedDate}"><span class="agenda-date"><strong>${GymCalendar.label(item.plannedDate, { day: 'numeric' })}</strong><small>${GymCalendar.label(item.plannedDate, { month: 'short' })}</small></span><span><strong>${escapeHtml(item.template.name)}</strong><small>${GymCalendar.label(item.plannedDate, { weekday: 'long' })}</small></span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button>`).join('') || '<p class="empty-calendar">No pending sessions in the last 28 days.</p>';
 }
 function openSession(templateId, date) {
   sessionDate = date;
@@ -101,23 +101,22 @@ function openSession(templateId, date) {
 // GYM-001, GYM-005, GYM-008, GYM-019
 function renderSession() {
   byId('sessionName').textContent = session().name;
-  byId('sessionProgramName').textContent = session().programName.toUpperCase();
   byId('sessionFocus').textContent = `${session().focus} · ${fullDate(sessionDate)}${sessionDate > todayDate ? ' · Planned preview' : ''}`;
   const done = session().exercises.reduce((sum, item) => sum + completed(item), 0);
   const total = session().exercises.reduce((sum, item) => sum + item.sets.length, 0);
   byId('sessionCount').textContent = `${done} / ${total} working sets done`;
   const state = session().state;
-  const action = state === 'paused' ? 'Resume session' : 'Start session';
+  const action = state === 'paused' ? 'Resume' : 'Start';
   byId('startSession').textContent = action;
+  byId('startSession').setAttribute('aria-label', `${action} session`);
   byId('startSession').hidden = state !== 'ready' && state !== 'paused';
   byId('pauseSession').hidden = state !== 'inProgress';
   byId('finishSession').hidden = state !== 'inProgress' && state !== 'paused';
   byId('finishSession').className = `md-button ${state === 'paused' ? 'md-outlined' : 'md-filled'}`;
-  byId('sessionStatus').textContent = `${GymSession.labels[state]}${state === 'paused' ? ' · your entries are kept' : state === 'finished' ? ` · ${done} / ${total} working sets logged` : state === 'inProgress' && done === total ? ' · all working sets logged' : ''}`;
+  byId('sessionStatus').textContent = GymSession.labels[state];
   const actual = session().attendedDate ?? observedAttendance().get(GymAttendance.key(sessionDate, session().templateId))?.actualDate;
-  byId('attendanceStatus').textContent = actual ? `Planned ${fullDate(sessionDate)} · logged ${fullDate(actual)}` : sessionDate > GymCalendar.today() ? 'Future preview · these entries do not record attendance.' : sessionDate < GymCalendar.today() ? 'This session is still available. Logging a working set today records today’s attendance.' : 'Attendance is recorded when you log a working set; Start alone does not count.';
-  byId('exerciseList').innerHTML = session().exercises.map((item, index) => `<div class="workout-exercise-row"><button class="exercise-card" data-exercise="${index}"><span class="exercise-number">${String(index + 1).padStart(2, '0')}</span><span><strong>${escapeHtml(item.name)}</strong><small>${item.sets.length} × ${escapeHtml(item.target)} reps · ${completed(item)}/${item.sets.length} done</small></span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button><div class="workout-order-controls"><button class="md-icon-button md-icon-outlined" data-move-exercise="${escapeHtml(item.entryId)}" data-direction="-1" aria-label="Move ${escapeHtml(item.name)} earlier" ${index === 0 ? 'disabled' : ''}>${buttonIcon('up')}</button><button class="md-icon-button md-icon-outlined" data-move-exercise="${escapeHtml(item.entryId)}" data-direction="1" aria-label="Move ${escapeHtml(item.name)} later" ${index === session().exercises.length - 1 ? 'disabled' : ''}>${buttonIcon('down')}</button></div></div>`).join('');
-  byId('executionOrderHelp').textContent = state === 'finished' ? 'Select an exercise to review your finished log.' : 'Machine busy? Move exercises up or down for this workout.';
+  byId('attendanceStatus').textContent = actual && actual !== sessionDate ? `Logged ${fullDate(actual)}` : '';
+  byId('exerciseList').innerHTML = session().exercises.map((item, index) => `<div class="workout-exercise-row"><button class="exercise-card" data-exercise="${index}"><span class="exercise-number">${String(index + 1).padStart(2, '0')}</span><span><strong>${escapeHtml(item.name)}</strong><small>${item.sets.length} × ${escapeHtml(item.target)} reps${completed(item) ? ` · ${completed(item)}/${item.sets.length} done` : ''}</small></span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button><div class="workout-order-controls"><button class="md-icon-button md-icon-outlined" data-move-exercise="${escapeHtml(item.entryId)}" data-direction="-1" aria-label="Move ${escapeHtml(item.name)} earlier" ${index === 0 ? 'disabled' : ''}>${buttonIcon('up')}</button><button class="md-icon-button md-icon-outlined" data-move-exercise="${escapeHtml(item.entryId)}" data-direction="1" aria-label="Move ${escapeHtml(item.name)} later" ${index === session().exercises.length - 1 ? 'disabled' : ''}>${buttonIcon('down')}</button></div></div>`).join('');
   if (state === 'finished') {
     byId('exerciseList').querySelectorAll('[data-move-exercise]').forEach(button => { button.disabled = true; });
     byId('exerciseList').querySelectorAll('.workout-order-controls').forEach(controls => { controls.hidden = true; });
@@ -132,7 +131,8 @@ function selectExercise(index) {
 // GYM-004, GYM-005, GYM-009, GYM-014: reps first; warm-ups and working sets share a labeled list.
 function setRow(set, index, kind) {
   const label = kind === 'warmups' ? 'Warm-up' : 'Working set';
-  return `<div class="set-row ${kind === 'warmups' ? 'warmup-row' : ''} ${set.done ? 'complete' : ''}"><span class="set-kind"><small>${kind === 'warmups' ? 'WARM-UP' : 'WORKING'}</small><b>${index + 1}</b></span><input aria-label="${label} ${index + 1} repetitions" type="number" min="0" step="1" required value="${set.reps}" data-kind="${kind}" data-set="${index}" data-field="reps"><input aria-label="${label} ${index + 1} weight in kilograms" type="number" min="0" step="any" required value="${set.weight}" data-kind="${kind}" data-set="${index}" data-field="weight"><button class="md-icon-button md-toggle" aria-label="${label} ${index + 1} complete" aria-pressed="${set.done}" data-kind="${kind}" data-toggle="${index}">${buttonIcon('check')}</button></div>${kind === 'warmups' ? `<button class="md-button md-text remove-warmup" data-remove="${index}" aria-label="Remove warm-up ${index + 1}">Remove warm-up ${index + 1}</button>` : ''}`;
+  const remove = kind === 'warmups' && session().state !== 'finished' ? `<button class="md-icon-button warmup-remove" data-remove="${index}" aria-label="Remove warm-up ${index + 1}">${buttonIcon('trash')}</button>` : '';
+  return `<div class="set-row ${kind === 'warmups' ? 'warmup-row' : ''} ${set.done ? 'complete' : ''}"><span class="set-kind"><small>${kind === 'warmups' ? 'WARM-UP' : 'WORKING'}</small><b>${index + 1}</b>${remove}</span><input aria-label="${label} ${index + 1} repetitions" type="number" min="0" step="1" required value="${set.reps}" data-kind="${kind}" data-set="${index}" data-field="reps"><input aria-label="${label} ${index + 1} weight in kilograms" type="number" min="0" step="any" required value="${set.weight}" data-kind="${kind}" data-set="${index}" data-field="weight"><button class="md-icon-button md-toggle" aria-label="${label} ${index + 1} complete" aria-pressed="${set.done}" data-kind="${kind}" data-toggle="${index}">${buttonIcon('check')}</button></div>`;
 }
 function renderSets() {
   byId('setCount').textContent = `${completed(exercise())} of ${exercise().sets.length} complete`;
@@ -143,15 +143,18 @@ function renderSets() {
 function renderExercise() {
   byId('exercise').classList.toggle('finished-review', session().state === 'finished');
   byId('exerciseName').textContent = exercise().name;
-  byId('exerciseCategory').textContent = `${session().name.toUpperCase()} · ${exercise().category}`;
-  byId('prescription').textContent = `Plan target: ${exercise().sets.length} working sets × ${exercise().target} reps`;
-  byId('back').innerHTML = `${buttonIcon('back')}${escapeHtml(session().name)}`;
+  byId('prescription').textContent = `Target: ${exercise().sets.length} sets × ${exercise().target} reps`;
+  byId('back').innerHTML = buttonIcon('back');
+  byId('back').setAttribute('aria-label', `Back to ${session().name}`);
+  byId('exerciseSessionStatus').textContent = GymSession.labels[session().state];
+  byId('exerciseSessionStatus').hidden = !['paused', 'finished'].includes(session().state);
   byId('pauseExerciseSession').hidden = session().state !== 'inProgress';
   byId('finishExerciseSession').hidden = !['inProgress', 'paused'].includes(session().state);
   byId('finishExerciseSession').className = `md-button ${session().state === 'paused' ? 'md-outlined' : 'md-filled'}`;
   byId('seatInput').value = exercise().seat;
   byId('seatInput').disabled = session().state === 'finished';
   byId('addWarmup').disabled = session().state === 'finished';
+  byId('addWarmup').hidden = session().state === 'finished';
   renderSets();
   renderTimer();
 }
@@ -198,7 +201,7 @@ function renderProgress() {
   byId('metricTitle').textContent = labels.title;
   byId('metricValue').textContent = last?.value == null ? '—' : format(last.value);
   byId('metricUnit').textContent = labels.unit;
-  byId('metricSubtitle').textContent = `${labels.subtitle} · latest session`;
+  byId('metricSubtitle').textContent = labels.subtitle;
   const max = Math.max(1, ...series.map(point => point.value ?? 0));
   const dateLabel = date => new Date(`${date}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
   byId('chart').innerHTML = series.map(point => `<div class="chart-column"><span class="chart-number">${point.value === null ? '—' : format(point.value)}</span><div class="bar-track"><div class="chart-bar" style="height:${point.value === null ? 0 : point.value / max * 100}%"></div></div><span class="chart-date">${dateLabel(point.date)}</span></div>`).join('');
@@ -214,7 +217,8 @@ function renderAttendance() {
   todayDate = today;
   capturePastPlans();
   const stats = GymAttendance.summarize(pastPlans, observedAttendance(), today);
-  byId('attendanceWindow').textContent = `Planned ${GymCalendar.label(GymCalendar.addDays(today, -28), { day: 'numeric', month: 'short' })}–${GymCalendar.label(GymCalendar.addDays(today, -1), { day: 'numeric', month: 'short' })} · updated through ${GymCalendar.label(today, { day: 'numeric', month: 'short' })}`;
+  byId('attendanceWindow').textContent = `${GymCalendar.label(GymCalendar.addDays(today, -28), { day: 'numeric', month: 'short' })}–${GymCalendar.label(GymCalendar.addDays(today, -1), { day: 'numeric', month: 'short' })}`;
+  byId('attendanceAsOf').textContent = `Planned period above; attendance updated through ${fullDate(today)}.`;
   byId('attendanceTotal').textContent = `${stats.logged} / ${stats.planned}`;
   byId('attendancePercent').textContent = stats.percent === null ? 'N/A' : `${Math.round(stats.percent)}%`;
   byId('attendanceOnTime').textContent = stats.onTime;
@@ -233,15 +237,18 @@ function renderTimer() {
   byId('timerValue').setAttribute('aria-label', mode === 'execution' ? 'Execution elapsed time' : 'Recovery time remaining');
   const status = mode === 'recovery' && seconds === 0 ? 'Recovery complete · continue when ready' : running ? 'Running' : state[mode].elapsed > 0 ? 'Paused' : 'Ready';
   if (byId('timerStatus').textContent !== status) byId('timerStatus').textContent = status;
+  byId('timerStatus').className = mode === 'recovery' && seconds === 0 ? 'field-help' : 'sr-only';
   byId('timerToggle').disabled = ['paused', 'finished'].includes(session().state);
   byId('timerReset').disabled = session().state === 'finished';
+  byId('timerToggle').hidden = session().state === 'finished';
+  byId('timerReset').hidden = session().state === 'finished';
   byId('timerToggle').textContent = running ? 'Pause' : state[mode].elapsed > 0 && !(mode === 'recovery' && seconds === 0) ? 'Resume' : 'Start';
   byId('recoverySettings').hidden = mode !== 'recovery';
   byId('recoverySeconds').disabled = state.recovery.startedAt !== null || session().state === 'finished';
   if (document.activeElement !== byId('recoverySeconds')) byId('recoverySeconds').value = state.duration;
   ['execution', 'recovery'].forEach(item => byId(`${item}Mode`).setAttribute('aria-pressed', mode === item));
   const other = mode === 'execution' ? 'recovery' : 'execution';
-  byId('timerContext').textContent = session().state === 'finished' ? 'Session finished · your log is available to review.' : session().state === 'paused' ? 'Session paused · resume from the session screen.' : state[other].startedAt !== null ? `Your ${other} timer is also running.` : 'For this exercise · manual controls';
+  byId('timerContext').textContent = session().state === 'paused' ? 'Resume the session to run timers.' : state[other].startedAt !== null ? `${other === 'execution' ? 'Execution' : 'Recovery'} is also running.` : '';
 }
 byId('exerciseList').addEventListener('click', event => {
   // GYM-019: only execution order changes; keep the selected object's identity.
@@ -255,7 +262,7 @@ byId('exerciseList').addEventListener('click', event => {
     if (next < 0) return;
     exerciseIndex = Math.max(0, session().exercises.indexOf(selected));
     renderSession();
-    byId('executionOrderStatus').textContent = `${session().exercises[next].name} moved to position ${next + 1}. This workout only.`;
+    byId('executionOrderStatus').textContent = `${session().exercises[next].name} moved to position ${next + 1}.`;
     const row = byId('exerciseList').children[next];
     const button = row.querySelector(`[data-direction="${direction}"]`);
     (button.disabled ? row.querySelector('[data-exercise]') : button).focus();
@@ -343,13 +350,13 @@ let planDraft = null;
 let draftDate = selectedDate;
 let editingTemplateId = null;
 let planDirty = false;
-let planMessage = 'Changes are drafts until you save the plan.';
+let planMessage = '';
 const ensureDraft = () => { if (!planDraft) planDraft = GymPlan.clone(GymData.program); };
 const templateDraft = () => planDraft.sessions.find(item => item.id === editingTemplateId);
 const assignmentOptions = first => `<option value="${first}">${first === 'weekly' ? 'Use weekly pattern' : 'No session'}</option>${first === 'weekly' ? '<option value="none">No session</option>' : ''}${planDraft.sessions.map(item => `<option value="${item.id}">${escapeHtml(item.name)} (${item.label})</option>`).join('')}`;
 function markPlanDirty() {
   planDirty = true;
-  planMessage = 'Unsaved changes · save to update new workouts.';
+  planMessage = 'Unsaved changes';
   byId('planFeedback').textContent = planMessage;
   byId('templateFeedback').textContent = planMessage;
 }
@@ -364,7 +371,7 @@ function renderPlan() {
   draftDate = draftDate < today ? today : draftDate;
   byId('planDate').min = today;
   byId('planName').value = planDraft.name;
-  byId('planSessions').innerHTML = planDraft.sessions.map(item => `<div class="plan-session-row"><button type="button" class="exercise-card" data-edit-template="${item.id}"><span class="exercise-number">${item.label}</span><span><strong>${escapeHtml(item.name)}</strong><small>${item.exercises.length} exercises · ${item.exercises.reduce((sum, entry) => sum + (Number(entry.setCount) || 0), 0)} planned working sets</small></span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button><button class="md-icon-button delete-template" type="button" data-delete-template="${item.id}" aria-label="Remove ${escapeHtml(item.name)}" ${planDraft.sessions.length === 1 ? 'disabled' : ''}>${buttonIcon('trash')}</button></div>`).join('');
+  byId('planSessions').innerHTML = planDraft.sessions.map(item => `<div class="plan-session-row"><button type="button" class="exercise-card" data-edit-template="${item.id}"><span class="exercise-number">${item.label}</span><span><strong>${escapeHtml(item.name)}</strong><small>${item.exercises.length} exercises</small></span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button><button class="md-icon-button delete-template" type="button" data-delete-template="${item.id}" aria-label="Remove ${escapeHtml(item.name)}" ${planDraft.sessions.length === 1 ? 'disabled' : ''}>${buttonIcon('trash')}</button></div>`).join('');
   byId('addPlanSession').disabled = planDraft.sessions.length >= 7;
   const days = [[1, 'Monday'], [2, 'Tuesday'], [3, 'Wednesday'], [4, 'Thursday'], [5, 'Friday'], [6, 'Saturday'], [0, 'Sunday']];
   byId('weeklySchedule').innerHTML = days.map(([day, name]) => `<div class="schedule-row"><label for="weekday-${day}">${name}</label><select id="weekday-${day}" data-weekday="${day}">${assignmentOptions('none')}</select></div>`).join('');
@@ -373,12 +380,18 @@ function renderPlan() {
   renderDateAssignment();
   byId('planFeedback').textContent = planMessage;
 }
+// GYM-021: summaries retain targets while occasional editing stays on demand.
+function prescriptionSummary(item, index) {
+  const name = GymData.catalog.find(machine => machine.id === item.exerciseId)?.name ?? 'Choose exercise';
+  const reps = item.minReps === item.maxReps ? item.minReps : `${item.minReps}–${item.maxReps}`;
+  return `${index + 1}. ${escapeHtml(name)} · ${item.setCount} × ${reps}`;
+}
 function renderTemplate() {
   const template = templateDraft();
-  byId('templateHeading').textContent = template.name || 'New session';
+  byId('templateHeading').textContent = 'Edit session';
   byId('templateName').value = template.name;
   byId('templateFocus').value = template.focus;
-  byId('plannedExercises').innerHTML = template.exercises.length ? template.exercises.map((item, index) => `<div class="prescription-card"><label class="select-label" for="planned-machine-${item.entryId}">Exercise ${index + 1}</label><select id="planned-machine-${item.entryId}" data-entry="${item.entryId}" data-plan-field="exerciseId">${GymData.catalog.map(machine => `<option value="${machine.id}" ${machine.id === item.exerciseId ? 'selected' : ''}>${machine.name}</option>`).join('')}</select><div class="prescription-fields"><label>Working sets<input type="number" min="1" max="10" step="1" required value="${item.setCount}" data-entry="${item.entryId}" data-plan-field="setCount" aria-label="Exercise ${index + 1} planned working sets"></label><label>Min reps<input type="number" min="1" max="50" step="1" required value="${item.minReps}" data-entry="${item.entryId}" data-plan-field="minReps" aria-label="Exercise ${index + 1} minimum target reps"></label><label>Max reps<input type="number" min="1" max="50" step="1" required value="${item.maxReps}" data-entry="${item.entryId}" data-plan-field="maxReps" aria-label="Exercise ${index + 1} maximum target reps"></label></div><div class="prescription-actions"><button class="md-icon-button md-icon-outlined" type="button" data-move-entry="${item.entryId}" data-direction="-1" aria-label="Move exercise ${index + 1} up" ${index === 0 ? 'disabled' : ''}>${buttonIcon('up')}</button><button class="md-icon-button md-icon-outlined" type="button" data-move-entry="${item.entryId}" data-direction="1" aria-label="Move exercise ${index + 1} down" ${index === template.exercises.length - 1 ? 'disabled' : ''}>${buttonIcon('down')}</button><button class="md-button md-text" type="button" data-remove-entry="${item.entryId}">Remove exercise</button></div></div>`).join('') : '<p class="field-help">Add an exercise to this session.</p>';
+  byId('plannedExercises').innerHTML = template.exercises.length ? template.exercises.map((item, index) => `<details class="prescription-card" ${index === 0 ? 'open' : ''}><summary><strong class="prescription-summary">${prescriptionSummary(item, index)}</strong></summary><label class="select-label" for="planned-machine-${item.entryId}">Exercise</label><select id="planned-machine-${item.entryId}" data-entry="${item.entryId}" data-plan-field="exerciseId">${GymData.catalog.map(machine => `<option value="${machine.id}" ${machine.id === item.exerciseId ? 'selected' : ''}>${machine.name}</option>`).join('')}</select><div class="prescription-fields"><label>Working sets<input type="number" min="1" max="10" step="1" required value="${item.setCount}" data-entry="${item.entryId}" data-plan-field="setCount" aria-label="Exercise ${index + 1} planned working sets"></label><label>Min reps<input type="number" min="1" max="50" step="1" required value="${item.minReps}" data-entry="${item.entryId}" data-plan-field="minReps" aria-label="Exercise ${index + 1} minimum target reps"></label><label>Max reps<input type="number" min="1" max="50" step="1" required value="${item.maxReps}" data-entry="${item.entryId}" data-plan-field="maxReps" aria-label="Exercise ${index + 1} maximum target reps"></label></div><div class="prescription-actions"><button class="md-icon-button md-icon-outlined" type="button" data-move-entry="${item.entryId}" data-direction="-1" aria-label="Move exercise ${index + 1} up" ${index === 0 ? 'disabled' : ''}>${buttonIcon('up')}</button><button class="md-icon-button md-icon-outlined" type="button" data-move-entry="${item.entryId}" data-direction="1" aria-label="Move exercise ${index + 1} down" ${index === template.exercises.length - 1 ? 'disabled' : ''}>${buttonIcon('down')}</button><button class="md-icon-button" type="button" data-remove-entry="${item.entryId}" aria-label="Remove exercise ${index + 1}">${buttonIcon('trash')}</button></div></details>`).join('') : '<p class="field-help">Add an exercise to this session.</p>';
   byId('exerciseToAdd').innerHTML = GymData.catalog.map(item => `<option value="${item.id}">${item.name}</option>`).join('');
   byId('templateFeedback').textContent = planMessage;
 }
@@ -394,7 +407,7 @@ function savePlan(event) {
   if (planDirty) GymPlan.apply(GymData.program, planDraft, GymData.catalog);
   planDraft = GymPlan.clone(GymData.program);
   planDirty = false;
-  planMessage = 'Plan saved · recorded sessions keep their original targets.';
+  planMessage = 'Plan saved';
   renderPlan();
   renderProgram();
   showView('plan', 'planNav');
@@ -435,13 +448,14 @@ byId('addPlanSession').addEventListener('click', () => {
   markPlanDirty(); renderTemplate(); showView('planSession', 'backToPlan');
 });
 byId('backToPlan').addEventListener('click', () => { renderPlan(); showView('plan', 'planNav'); });
-byId('templateName').addEventListener('input', event => { templateDraft().name = event.target.value; byId('templateHeading').textContent = event.target.value || 'New session'; markPlanDirty(); });
+byId('templateName').addEventListener('input', event => { templateDraft().name = event.target.value; markPlanDirty(); });
 byId('templateFocus').addEventListener('input', event => { templateDraft().focus = event.target.value; markPlanDirty(); });
 byId('plannedExercises').addEventListener('input', event => {
   const field = event.target.dataset.planField;
   if (!field) return;
   const item = templateDraft().exercises.find(entry => entry.entryId === event.target.dataset.entry);
   item[field] = field === 'exerciseId' ? event.target.value : Number(event.target.value);
+  event.target.closest('.prescription-card').querySelector('.prescription-summary').innerHTML = prescriptionSummary(item, templateDraft().exercises.indexOf(item));
   markPlanDirty();
 });
 byId('plannedExercises').addEventListener('click', event => {
@@ -460,6 +474,11 @@ byId('addPlanExercise').addEventListener('click', () => {
 });
 byId('planForm').addEventListener('submit', savePlan);
 byId('templateForm').addEventListener('submit', savePlan);
+// GYM-021: reveal a collapsed invalid field before the browser moves focus to it.
+['planForm', 'templateForm'].forEach(id => byId(id).addEventListener('invalid', event => {
+  const details = event.target.closest('details');
+  if (details) details.open = true;
+}, true));
 
 // GYM-010
 byId('progressNav').addEventListener('click', () => { renderProgress(); showView('progress', 'progressNav'); });

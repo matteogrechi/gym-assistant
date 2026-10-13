@@ -9,7 +9,8 @@ Android distinguishes filled, filled tonal, outlined, and text buttons by emphas
 | App action | Material component choice |
 | --- | --- |
 | Open workout, Start/Resume/Finish session (Finish is outlined while Paused), timer Start/Pause/Resume, Save plan | Filled button |
-| Add warm-up, session, or catalog exercise | Filled tonal button |
+| Add session or catalog exercise | Filled tonal button |
+| Inline Add warm-up | Text button beside the set heading |
 | Pause session; Finish while Paused | Outlined button |
 | Back, Today, Reset, remove warm-up/exercise text, video access | Text button |
 | Previous/next week and exercise move earlier/later | Outlined icon button |
@@ -28,3 +29,5 @@ Train, Plan, and Progress are bottom navigation destinations, with persistent la
 Standard interactive targets have a minimum of 48 × 48 CSS pixels for this phone-sized preview, including completion buttons, timer controls, and selectors. Per the user’s request to show the entire week without horizontal scrolling, calendar date cells use seven equal columns: their width can be below 48 CSS pixels on narrow previews, while height stays at least 48 pixels. This is a documented prototype exception; touch areas do not overlap. Native Android implementation must measure in dp and use platform accessibility semantics. The preview's CSS pixels are a design approximation rather than a physical-size guarantee on arbitrary browsers. [Android: Accessibility defaults](https://developer.android.com/develop/ui/compose/accessibility/api-defaults)
 
 The future Android app should use native Material components and verify screen-reader behavior, display/font scaling, insets, and system Back. These checks are deferred with Android implementation. The mockup already provides focus states, labels, programmatic selected/pressed states, textual warm-up labels, and a native browser dialog.
+
+GYM-021 keeps timer actions compact, uses short visible Pause/Finish labels with full accessible names, and uses browser disclosure controls for occasional settings and metric definitions. Disclosure summaries retain 48px targets and visible keyboard focus. Invalid collapsed fields expand before validation focus. These disclosures are prototype presentations; native Android equivalents remain undecided.

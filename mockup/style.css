@@ -208,7 +208,7 @@ input::placeholder { color: var(--on-surface-variant); opacity: 1; }
 /* GYM-017: lifecycle actions are accessible from session and exercise screens. */
 .session-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .session-actions #startSession { width: auto; flex: 1 1 170px; }
-.session-stop { flex-shrink: 0; }
+.session-pause { flex-shrink: 0; }
 .exercise-navigation { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
 .exercise-navigation .back { margin-bottom: 0; }
 
@@ -249,3 +249,10 @@ h2, h3, .exercise-card strong { overflow-wrap: anywhere; }
 .attendance-details > div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--outline-variant); }
 .attendance-details dd { margin: 0; font-weight: 700; white-space: nowrap; }
 .attendance-card .field-help:last-child { margin-bottom: 0; }
+
+/* GYM-017: both lifecycle actions fit narrow exercise screens. */
+.exercise-navigation { flex-wrap: wrap; }
+.exercise-session-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.session-actions #finishSession { flex: 1 1 170px; }
+/* GYM-017: preserve recorded-value contrast during read-only review. */
+.finished-review input:disabled { opacity: 1; }

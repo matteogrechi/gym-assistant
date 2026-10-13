@@ -126,6 +126,55 @@ test('GYM-016: an empty planning horizon produces an empty agenda', () => {
 });
 
 const plan = require('../mockup/plan.js');
+const lifecycle = require('../mockup/session.js');
+test('GYM-017: state diagram admits only Start/Pause/Resume/Finish transitions', () => {
+  const legal = { ready: { start: 'inProgress' }, inProgress: { pause: 'paused', finish: 'finished' }, paused: { resume: 'inProgress', finish: 'finished' }, finished: {} };
+  for (const state of Object.keys(legal)) for (const action of ['start', 'pause', 'resume', 'finish']) {
+    const instance = { state, exercises: [] };
+    assert.equal(lifecycle.transition(instance, action, 1000), Boolean(legal[state][action]), `${state}: ${action}`);
+    assert.equal(instance.state, legal[state][action] ?? state);
+  }
+  assert.equal(lifecycle.labels.inProgress, 'In progress');
+});
+
+test('GYM-017: Pause retains all logs and pauses both timers on every exercise; Resume is manual for timers', () => {
+  const instance = plan.openOccurrence(data.program, data.catalog, '2026-10-12', 'session-A');
+  instance.exercises.forEach(item => { item.timers = timers.create(); item.warmups = [{ reps: 15, weight: 20, done: true }]; });
+  instance.exercises[0].seat = 'Seat 7';
+  instance.exercises[0].sets[0].done = true;
+  assert.equal(lifecycle.transition(instance, 'start', 1000), true);
+  instance.exercises.forEach(item => { timers.start(item.timers, 'execution', 1000); timers.start(item.timers, 'recovery', 1000); });
+  assert.equal(lifecycle.transition(instance, 'pause', 4000), true);
+  instance.exercises.forEach(item => {
+    assert.equal(item.timers.execution.startedAt, null);
+    assert.equal(item.timers.recovery.startedAt, null);
+    assert.equal(timers.read(item.timers, 'execution', 9000), 3);
+    assert.equal(timers.read(item.timers, 'recovery', 9000), 87);
+    assert.equal(item.warmups[0].reps, 15);
+  });
+  assert.equal(instance.exercises[0].seat, 'Seat 7');
+  assert.equal(instance.exercises[0].sets[0].done, true);
+  assert.equal(lifecycle.transition(instance, 'resume', 9000), true);
+  assert.equal(instance.exercises[0].timers.execution.startedAt, null);
+});
+
+test('GYM-017: partial Finish is terminal, preserves records without marking sets done or adding attendance', () => {
+  const instance = plan.openOccurrence(data.program, data.catalog, '2026-10-12', 'session-A');
+  instance.exercises.forEach(item => { item.timers = timers.create(); });
+  lifecycle.transition(instance, 'start', 1000);
+  timers.start(instance.exercises[0].timers, 'execution', 1000);
+  instance.exercises[0].sets[0].done = true;
+  assert.equal(lifecycle.transition(instance, 'finish', 6000), true);
+  assert.equal(instance.state, 'finished');
+  assert.equal(instance.finishedAt, 6000);
+  assert.equal(instance.attendedDate, undefined);
+  assert.equal(instance.exercises.flatMap(item => item.sets).filter(set => set.done).length, 1);
+  assert.equal(timers.read(instance.exercises[0].timers, 'execution', 9000), 5);
+  assert.equal(plan.moveExercise(instance, 'A-leg', 1), -1);
+  for (const action of ['start', 'pause', 'resume', 'finish']) assert.equal(lifecycle.transition(instance, action, 9000), false);
+  assert.strictEqual(plan.openOccurrence(data.program, data.catalog, instance.date, 'session-A', instance), instance);
+});
+
 const attendance = require('../mockup/attendance.js');
 test('GYM-020: cohort excludes today/future, separates late visits, and retains original plans', () => {
   const definition = plan.clone(data.program);
@@ -144,7 +193,7 @@ test('GYM-020: cohort excludes today/future, separates late visits, and retains 
 
 test('GYM-020: valid working log catches up once on actual date, without altering strength history', () => {
   const workout = plan.openOccurrence(data.program, data.catalog, '2026-09-18', 'session-C');
-  workout.state = 'active';
+  workout.state = 'inProgress';
   workout.exercises[0].warmups = [{ reps: 15, weight: 20, done: true }];
   assert.equal(attendance.observe(workout, '2026-10-12'), false);
   workout.exercises[0].sets[0] = { reps: 0, weight: 30, done: true };
@@ -152,7 +201,7 @@ test('GYM-020: valid working log catches up once on actual date, without alterin
   workout.exercises[0].sets[0].reps = 12;
   const before = plan.clone(data.history);
   assert.equal(attendance.observe(workout, '2026-10-12'), true);
-  workout.state = 'stopped';
+  workout.state = 'paused';
   assert.equal(attendance.observe(workout, '2026-10-13'), false);
   assert.equal(workout.attendedDate, '2026-10-12');
   assert.equal(workout.date, '2026-09-18');
@@ -247,7 +296,7 @@ test('GYM-018: actual reps and weights never mutate the prescribed plan', () => 
 test('GYM-018: saving updates new and untouched previews but protects recorded snapshots', () => {
   const definition = plan.clone(data.program);
   const active = plan.openOccurrence(definition, data.catalog, '2026-10-12', 'session-A');
-  active.state = 'active';
+  active.state = 'inProgress';
   active.exercises[0].sets[0].reps = 7;
   const untouched = plan.openOccurrence(definition, data.catalog, '2026-10-19', 'session-A');
   const draft = plan.clone(definition);
@@ -267,12 +316,12 @@ test('GYM-018: saving updates new and untouched previews but protects recorded s
   assert.equal(active.planRevision, 1);
 });
 
-test('GYM-018: entries and stopped state keep the snapshot even after template removal', () => {
+test('GYM-018: entries and Paused state keep the snapshot even after template removal', () => {
   const definition = plan.clone(data.program);
   const recorded = plan.openOccurrence(definition, data.catalog, '2026-10-12', 'session-A');
   recorded.hasEntries = true;
-  const stopped = plan.openOccurrence(definition, data.catalog, '2026-10-19', 'session-A');
-  stopped.state = 'stopped';
+  const paused = plan.openOccurrence(definition, data.catalog, '2026-10-19', 'session-A');
+  paused.state = 'paused';
   const draft = plan.clone(definition);
   draft.dateAssignments['2026-10-20'] = 'session-A';
   assert.equal(plan.removeSession(draft, 'session-A'), true);
@@ -280,7 +329,7 @@ test('GYM-018: entries and stopped state keep the snapshot even after template r
   assert.equal(draft.dateAssignments['2026-10-20'], null);
   plan.apply(definition, draft, data.catalog);
   assert.strictEqual(plan.openOccurrence(definition, data.catalog, '2026-10-12', 'session-A', recorded), recorded);
-  assert.strictEqual(plan.openOccurrence(definition, data.catalog, '2026-10-19', 'session-A', stopped), stopped);
+  assert.strictEqual(plan.openOccurrence(definition, data.catalog, '2026-10-19', 'session-A', paused), paused);
   assert.equal(definition.sessions.find(item => item.id === 'session-B').label, 'B');
   assert.equal(calendar.plan('2026-10-21', definition.schedule, {}), 'session-B');
 });

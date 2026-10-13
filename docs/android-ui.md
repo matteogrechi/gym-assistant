@@ -8,9 +8,9 @@ Android distinguishes filled, filled tonal, outlined, and text buttons by emphas
 
 | App action | Material component choice |
 | --- | --- |
-| Open workout, Start/Continue/Resume session, timer Start/Pause/Resume, Save plan | Filled button |
+| Open workout, Start/Resume/Finish session (Finish is outlined while Paused), timer Start/Pause/Resume, Save plan | Filled button |
 | Add warm-up, session, or catalog exercise | Filled tonal button |
-| Stop session | Outlined button |
+| Pause session; Finish while Paused | Outlined button |
 | Back, Today, Reset, remove warm-up/exercise text, video access | Text button |
 | Previous/next week and exercise move earlier/later | Outlined icon button |
 | Remove session template | Standard icon button with a trash icon |

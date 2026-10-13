@@ -45,6 +45,7 @@ const GymPlan = (() => {
   const locked = instance => instance && (instance.state !== 'ready' || instance.hasEntries || instance.orderChanged);
   // GYM-019: move the existing exercise object, retaining all occurrence data.
   function moveExercise(instance, entryId, direction) {
+    if (instance.state === 'finished') return -1;
     const index = instance.exercises.findIndex(item => item.entryId === entryId);
     const next = index + direction;
     if (![1, -1].includes(direction) || index < 0 || next < 0 || next >= instance.exercises.length) return -1;

@@ -1,5 +1,5 @@
 'use strict';
-/* global GymData, GymMetrics, GymTimers, GymCalendar, GymPlan, GymAttendance */
+/* global GymData, GymMetrics, GymTimers, GymCalendar, GymPlan, GymAttendance, GymSession */
 const byId = id => document.getElementById(id);
 // GYM-015: uniform decorative SVGs; the surrounding button provides its action name.
 const buttonIcon = name => {
@@ -87,7 +87,8 @@ function renderCalendar() {
   const upcoming = GymCalendar.upcoming(todayDate, GymData.program.schedule, executionAssignments());
   byId('upcomingSessions').innerHTML = upcoming.length ? upcoming.map(item => `<button class="exercise-card upcoming-card" data-planned-date="${item.date}"><span class="agenda-date"><strong>${GymCalendar.label(item.date, { day: 'numeric' })}</strong><small>${GymCalendar.label(item.date, { month: 'short' })}</small></span><span><strong>${escapeHtml(plannedForDate(item.date).template.name)}</strong><small>${GymCalendar.label(item.date, { weekday: 'long', day: 'numeric', month: 'short' })}</small></span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button>`).join('') : '<p class="empty-calendar">No sessions planned in the next 28 days.</p>';
   // GYM-020: overdue workouts remain available, oldest first; dates do not move.
-  const pending = GymAttendance.pending(pastPlans, observedAttendance(), todayDate);
+  const finishedIds = new Set([...sessionInstances.values()].filter(item => item.state === 'finished').map(item => GymAttendance.key(item.date, item.templateId)));
+  const pending = GymAttendance.pending(pastPlans, observedAttendance(), todayDate).filter(item => !finishedIds.has(item.id));
   byId('pendingCount').textContent = `${pending.length} not yet logged`;
   byId('pendingSessions').innerHTML = pending.slice(0, 3).map(item => `<button class="exercise-card" data-pending-date="${item.plannedDate}"><span class="agenda-date"><strong>${GymCalendar.label(item.plannedDate, { day: 'numeric' })}</strong><small>${GymCalendar.label(item.plannedDate, { month: 'short' })}</small></span><span><strong>${escapeHtml(item.template.name)}</strong><small>Planned ${GymCalendar.label(item.plannedDate, { weekday: 'short', day: 'numeric', month: 'short' })} · ready when you are</small></span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button>`).join('') || '<p class="empty-calendar">No pending sessions in the last 28 days.</p>';
 }
@@ -105,13 +106,22 @@ function renderSession() {
   const done = session().exercises.reduce((sum, item) => sum + completed(item), 0);
   const total = session().exercises.reduce((sum, item) => sum + item.sets.length, 0);
   byId('sessionCount').textContent = `${done} / ${total} working sets done`;
-  const action = session().state === 'stopped' ? 'Resume session' : session().state === 'active' ? 'Continue session' : 'Start session';
+  const state = session().state;
+  const action = state === 'paused' ? 'Resume session' : 'Start session';
   byId('startSession').textContent = action;
-  byId('stopSession').hidden = session().state !== 'active';
-  byId('sessionStatus').textContent = session().state === 'stopped' ? 'Stopped · your entries are kept' : session().state === 'active' ? (done === total ? 'All working sets logged · session active' : sessionDate > todayDate ? 'Preview in progress' : 'In progress') : 'Ready to start';
+  byId('startSession').hidden = state !== 'ready' && state !== 'paused';
+  byId('pauseSession').hidden = state !== 'inProgress';
+  byId('finishSession').hidden = state !== 'inProgress' && state !== 'paused';
+  byId('finishSession').className = `md-button ${state === 'paused' ? 'md-outlined' : 'md-filled'}`;
+  byId('sessionStatus').textContent = `${GymSession.labels[state]}${state === 'paused' ? ' · your entries are kept' : state === 'finished' ? ` · ${done} / ${total} working sets logged` : state === 'inProgress' && done === total ? ' · all working sets logged' : ''}`;
   const actual = session().attendedDate ?? observedAttendance().get(GymAttendance.key(sessionDate, session().templateId))?.actualDate;
   byId('attendanceStatus').textContent = actual ? `Planned ${fullDate(sessionDate)} · logged ${fullDate(actual)}` : sessionDate > GymCalendar.today() ? 'Future preview · these entries do not record attendance.' : sessionDate < GymCalendar.today() ? 'This session is still available. Logging a working set today records today’s attendance.' : 'Attendance is recorded when you log a working set; Start alone does not count.';
   byId('exerciseList').innerHTML = session().exercises.map((item, index) => `<div class="workout-exercise-row"><button class="exercise-card" data-exercise="${index}"><span class="exercise-number">${String(index + 1).padStart(2, '0')}</span><span><strong>${escapeHtml(item.name)}</strong><small>${item.sets.length} × ${escapeHtml(item.target)} reps · ${completed(item)}/${item.sets.length} done</small></span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button><div class="workout-order-controls"><button class="md-icon-button md-icon-outlined" data-move-exercise="${escapeHtml(item.entryId)}" data-direction="-1" aria-label="Move ${escapeHtml(item.name)} earlier" ${index === 0 ? 'disabled' : ''}>${buttonIcon('up')}</button><button class="md-icon-button md-icon-outlined" data-move-exercise="${escapeHtml(item.entryId)}" data-direction="1" aria-label="Move ${escapeHtml(item.name)} later" ${index === session().exercises.length - 1 ? 'disabled' : ''}>${buttonIcon('down')}</button></div></div>`).join('');
+  byId('executionOrderHelp').textContent = state === 'finished' ? 'Select an exercise to review your finished log.' : 'Machine busy? Move exercises up or down for this workout.';
+  if (state === 'finished') {
+    byId('exerciseList').querySelectorAll('[data-move-exercise]').forEach(button => { button.disabled = true; });
+    byId('exerciseList').querySelectorAll('.workout-order-controls').forEach(controls => { controls.hidden = true; });
+  }
   byId('executionOrderStatus').textContent = '';
 }
 function selectExercise(index) {
@@ -127,20 +137,27 @@ function setRow(set, index, kind) {
 function renderSets() {
   byId('setCount').textContent = `${completed(exercise())} of ${exercise().sets.length} complete`;
   byId('sets').innerHTML = exercise().warmups.map((set, index) => setRow(set, index, 'warmups')).join('') + exercise().sets.map((set, index) => setRow(set, index, 'sets')).join('');
+  if (session().state === 'finished') byId('sets').querySelectorAll('input,button').forEach(control => { control.disabled = true; });
 }
 // GYM-001, GYM-003, GYM-008, GYM-012
 function renderExercise() {
+  byId('exercise').classList.toggle('finished-review', session().state === 'finished');
   byId('exerciseName').textContent = exercise().name;
   byId('exerciseCategory').textContent = `${session().name.toUpperCase()} · ${exercise().category}`;
   byId('prescription').textContent = `Plan target: ${exercise().sets.length} working sets × ${exercise().target} reps`;
   byId('back').innerHTML = `${buttonIcon('back')}${escapeHtml(session().name)}`;
-  byId('stopExerciseSession').hidden = session().state !== 'active';
+  byId('pauseExerciseSession').hidden = session().state !== 'inProgress';
+  byId('finishExerciseSession').hidden = !['inProgress', 'paused'].includes(session().state);
+  byId('finishExerciseSession').className = `md-button ${session().state === 'paused' ? 'md-outlined' : 'md-filled'}`;
   byId('seatInput').value = exercise().seat;
+  byId('seatInput').disabled = session().state === 'finished';
+  byId('addWarmup').disabled = session().state === 'finished';
   renderSets();
   renderTimer();
 }
 // GYM-004, GYM-014: reject invalid numbers; retain last valid value.
 function updateSet(input) {
+  if (session().state === 'finished') return;
   const set = exercise()[input.dataset.kind][Number(input.dataset.set)];
   if (!input.checkValidity() || !Number.isFinite(Number(input.value))) {
     input.reportValidity();
@@ -153,6 +170,7 @@ function updateSet(input) {
 }
 // GYM-005, GYM-014
 function toggleSet(index, kind) {
+  if (session().state === 'finished') return;
   const set = exercise()[kind][index];
   set.done = !set.done;
   session().hasEntries = true;
@@ -215,19 +233,21 @@ function renderTimer() {
   byId('timerValue').setAttribute('aria-label', mode === 'execution' ? 'Execution elapsed time' : 'Recovery time remaining');
   const status = mode === 'recovery' && seconds === 0 ? 'Recovery complete · continue when ready' : running ? 'Running' : state[mode].elapsed > 0 ? 'Paused' : 'Ready';
   if (byId('timerStatus').textContent !== status) byId('timerStatus').textContent = status;
-  byId('timerToggle').disabled = session().state === 'stopped';
+  byId('timerToggle').disabled = ['paused', 'finished'].includes(session().state);
+  byId('timerReset').disabled = session().state === 'finished';
   byId('timerToggle').textContent = running ? 'Pause' : state[mode].elapsed > 0 && !(mode === 'recovery' && seconds === 0) ? 'Resume' : 'Start';
   byId('recoverySettings').hidden = mode !== 'recovery';
-  byId('recoverySeconds').disabled = state.recovery.startedAt !== null;
+  byId('recoverySeconds').disabled = state.recovery.startedAt !== null || session().state === 'finished';
   if (document.activeElement !== byId('recoverySeconds')) byId('recoverySeconds').value = state.duration;
   ['execution', 'recovery'].forEach(item => byId(`${item}Mode`).setAttribute('aria-pressed', mode === item));
   const other = mode === 'execution' ? 'recovery' : 'execution';
-  byId('timerContext').textContent = session().state === 'stopped' ? 'Session stopped · resume from the session screen.' : state[other].startedAt !== null ? `Your ${other} timer is also running.` : 'For this exercise · manual controls';
+  byId('timerContext').textContent = session().state === 'finished' ? 'Session finished · your log is available to review.' : session().state === 'paused' ? 'Session paused · resume from the session screen.' : state[other].startedAt !== null ? `Your ${other} timer is also running.` : 'For this exercise · manual controls';
 }
 byId('exerciseList').addEventListener('click', event => {
   // GYM-019: only execution order changes; keep the selected object's identity.
   const move = event.target.closest('[data-move-exercise]');
   if (move) {
+    if (session().state === 'finished') return;
     const selected = exercise();
     const entryId = move.dataset.moveExercise;
     const direction = Number(move.dataset.direction);
@@ -296,26 +316,28 @@ byId('pendingSessions').addEventListener('click', event => {
 byId('calendarToday').addEventListener('click', () => {
   todayDate = GymCalendar.today(); selectedDate = todayDate; displayedWeek = GymCalendar.week(todayDate)[0]; renderCalendar();
 });
-// GYM-017: start/continue/resume selects unfinished work and preserves recorded data.
+// GYM-017: Start/Resume select unfinished work; exercise selection is navigation.
 byId('startSession').addEventListener('click', () => {
-  session().state = 'active';
+  const action = session().state === 'paused' ? 'resume' : 'start';
+  if (!GymSession.transition(session(), action, Date.now())) return;
   const next = session().exercises.findIndex(item => item.sets.some(set => !set.done));
   selectExercise(next < 0 ? 0 : next);
 });
-// GYM-017, GYM-012: stop pauses every timer in this session occurrence.
-function stopSession() {
-  if (session().state !== 'active') return;
-  const now = Date.now();
-  session().exercises.forEach(item => {
-    GymTimers.pause(item.timers, 'execution', now);
-    GymTimers.pause(item.timers, 'recovery', now);
-  });
-  session().state = 'stopped';
+// GYM-017, GYM-012: Pause/Finish pause all occurrence timers, preserving entries.
+function pauseSession() {
+  if (!GymSession.transition(session(), 'pause', Date.now())) return;
   renderSession();
   showView('session', 'startSession');
 }
-byId('stopSession').addEventListener('click', stopSession);
-byId('stopExerciseSession').addEventListener('click', stopSession);
+byId('pauseSession').addEventListener('click', pauseSession);
+byId('pauseExerciseSession').addEventListener('click', pauseSession);
+function finishSession() {
+  if (!GymSession.transition(session(), 'finish', Date.now())) return;
+  renderSession();
+  showView('session', 'backProgram');
+}
+byId('finishSession').addEventListener('click', finishSession);
+byId('finishExerciseSession').addEventListener('click', finishSession);
 // GYM-018: a single editable draft owns templates and scheduling, separate from Train.
 let planDraft = null;
 let draftDate = selectedDate;
@@ -445,11 +467,12 @@ byId('progressExercise').innerHTML = GymData.catalog.map((item, index) => `<opti
 byId('progressExercise').addEventListener('change', renderProgress);
 document.querySelectorAll('[data-metric]').forEach(button => button.addEventListener('click', () => { metric = button.dataset.metric; renderProgress(); }));
 // GYM-003
-byId('seatInput').addEventListener('input', event => { exercise().seat = event.target.value; session().hasEntries = true; });
+byId('seatInput').addEventListener('input', event => { if (session().state !== 'finished') { exercise().seat = event.target.value; session().hasEntries = true; } });
 // GYM-004, GYM-005, GYM-014
 ['sets'].forEach(id => {
   byId(id).addEventListener('change', event => { if (event.target.matches('input')) updateSet(event.target); });
   byId(id).addEventListener('click', event => {
+    if (session().state === 'finished') return;
     const button = event.target.closest('[data-toggle]');
     if (button) toggleSet(Number(button.dataset.toggle), button.dataset.kind);
     const remove = event.target.closest('[data-remove]');
@@ -457,6 +480,7 @@ byId('seatInput').addEventListener('input', event => { exercise().seat = event.t
   });
 });
 byId('addWarmup').addEventListener('click', () => {
+  if (session().state === 'finished') return;
   exercise().warmups.push({ reps: 0, weight: 0, done: false });
   session().hasEntries = true;
   renderSets();
@@ -465,15 +489,16 @@ byId('addWarmup').addEventListener('click', () => {
 // GYM-012
 ['execution', 'recovery'].forEach(mode => byId(`${mode}Mode`).addEventListener('click', () => { exercise().timers.mode = mode; renderTimer(); }));
 byId('timerToggle').addEventListener('click', () => {
-  if (session().state === 'stopped') return;
+  if (['paused', 'finished'].includes(session().state)) return;
   session().hasEntries = true;
   const state = exercise().timers;
   if (state[state.mode].startedAt === null) GymTimers.start(state, state.mode, Date.now());
   else GymTimers.pause(state, state.mode, Date.now());
   renderTimer();
 });
-byId('timerReset').addEventListener('click', () => { session().hasEntries = true; GymTimers.reset(exercise().timers, exercise().timers.mode); renderTimer(); });
+byId('timerReset').addEventListener('click', () => { if (session().state === 'finished') return; session().hasEntries = true; GymTimers.reset(exercise().timers, exercise().timers.mode); renderTimer(); });
 byId('recoverySeconds').addEventListener('change', event => {
+  if (session().state === 'finished') return;
   if (!GymTimers.setDuration(exercise().timers, Number(event.target.value))) { event.target.reportValidity(); event.target.value = exercise().timers.duration; }
   else session().hasEntries = true;
   renderTimer();

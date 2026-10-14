@@ -1,0 +1,6 @@
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- GYM-007/013/015: reuse the same outline for supported themed launchers. -->
+    <background android:drawable="@color/gym_icon_background" />
+    <foreground android:drawable="@drawable/ic_gym_foreground" />
+    <monochrome android:drawable="@drawable/ic_gym_foreground" />
+</adaptive-icon>

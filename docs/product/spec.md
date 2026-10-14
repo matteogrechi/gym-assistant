@@ -1,6 +1,11 @@
 # gym assystant — draft specification
 
-Status: revision 34, native implementation authorized and implemented; verification is recorded separately. The offline Android plan has been presented. The browser mockup remains the visual reference; native coverage is recorded separately and only after its implementation and checks exist.
+Status: revision 35, native implementation authorized and implemented; verification is recorded separately. The offline Android plan has been presented. The browser mockup remains the visual reference; native coverage is recorded separately and only after its implementation and checks exist.
+
+## Native logo refinement (revision 35)
+
+- GYM-007/013: replace the Android launcher's generic program glyph with an openly licensed dumbbell symbol, restyled with a heavier stroke and rounded joins to match bundled Manrope ExtraBold (weight 800). Use the existing deep-teal, ivory and sunrise-amber palette, with an amber connecting bar. Preserve the exact app name. Provide reusable SVG assets for the symbol and outlined full-name wordmark, with no external font dependency when rendered; preserve the symbol's upstream license and source attribution.
+- GYM-015/025/027: use native adaptive foreground/background layers, keep the mark inside the mask-safe area, and provide a monochrome layer for supported themed launchers. Verify circular/rounded masks and small-size legibility, build the APK, and inspect the installed launcher icon. This visual refinement adds no runtime setting or network dependency.
 
 ## Native implementation acceptance refinements (revision 34)
 

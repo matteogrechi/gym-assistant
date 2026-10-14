@@ -93,8 +93,8 @@ jobs:
           tag = 'v' + version
           endpoint = f'repos/{repo}'
           release = optional_api(f'{endpoint}/releases/tags/{tag}')
-          commit = optional_api(f'{endpoint}/commits/{tag}')
-          guard(release, commit['sha'] if commit else sha, sha)
+          commit = optional_api(f'{endpoint}/git/ref/tags/{tag}')
+          guard(release, commit['object']['sha'] if commit else sha, sha)
           if release and not commit:
               raise RuntimeError('Existing release has no resolvable tag')
           if not commit:
@@ -106,7 +106,7 @@ jobs:
                  f'Commit: {sha}\nSigned offline Android APK and Play submission bundle.\n'
                  'Verify SHA256SUMS before installing. See docs/architecture/android-distribution.md.')
               release = json.loads(gh('api', f'{endpoint}/releases/tags/{tag}'))
-          guard(release, json.loads(gh('api', f'{endpoint}/commits/{tag}'))['sha'], sha)
+          guard(release, json.loads(gh('api', f'{endpoint}/git/ref/tags/{tag}'))['object']['sha'], sha)
           directory = Path(os.environ['RUNNER_TEMP']) / 'release'
           assets = {asset['name'] for asset in release['assets']}
           names = [f'gym-assystant-{version}.{extension}' for extension in ('apk', 'aab')]
@@ -135,7 +135,7 @@ jobs:
           if 'jar verified.' not in bundle_check:
               raise RuntimeError('Bundle signature verification failed')
           # Check identity again immediately before publishing; never move an existing tag.
-          guard(release, json.loads(gh('api', f'{endpoint}/commits/{tag}'))['sha'], sha)
+          guard(release, json.loads(gh('api', f'{endpoint}/git/ref/tags/{tag}'))['object']['sha'], sha)
           if release['draft']:
               gh('release', 'edit', tag, '--repo', repo, '--draft=false')
           print(f'Published {tag} for {sha}')

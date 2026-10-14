@@ -1,6 +1,14 @@
 # gym assystant — draft specification
 
-Status: revision 35, native implementation authorized and implemented; verification is recorded separately. The offline Android plan has been presented. The browser mockup remains the visual reference; native coverage is recorded separately and only after its implementation and checks exist.
+Status: revision 36, native implementation authorized and implemented; verification is recorded separately. The offline Android plan has been presented. The browser mockup remains the visual reference; native coverage is recorded separately and only after its implementation and checks exist.
+
+## Mockup alignment (revision 36)
+
+- GYM-006/007/013/025: display the approved dumbbell logo in the mockup page's desktop branding, browser icon and external view-reference strip. Reuse the Android symbol's vector paths, colors and heavier stroke; preserve its license. Decorative marks do not duplicate the spoken app name or add navigation actions. The phone header follows the implemented Android text wordmark. Verify both themes, desktop and 320/390/430px widths without clipping or reducing app controls.
+- GYM-001/004/009/012/014/015/017/018/019/025: future browser previews are read-only, with no session lifecycle, logging, warm-up, reorder or timer execution actions. Match native Pause-before-Finish order, persistent planning library/detail headers and labelled Remove exercise actions.
+- GYM-010/015/025: Progress exposes Setup and Reference weight (kg) dropdowns beside one another. Options come from comparable sample history; reference weights include valid completed working sets only. Choose a recorded weight explicitly for reps; absent reference shows an unavailable comparison. Preserve chosen references per exercise/setup while navigating, exclude changed-context records, and reset plot exploration when context changes. Fictional history remains labelled and separate from live demo edits.
+- GYM-010/025: keep the 180px plot and 48px exploration targets readable. Comparison controls appear above the plot; when the added row or an unavailable-comparison explanation exceeds the visible height, vertical scrolling reveals the full chart and guidance, following the native Progress screen.
+- Review the browser's current screens against the implemented native UI and align material visible labels, hierarchy and controls. Keep the explicitly fictional data, disposable storage/file/video previews and external view IDs; record platform-specific differences and actual review limits.
 
 ## Native logo refinement (revision 35)
 

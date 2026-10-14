@@ -31,7 +31,10 @@ const GymPlanningUI = (() => {
     list.setAttribute('role', 'tabpanel');
     list.setAttribute('aria-labelledby', labelledBy);
 
-    section.replaceChildren(heading, tabs, list);
+    const bar = document.createElement('div');
+    bar.className = 'library-bar';
+    bar.append(heading, tabs);
+    section.replaceChildren(bar, list);
   }
 
   function renderList(container, entries, { attribute, icon }) {

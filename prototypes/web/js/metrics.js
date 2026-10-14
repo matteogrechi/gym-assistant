@@ -17,7 +17,10 @@ const GymMetrics = (() => {
       return { date: record.date, value: values.length ? (metric === 'volume' ? values.reduce((a, b) => a + b, 0) : Math.max(...values)) : null };
     });
   }
+  // GYM-010: expose only recorded contexts and qualifying reference loads.
+  const contexts = (history, base) => [...new Set(history.filter(record => contextKeys.every(key => key === 'setup' || (base[key] !== undefined && record[key] === base[key]))).map(record => record.setup))].map(setup => ({ ...base, setup }));
+  const referenceWeights = (history, context) => [...new Set(comparable(history, context).flatMap(workingSets).map(set => set.weight))].sort((a, b) => a - b);
   const countSets = (history, context) => comparable(history, context).reduce((sum, record) => sum + workingSets(record).length, 0);
-  return { series, countSets, comparable };
+  return { series, countSets, comparable, contexts, referenceWeights };
 })();
 if (typeof module !== 'undefined') module.exports = GymMetrics;

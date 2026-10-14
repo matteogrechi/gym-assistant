@@ -53,6 +53,10 @@ const fs = require('node:fs/promises');
       await openSessionFinish();
       if (await page.locator('#finishSessionDialog').isVisible()) await page.locator('#confirmFinishSession').click();
     };
+    const selectSampleReference = async () => {
+      const weight = await page.evaluate(() => GymData.catalog[Number(document.getElementById('progressExercise').value)].weight);
+      await page.locator('#progressReference').selectOption(String(weight));
+    };
     const openSettings = async () => {
       await page.locator('#overflowButton').click();
       await page.locator('#settingsMenuItem').click();
@@ -118,7 +122,8 @@ const fs = require('node:fs/promises');
     await page.locator('#nextWeek').click();
     await page.locator('#calendarDays [data-date="2026-10-19"]').click();
     await page.locator('#openSelectedSession').click();
-    await expect(page.locator('#startSession')).toHaveAccessibleName('Start session');
+    await expect(page.locator('#startSession')).toBeHidden();
+    await expect(page.locator('#exerciseList [data-sort-handle]:visible')).toHaveCount(0);
     await page.locator('[data-exercise="0"]').click();
     await expect(page.locator('#exercise [aria-label="Pause session"],#exercise [aria-label="Finish session"]')).toHaveCount(0);
     await expect(page.locator('#seatInput')).toHaveValue('Seat 4 · backrest 2');
@@ -346,7 +351,26 @@ const fs = require('node:fs/promises');
     await expect(page.locator('#seatInput')).toHaveValue('Seat 3');
     // GYM-010: metric switch and historical values ignore current-session edits.
     await page.locator('#progressNav').click();
+    await expect(page.locator('#metricValue')).toHaveText('—');
+    await selectSampleReference();
     await expect(page.locator('#metricValue')).toHaveText('12');
+    // Reference choices and setup filters remain independent and persist through navigation.
+    await page.evaluate(() => {
+      const source = structuredClone(GymData.history.find(record => record.exerciseId === 'leg'));
+      GymData.history.push({ ...source, setup: 'Seat 7', date: '2026-10-06', sets: [{ done: true, reps: 3, weight: 10 }] });
+      renderProgress();
+    });
+    await page.locator('#progressSetup').selectOption('Seat 7');
+    await expect(page.locator('#metricValue')).toHaveText('—');
+    await expect(page.locator('#progressReference option')).toHaveText(['Choose recorded kg', '10']);
+    await page.locator('#progressReference').selectOption('10');
+    await expect(page.locator('#metricValue')).toHaveText('3');
+    await page.locator('#programNav').click(); await page.locator('#progressNav').click();
+    await expect(page.locator('#progressReference')).toHaveValue('10');
+    await page.locator('#progressSetup').selectOption('Seat 4 · backrest 2');
+    await expect(page.locator('#progressReference')).toHaveValue('60');
+    await expect(page.locator('#metricValue')).toHaveText('12');
+    await page.evaluate(() => { GymData.history.splice(GymData.history.findIndex(record => record.setup === 'Seat 7'), 1); renderProgress(); });
     await expect(page.locator('#workingSets')).toHaveText('12');
     // GYM-010: inspect observations by touch and keyboard without changing history.
     const historyBeforeInspection = await page.evaluate(() => JSON.stringify(GymData.history));
@@ -379,6 +403,7 @@ const fs = require('node:fs/promises');
     await page.locator('#chart [data-observation-date="2026-10-05"]').click();
     await expect(page.locator('#metricValue')).toHaveText('65');
     await page.locator('[data-metric="reps"]').click();
+    await selectSampleReference();
     await expect(page.locator('#metricValue')).toHaveText('12');
     assert.equal(await page.evaluate(() => JSON.stringify(GymData.history)),historyBeforeInspection);
     await expect(page.locator('#attendanceTotal')).toHaveText(attendanceBeforeInspection);
@@ -396,6 +421,7 @@ const fs = require('node:fs/promises');
     await page.locator('#progressExercise').selectOption('1');
     await expect(page.locator('#metricValue')).toHaveText('650');
     await page.locator('[data-metric="reps"]').click();
+    await page.locator('#progressReference').selectOption('20');
     await expect(page.locator('#metricTitle')).toHaveText('Reps at 20 kg');
     await page.screenshot({ path: path.join(previews, 'progress.png') });
     // GYM-006, GYM-015: narrow widths, target sizes, and persistent bottom navigation.
@@ -518,21 +544,19 @@ const fs = require('node:fs/promises');
     await page.locator('#calendarDays [data-date="2026-10-26"]').click();
     await page.locator('#openSelectedSession').click();
     await expect(page.locator('#exerciseList .exercise-card strong').first()).toHaveText('Leg press');
-    await page.getByRole('button', { name: 'Reorder Chest press', exact: true }).focus();
-    await page.keyboard.press('ArrowUp');
+    await expect(page.locator('#exerciseList [data-sort-handle]:visible')).toHaveCount(0);
+    await expect(page.locator('#startSession')).toBeHidden();
+    await page.locator('[data-exercise="0"]').click();
+    await expect(page.locator('#sets input').first()).toBeDisabled();
+    await expect(page.locator('#addWarmup')).toBeHidden();
+    await expect(page.locator('#timerToggle')).toBeHidden();
+    await expect(page.locator('#seatInput')).toBeDisabled();
     await page.locator('#programNav').click();
     await page.locator('#openSelectedSession').click();
-    await expect(page.locator('#exerciseList .exercise-card strong').first()).toHaveText('Chest press');
-    await expect(page.locator('#startSession')).toHaveAccessibleName('Start session');
-    // GYM-020: a future preview and Start/warm-ups alone are not attendance.
-    await page.locator('#startSession').click();
-    await page.locator('[data-kind="sets"][data-toggle="0"]').click();
-    // GYM-017: Finish from Paused ends a preview without creating attendance.
-    await pauseWorkout();
-    await expect(page.locator('#sessionStatus')).toContainText('Paused');
-    await finishWorkout();
-    await expect(page.locator('#sessionStatus')).toContainText('Finished');
-    await expect(page.locator('#startSession')).not.toBeVisible();
+    await expect(page.locator('#exerciseList .exercise-card strong').first()).toHaveText('Leg press');
+    await expect(page.locator('#sessionStatus')).toContainText('Ready');
+    // GYM-020: a read-only future preview never creates attendance.
+    await expect(page.locator('#startSession')).toBeHidden();
     await page.locator('#progressNav').click();
     await expect(page.locator('#attendanceTotal')).toHaveText('6 / 12');
     await expect(page.locator('#attendancePercent')).toHaveText('50%');
@@ -570,6 +594,7 @@ const fs = require('node:fs/promises');
     await expect(page.locator('#attendanceDelay')).toBeVisible();
     await expect(page.locator('#attendanceAsOf')).toContainText('12 Oct 2026');
     await page.locator('#attendanceDetails > summary').click();
+    await selectSampleReference();
     await expect(page.locator('#metricValue')).toHaveText('12');
     for (const width of [320, 390, 430]) {
       await page.setViewportSize({ width, height: 844 });
@@ -633,10 +658,11 @@ const fs = require('node:fs/promises');
     await expect(page.locator('#planFeedback')).toContainText('Plan saved');
     await page.locator('#programNav').click();
     await page.locator('#openSelectedSession').click();
-    await expect(page.locator('#sessionName')).toHaveText('Session A');
-    await expect(page.locator('#exerciseList .exercise-card strong').first()).toHaveText('Chest press');
+    await expect(page.locator('#sessionName')).toHaveText('Lower-body day');
+    await expect(page.locator('#exerciseList .exercise-card strong').first()).toHaveText('Leg press');
     await page.locator('[data-exercise="0"]').click();
-    await expect(page.locator('#exerciseName')).toHaveText('Chest press');
+    await expect(page.locator('#prescription')).toContainText('4 sets × 6–8');
+    await expect(workReps).toBeDisabled();
     await openActivePlan();
     for (const width of [320, 390, 430]) {
       await page.setViewportSize({ width, height: 844 });
@@ -663,8 +689,12 @@ const fs = require('node:fs/promises');
     await expect(page.locator('#prescription')).toContainText('4 sets × 6–8');
     await expect(page.locator('#sets [data-kind="sets"][data-field="reps"]')).toHaveCount(4);
     await expect(workReps).toHaveValue('8');
-    // GYM-017: logging every set still requires an explicit Finish action.
-    await page.locator('#back').click();
+    // GYM-017: use an executable past workout; future previews stay read-only.
+    await page.locator('#programNav').click();
+    await page.locator('#calendarToday').click();
+    await page.locator('#previousWeek').click(); await page.locator('#previousWeek').click();
+    await page.locator('#calendarDays [data-date="2026-09-28"]').click();
+    await page.locator('#openSelectedSession').click();
     await page.locator('#startSession').click();
     for (let index = 0; index < 3; index++) {
       if (index) await page.locator(`[data-exercise="${index}"]`).click();
@@ -673,7 +703,7 @@ const fs = require('node:fs/promises');
       await page.locator('#back').click();
     }
     await expect(page.locator('#sessionStatus')).toHaveText('In progress');
-    await expect(page.locator('#sessionCount')).toHaveText('10 / 10 working sets done');
+    await expect(page.locator('#sessionCount')).toHaveText('9 / 9 working sets done');
     await finishWorkout();
     await expect(page.locator('#sessionStatus')).toHaveText('Finished');
     // New session, exercise add/reorder/remove, and weekly assignment.
@@ -1046,9 +1076,8 @@ const fs = require('node:fs/promises');
     await page.locator('#programNav').click();
     await page.locator('[data-date="2026-10-16"]').click();
     await page.locator('#openSelectedSession').click();
-    await page.locator('#exerciseList [data-sort-handle]').first().focus();
-    await page.keyboard.press('ArrowDown');
-    const futureOrder = await page.locator('[data-exercise] strong').allTextContents();
+    await expect(page.locator('#exerciseList [data-sort-handle]:visible')).toHaveCount(0);
+    await expect(page.locator('#startSession')).toBeHidden();
     // Keep a workout underway with raw values, warm-ups, notes and running time.
     await page.locator('#programNav').click();
     await page.locator('#calendarToday').click();
@@ -1098,6 +1127,7 @@ const fs = require('node:fs/promises');
     // Historical denominators and performance survive switching.
     await page.locator('#progressNav').click();
     await expect(page.locator('#attendanceTotal')).toHaveText('6 / 12');
+    await selectSampleReference();
     await expect(page.locator('#metricValue')).toHaveText('12');
     await page.locator('#programNav').click();
     await expect(page.locator('#trainProgramName')).toHaveText('Evening routine draft');
@@ -1120,9 +1150,8 @@ const fs = require('node:fs/promises');
     await expect(page.locator('#sessionCount')).toHaveText('0 / 4 working sets done');
     await page.locator('#programNav').click();
     await page.locator('[data-date="2026-10-16"]').click();
-    await page.locator('#openSelectedSession').click();
-    assert.deepEqual(await page.locator('[data-exercise] strong').allTextContents(), futureOrder);
-    await expect(page.locator('#sessionFocus')).toContainText('Full body foundations');
+    await expect(page.locator('#sessionCard h3')).toHaveText('No session planned');
+    await expect(page.locator('#openSelectedSession')).toHaveCount(0);
     // Overdue old-plan sessions still open their original prescription and record the actual day.
     await page.locator('#programNav').click();
     await expect(page.locator('#pendingSessions')).toContainText('Full body foundations');
@@ -1378,6 +1407,7 @@ const fs = require('node:fs/promises');
     await page.reload(); await reference('VIEW-001');
     // GYM-010: missing/dense/empty histories retain readable, honest presentation.
     await page.locator('#progressNav').click();
+    await selectSampleReference();
     await page.evaluate(()=>{window.plotFixtureHistory=structuredClone(GymData.history);GymData.history.find(record=>record.exerciseId==='leg'&&record.date==='2026-09-21').sets=[];renderProgress();});
     await page.locator('#chart [data-observation-date="2026-09-21"]').click();
     await expect(page.locator('#metricValue')).toHaveText('—');
@@ -1543,8 +1573,11 @@ const fs = require('node:fs/promises');
     assert(await page.locator('[data-readonly-for="templateFocus"]').evaluate(el=>el.scrollWidth<=el.clientWidth));
     await page.setViewportSize({width:390,height:844}); await page.locator('#progressNav').click();
     await page.locator('.screen-area').evaluate(el=>{el.scrollTop=0;});
-    assert(await page.locator('.chart-card').evaluate(el=>el.getBoundingClientRect().bottom<=document.querySelector('.main-nav').getBoundingClientRect().top),'Entire Progress card and guidance fit on entry');
-    console.log('PASS: readonly name/focus wrapping and alignment, edit restoration and complete Progress card on entry.');
+    await expect(page.locator('#progressSetup')).toBeInViewport();
+    await expect(page.locator('#progressReference')).toBeInViewport();
+    await page.locator('.chart-card').scrollIntoViewIfNeeded();
+    assert(await page.locator('.chart-card').evaluate(el=>el.getBoundingClientRect().bottom<=document.querySelector('.main-nav').getBoundingClientRect().top),'Entire Progress card and guidance remain reachable below comparison controls');
+    console.log('PASS: readonly name/focus wrapping and alignment, edit restoration, visible comparisons and reachable complete Progress card.');
     // GYM-006, GYM-015, GYM-025: exercise real native pickers, including options in dialogs.
     await page.reload();
     async function checkPicker(id) {
@@ -1699,7 +1732,7 @@ const fs = require('node:fs/promises');
     assert(await page.locator('.chart-timeline').evaluate(el=>el.scrollLeft)>beforeGapPan,'Dragging gap date pans the timeline');
     console.log('PASS: consolidated readonly plan/date review, whole-plan Save scope, focused cross-field errors, sticky edit actions, dated exercise context, readable working/warm-up scope, Settings position/density, short desktop dialogs and dense/gap chart navigation.');
     assert.deepEqual(errors, []);
-    console.log('PASS: phone-contained video/folder overlays and cards, desktop/mobile resize/scroll, short-height internal scrolling, native modal focus/Escape/scrim dismissal; Spanish selection/system variants, translated controls, retained data and export preference, narrow layouts; multiple-plan browsing/creation/draft isolation/activation, original workout and future-order/timer retention, old-plan catch-up/cohort ownership, v2 library/draft exports and reload reset; consistent Back, Save/draft states, static finished status, empty-focus subtitle and numeric keyboard entry; top-right overflow menu, keyboard/outside dismissal and retained screen/scroll/drafts/timers, three bottom destinations; settings language/theme/system following, folder preview/cancel, JSON/CSV/guide downloads, complete non-mutating snapshots, unchanged metric exports, narrow Settings targets, reload reset; pending catch-up sessions and planned/actual attendance, single-count visits, preview/warm-up exclusion, protected denominators and past prescriptions, workout reordering with retained logs/running timers, plan/date isolation and reordered preview retention, session Start/Pause/Resume/Finish, paused timer isolation, selected-date card without popup, fitted seven-day week, separate plan editing, prescription snapshots, stable session IDs, today/future calendar, date assignment, week navigation, dated log isolation, program navigation, set logging/validation, unified warm-ups, timers, secondary video, progress metrics, state isolation, mobile widths, bottom navigation, standard 48px targets, reload reset.');
+    console.log('PASS: phone-contained video/folder overlays and cards, desktop/mobile resize/scroll, short-height internal scrolling, native modal focus/Escape/scrim dismissal; Spanish selection/system variants, translated controls, retained data and export preference, narrow layouts; multiple-plan browsing/creation/draft isolation/activation, original workout/timer retention and read-only future replacement, old-plan catch-up/cohort ownership, v2 library/draft exports and reload reset; consistent Back, Save/draft states, static finished status, empty-focus subtitle and numeric keyboard entry; top-right overflow menu, keyboard/outside dismissal and retained screen/scroll/drafts/timers, three bottom destinations; settings language/theme/system following, folder preview/cancel, JSON/CSV/guide downloads, complete non-mutating snapshots, unchanged metric exports, narrow Settings targets, reload reset; pending catch-up sessions and planned/actual attendance, single-count visits, preview/warm-up exclusion, protected denominators and past prescriptions, workout reordering with retained logs/running timers, plan/date isolation and reordered Ready-workout retention, session Start/Pause/Resume/Finish, paused timer isolation, selected-date card without popup, fitted seven-day week, separate plan editing, prescription snapshots, stable session IDs, today/future calendar, date assignment, week navigation, dated log isolation, program navigation, set logging/validation, unified warm-ups, timers, secondary video, progress metrics, state isolation, mobile widths, bottom navigation, standard 48px targets, reload reset.');
     {
       // GYM-017/012: the guard counts the whole session, excludes warm-ups and leaves live clocks alone.
       await page.reload();

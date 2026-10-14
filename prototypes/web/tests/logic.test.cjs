@@ -550,3 +550,23 @@ test('GYM-012, GYM-018: planned recovery bounds and legacy default preserve save
   assert.deepEqual(plan.validate(definition, data.catalog), []);
   assert.equal(plan.openOccurrence(definition, data.catalog, '2026-10-12', 'session-A').exercises[0].recoverySeconds, 90);
 });
+
+// GYM-010/015: comparison choices never introduce a machine or unperformed load.
+test('GYM-010: recorded setups and reference weights exclude different machines and invalid sets', () => {
+  const history = [
+    { ...context, date: '2026-10-01', sets: [
+      { done: true, reps: 10, weight: 0 },
+      { done: true, reps: 10, weight: 60.25 },
+      { done: true, reps: 5, weight: 60.25 },
+      { done: true, reps: 10, weight: 100, warmup: true },
+      { done: false, reps: 10, weight: 80 },
+      { done: true, reps: 0, weight: 90 }
+    ] },
+    { ...context, setup: 'Seat 7', date: '2026-10-02', sets: [{ done: true, reps: 10, weight: 30 }] },
+    { ...context, machine: 'Other machine', setup: 'Other seat', date: '2026-10-03', sets: [{ done: true, reps: 10, weight: 200 }] }
+  ];
+  assert.deepEqual(metrics.contexts(history, context).map(item => item.setup), [context.setup, 'Seat 7']);
+  assert.deepEqual(metrics.referenceWeights(history, context), [0, 60.25]);
+  assert.deepEqual(metrics.referenceWeights(history, { ...context, setup: 'Seat 7' }), [30]);
+  assert.deepEqual(metrics.referenceWeights(history, { ...context, setup: 'Unrecorded' }), []);
+});

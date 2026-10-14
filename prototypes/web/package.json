@@ -2,7 +2,7 @@
   "name": "gym-assystant-mockup",
   "version": "0.2.0",
   "private": true,
-  "description": "Disposable training-program mockup; Android implementation deferred",
+  "description": "Disposable browser preview of the offline Android training-program app",
   "scripts": {
     "test": "node --test tests/*.test.cjs",
     "test:browser": "node tests/browser.cjs"

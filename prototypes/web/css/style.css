@@ -41,8 +41,12 @@ button { cursor: pointer; color: inherit; touch-action: manipulation; }
 button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
 button:disabled, input:disabled { opacity: .38; cursor: default; }
 .intro { width: 430px; min-height: 800px; display: flex; flex-direction: column; justify-content: space-between; padding: 30px 0; }
-.brand { font-family: Manrope, sans-serif; font-size: 34px; font-weight: 800; letter-spacing: -1.6px; }
-.brand span, .wordmark span { color: var(--focus); font-size: .45em; margin-left: 5px; }
+.brand { display: flex; align-items: center; gap: 12px; font-family: Manrope, sans-serif; font-size: 34px; font-weight: 800; letter-spacing: -1.6px; }
+.brand-dot, .wordmark span { color: var(--focus); font-size: .45em; margin-left: 5px; }
+/* GYM-006/007/013: page branding shares the Android launcher SVG outside the app frame. */
+.brand-logo { width: 48px; height: 48px; flex-shrink: 0; }
+.brand-name { white-space: nowrap; }
+.preview-logo { width: 20px; height: 20px; flex-shrink: 0; }
 .eyebrow { font-size: 10px; font-weight: 800; letter-spacing: 1.8px; margin: 0 0 12px; }
 h1, h2, h3 { font-family: Manrope, sans-serif; }
 h1 { font-size: 53px; letter-spacing: -2.5px; line-height: 1.15; margin: 22px 0; }
@@ -497,7 +501,7 @@ details[open] > summary .disclosure-icon svg { transform: rotate(180deg); }
 #exerciseContext { margin: 4px 0 12px; }
 /* GYM-018, GYM-025, GYM-026: one persistent editing action/status and compact review. */
 .editor-bar > .field-help:empty { display: none; }
-.plan-editing .editor-bar { position: sticky; top: 0; z-index: 4; padding-block: 8px; background: var(--surface); }
+.editor-bar, .library-bar { position: sticky; top: -8px; z-index: 4; padding-block: 8px; background: var(--surface); }
 .editor-bar .page-heading { margin-bottom: 8px; }
 .editor-bar .field-help { margin: 0 0 8px; }
 .plan-editing input, .plan-editing select, .plan-editing summary { scroll-margin-top: 132px; }
@@ -512,3 +516,15 @@ details[open] > summary .disclosure-icon svg { transform: rotate(180deg); }
 .phone-modal { padding-top: calc(var(--modal-visible-top, 0px) + 16px); padding-bottom: calc(var(--modal-height) - var(--modal-visible-top, 0px) - var(--modal-visible-height, var(--modal-height)) + 16px); }
 
 html:has(.phone-modal[open]) { overflow: hidden; }
+
+/* GYM-010/015/025: native comparison controls share existing styled dropdowns. */
+.progress-context-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 6px; }
+.progress-context-fields .select-label { font-size: 11px; }
+@supports (appearance: base-select) {
+  .progress-context-fields select { padding-block: 0; }
+  .progress-context-fields select > button { padding: 0; border: 0; background: transparent; color: inherit; min-width: 0; flex: 1; min-height: 48px; text-align: left; }
+  .progress-context-fields selectedcontent { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+.library-bar .page-heading { margin-bottom: 18px; }
+.library-bar .secondary-tabs { margin-bottom: 0; }
+.prescription-actions { justify-content: flex-start; }

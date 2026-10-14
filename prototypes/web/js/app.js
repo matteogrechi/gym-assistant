@@ -13,6 +13,8 @@ let metric = 'reps';
 let progressDate = null;
 let progressPoints = [];
 let progressExercise = null;
+let progressSetup = null;
+const progressReferences = new Map();
 let progressView = { zoom: 1, scrollLeft: 0 };
 let progressExploration = null;
 let todayDate = GymCalendar.today();
@@ -49,6 +51,7 @@ function getSession(templateId, date, programId = GymData.library.activePlanId) 
 let currentSession = null;
 const session = () => currentSession;
 const exercise = () => session().exercises[exerciseIndex];
+const canEditSession = () => sessionDate <= GymCalendar.today() && session().state !== 'finished';
 const completed = item => item.sets.filter(set => set.done).length;
 const format = value => new Intl.NumberFormat('en-GB', { maximumFractionDigits: 1 }).format(value);
 const formatObservation = value => new Intl.NumberFormat('en-GB', { maximumFractionDigits: 20 }).format(value);
@@ -119,15 +122,15 @@ function renderSession() {
   const action = state === 'paused' ? 'Resume' : 'Start';
   byId('startSession').textContent = action;
   byId('startSession').setAttribute('aria-label', `${action} session`);
-  byId('startSession').hidden = state !== 'ready' && state !== 'paused';
-  byId('pauseSession').hidden = state !== 'inProgress';
-  byId('finishSession').hidden = state !== 'inProgress' && state !== 'paused';
+  byId('startSession').hidden = sessionDate > todayDate || (state !== 'ready' && state !== 'paused');
+  byId('pauseSession').hidden = sessionDate > todayDate || state !== 'inProgress';
+  byId('finishSession').hidden = sessionDate > todayDate || (state !== 'inProgress' && state !== 'paused');
   byId('finishSession').className = `md-button ${state === 'paused' ? 'md-outlined' : 'md-filled'}`;
   byId('sessionStatus').textContent = GymSession.labels[state];
   const actual = session().attendedDate ?? observedAttendance().get(GymAttendance.key(sessionDate, session().templateId))?.actualDate;
   byId('attendanceStatus').textContent = actual && actual !== sessionDate ? `Logged ${fullDate(actual)}` : '';
   byId('exerciseList').innerHTML = session().exercises.map((item, index) => `<div class="workout-exercise-row" data-sort-item="${escapeHtml(item.entryId)}"><button class="exercise-card" data-exercise="${index}"><span class="exercise-number">${String(index + 1).padStart(2, '0')}</span><span><strong>${escapeHtml(item.name)}</strong><small>${item.sets.length} × ${escapeHtml(item.target)} reps${completed(item) ? ` · ${completed(item)}/${item.sets.length} done` : ''}</small></span><span class="chevron" aria-hidden="true">${buttonIcon('right')}</span></button><div class="workout-order-controls">${sortHandle(item.name)}</div></div>`).join('');
-  if (state === 'finished') {
+  if (!canEditSession()) {
     byId('exerciseList').querySelectorAll('[data-sort-handle]').forEach(button => { button.disabled = true; });
     byId('exerciseList').querySelectorAll('.workout-order-controls').forEach(controls => { controls.hidden = true; });
   }
@@ -141,9 +144,9 @@ function selectExercise(index) {
 // GYM-004, GYM-005, GYM-009, GYM-014: reps first; warm-ups and working sets share a labeled list.
 function setRow(set, index, kind) {
   const label = kind === 'warmups' ? 'Warm-up' : 'Working set';
-  const remove = kind === 'warmups' && session().state !== 'finished' ? `<button class="md-icon-button warmup-remove" data-remove="${index}" aria-label="Remove warm-up ${index + 1}">${buttonIcon('trash')}</button>` : '';
+  const remove = kind === 'warmups' && canEditSession() ? `<button class="md-icon-button warmup-remove" data-remove="${index}" aria-label="Remove warm-up ${index + 1}">${buttonIcon('trash')}</button>` : '';
   // GYM-025: terminal review exposes a status, not a disabled interactive-looking toggle.
-  const completion = session().state === 'finished'
+  const completion = !canEditSession()
     ? `<span class="set-status ${set.done ? 'is-complete' : ''}" role="img" aria-label="${label} ${index + 1} ${set.done ? 'complete' : 'not logged'}">${set.done ? buttonIcon('check') : '<span aria-hidden="true">—</span>'}</span>`
     : `<button class="md-icon-button md-toggle" aria-label="${label} ${index + 1} complete" aria-pressed="${set.done}" data-kind="${kind}" data-toggle="${index}">${buttonIcon('check')}</button>`;
   return `<div class="set-row ${kind === 'warmups' ? 'warmup-row' : ''} ${set.done ? 'complete' : ''}"><span class="set-kind"><small>${kind === 'warmups' ? 'Warm-up' : 'Working'}</small><b>${index + 1}</b>${remove}</span><input aria-label="${label} ${index + 1} repetitions" type="number" min="0" step="1" required value="${set.reps}" data-kind="${kind}" data-set="${index}" data-field="reps"><input aria-label="${label} ${index + 1} weight in kilograms" type="number" min="0" step="any" required value="${set.weight}" data-kind="${kind}" data-set="${index}" data-field="weight">${completion}</div>`;
@@ -152,7 +155,7 @@ function renderSets() {
   byId('setCount').textContent = `Working: ${completed(exercise())}/${exercise().sets.length}`;
   byId('setCount').setAttribute('aria-label', `${completed(exercise())} of ${exercise().sets.length} working sets complete`);
   byId('sets').innerHTML = exercise().warmups.map((set, index) => setRow(set, index, 'warmups')).join('') + exercise().sets.map((set, index) => setRow(set, index, 'sets')).join('');
-  if (session().state === 'finished') byId('sets').querySelectorAll('input,button').forEach(control => { control.disabled = true; });
+  if (!canEditSession()) byId('sets').querySelectorAll('input,button').forEach(control => { control.disabled = true; });
 }
 // GYM-025: wrapping values replace inactive text fields without changing data.
 function renderReadonlyValue(field, readonly) {
@@ -170,7 +173,7 @@ function renderReadonlyValue(field, readonly) {
 }
 // GYM-001, GYM-003, GYM-008, GYM-009, GYM-012, GYM-017, GYM-025
 function renderExercise() {
-  byId('exercise').classList.toggle('finished-review', session().state === 'finished');
+  byId('exercise').classList.toggle('finished-review', !canEditSession());
   byId('exerciseName').textContent = exercise().name;
   // GYM-009, GYM-017, GYM-026: keep exceptional date/plan context with the log.
   const today = GymCalendar.today();
@@ -183,16 +186,16 @@ function renderExercise() {
   byId('exerciseSessionStatus').textContent = GymSession.labels[session().state];
   byId('exerciseSessionStatus').hidden = !['paused', 'finished'].includes(session().state);
   byId('seatInput').value = exercise().seat;
-  byId('seatInput').disabled = session().state === 'finished';
-  renderReadonlyValue(byId('seatInput'), session().state === 'finished');
-  byId('addWarmup').disabled = session().state === 'finished';
-  byId('addWarmup').hidden = session().state === 'finished';
+  byId('seatInput').disabled = !canEditSession();
+  renderReadonlyValue(byId('seatInput'), !canEditSession());
+  byId('addWarmup').disabled = !canEditSession();
+  byId('addWarmup').hidden = !canEditSession();
   renderSets();
   renderTimer();
 }
 // GYM-004, GYM-014: reject invalid numbers; retain last valid value.
 function updateSet(input) {
-  if (session().state === 'finished') return;
+  if (!canEditSession()) return;
   const set = exercise()[input.dataset.kind][Number(input.dataset.set)];
   if (!input.checkValidity() || !Number.isFinite(Number(input.value))) {
     input.reportValidity();
@@ -205,7 +208,7 @@ function updateSet(input) {
 }
 // GYM-005, GYM-014
 function toggleSet(index, kind) {
-  if (session().state === 'finished') return;
+  if (!canEditSession()) return;
   const set = exercise()[kind][index];
   set.done = !set.done;
   session().hasEntries = true;
@@ -225,15 +228,34 @@ function renderProgress() {
   const exerciseId = byId('progressExercise').value;
   if (exerciseId !== progressExercise) {
     progressExercise = exerciseId;
+    progressSetup = null;
     progressDate = null;
     progressView = { zoom: 1, scrollLeft: 0 };
   }
   renderAttendance();
   const selected = GymData.catalog[Number(byId('progressExercise').value)];
-  const context = GymData.context(selected);
-  const series = GymMetrics.series(GymData.history, context, metric, selected.weight);
+  const base = GymData.context(selected);
+  const contexts = GymMetrics.contexts(GymData.history, base);
+  if (!contexts.length) contexts.push(base);
+  const context = contexts.find(item => item.setup === progressSetup) ?? contexts[0];
+  if (context.setup !== progressSetup) {
+    progressSetup = context.setup;
+    progressDate = null;
+    progressView = { zoom: 1, scrollLeft: 0 };
+  }
+  const selectionLabel = '<button type="button" tabindex="-1"><selectedcontent></selectedcontent></button>';
+  byId('progressSetup').innerHTML = selectionLabel + contexts.map(item => `<option value="${escapeHtml(item.setup)}">${escapeHtml(item.setup || 'No setup')}</option>`).join('');
+  byId('progressSetup').value = context.setup;
+  const weights = GymMetrics.referenceWeights(GymData.history, context);
+  const referenceKey = JSON.stringify([selected.id, context.setup]);
+  const stored = progressReferences.get(referenceKey);
+  const reference = weights.includes(stored) ? stored : null;
+  byId('progressReference').innerHTML = selectionLabel + `<option value="" ${reference !== null ? 'disabled' : ''}>Choose recorded kg</option>` + weights.map(weight => `<option value="${weight}">${formatObservation(weight)}</option>`).join('');
+  byId('progressReference').value = reference === null ? '' : String(reference);
+  byId('progressReference').disabled = weights.length === 0;
+  const series = GymMetrics.series(GymData.history, context, metric, reference);
   const labels = {
-    reps: { title: `Reps at ${selected.weight} kg`, unit: 'reps', subtitle: 'Best working set at this weight', explanation: 'More reps at the same weight can show progress. Compare similar effort, setup, and movement.' },
+    reps: { title: reference === null ? 'Reps at reference weight' : `Reps at ${formatObservation(reference)} kg`, unit: 'reps', subtitle: 'Choose a recorded reference weight to compare reps.', explanation: 'More reps at the same weight can show progress. Compare similar effort, setup, and movement.' },
     weight: { title: 'Weight at 10 reps', unit: 'kg', subtitle: 'Heaviest working set of exactly 10 reps', explanation: 'Track weight for the same repetition task. This is a performed set, not a tested maximum.' },
     volume: { title: 'Volume load', unit: 'kg·reps', subtitle: 'Weight × reps, summed over working sets', explanation: 'This describes workload. More volume does not by itself mean more strength or muscle growth.' }
   }[metric];
@@ -243,6 +265,7 @@ function renderProgress() {
   byId('metricTitle').textContent = labels.title;
   byId('metricUnit').textContent = labels.unit;
   byId('metricSubtitle').textContent = labels.subtitle;
+  byId('metricSubtitle').hidden = metric !== 'reps' || reference !== null;
   const dateLabel = (date, full = false) => GymCalendar.label(date, { day: 'numeric', month: 'short', ...(full ? { year: 'numeric' } : {}) });
   progressExploration = GymCharts.render(byId('chart'), model, {unit:labels.unit, selectedDate:progressDate, format:formatObservation, dateLabel, view:progressView, onInspect:selectProgressObservation});
   byId('chartHelp').textContent = `${model.points.some(point=>point.value===null) ? '— No comparable set · ' : ''}Drag plot to inspect; swipe dates to pan.`;
@@ -251,7 +274,7 @@ function renderProgress() {
   byId('workingSets').textContent = GymMetrics.countSets(GymData.history, context);
   byId('comparisonContext').textContent = selected.custom
     ? [selected.machine, selected.seat, 'No sample history for this exercise. Effort and range of motion are unknown. Warm-ups excluded.'].filter(Boolean).join(' · ')
-    : `${selected.machine} · ${selected.seat}. Sample history uses the same movement and 2 reps in reserve (estimated reps left). Warm-ups excluded.`;
+    : `${selected.machine} · ${context.setup}. Sample history uses the same movement and 2 reps in reserve (estimated reps left). Warm-ups excluded.`;
   byId('metricExplanation').textContent = labels.explanation;
   metricSegments.select(metric);
 }
@@ -307,10 +330,10 @@ function renderTimer() {
   const status = mode === 'recovery' && seconds === 0 ? 'Recovery complete · continue when ready' : running ? 'Running' : state[mode].elapsed > 0 ? 'Paused' : 'Ready';
   if (byId('timerStatus').textContent !== status) byId('timerStatus').textContent = status;
   byId('timerStatus').className = mode === 'recovery' && seconds === 0 ? 'field-help' : 'sr-only';
-  byId('timerToggle').disabled = ['paused', 'finished'].includes(session().state);
-  byId('timerReset').disabled = session().state === 'finished';
-  byId('timerToggle').hidden = session().state === 'finished';
-  byId('timerReset').hidden = session().state === 'finished';
+  byId('timerToggle').disabled = !canEditSession() || session().state === 'paused';
+  byId('timerReset').disabled = !canEditSession();
+  byId('timerToggle').hidden = !canEditSession();
+  byId('timerReset').hidden = !canEditSession();
   byId('timerToggle').textContent = running ? 'Pause' : state[mode].elapsed > 0 && !(mode === 'recovery' && seconds === 0) ? 'Resume' : 'Start';
   timerSegments.select(mode);
   const other = mode === 'execution' ? 'recovery' : 'execution';
@@ -323,6 +346,7 @@ byId('exerciseList').addEventListener('click', event => {
 });
 // GYM-019: preserve selected identity and all occurrence data on drop.
 GymSorting.mount(byId('exerciseList'), (entryId, target) => {
+  if (!canEditSession()) return;
   const selected = exercise();
   const next = GymPlan.reorderExercise(session(), entryId, target);
   if (next < 0) return;
@@ -385,6 +409,7 @@ byId('calendarToday').addEventListener('click', () => {
 });
 // GYM-017: Start/Resume select unfinished work; exercise selection is navigation.
 byId('startSession').addEventListener('click', () => {
+  if (!canEditSession()) return;
   const action = session().state === 'paused' ? 'resume' : 'start';
   if (!GymSession.transition(session(), action, Date.now())) return;
   const next = session().exercises.findIndex(item => item.sets.some(set => !set.done));
@@ -392,6 +417,7 @@ byId('startSession').addEventListener('click', () => {
 });
 // GYM-017, GYM-012: Pause/Finish pause all occurrence timers, preserving entries.
 function pauseSession() {
+  if (!canEditSession()) return;
   if (!GymSession.transition(session(), 'pause', Date.now())) return;
   renderSession();
   showView('session', 'startSession');
@@ -405,6 +431,7 @@ function completeSession(target) {
 }
 // GYM-017, GYM-012: inspecting/cancelling a terminal action leaves live clocks untouched.
 function finishSession() {
+  if (!canEditSession()) return;
   const target = session();
   if (!['inProgress', 'paused'].includes(target.state)) return;
   const sets = target.exercises.flatMap(item => item.sets);
@@ -607,7 +634,7 @@ function renderTemplate(expanded = null) {
   byId('templateHeading').textContent = 'Edit session';
   byId('templateName').value = template.name;
   byId('templateFocus').value = template.focus;
-  byId('plannedExercises').innerHTML = template.exercises.length ? template.exercises.map((item, index) => `<div class="planned-exercise-row" data-sort-item="${escapeHtml(item.entryId)}">${sortHandle(GymData.catalog.find(machine => machine.id === item.exerciseId)?.name ?? 'exercise')}<details class="prescription-card" ${(expanded ? expanded.has(item.entryId) : planEditing && index === 0) ? 'open' : ''}><summary><strong class="prescription-summary">${prescriptionSummary(item, index)}</strong><span class="disclosure-icon" aria-hidden="true">${buttonIcon('expand')}</span></summary><label class="select-label" for="planned-machine-${item.entryId}">Exercise</label><select id="planned-machine-${item.entryId}" data-entry="${item.entryId}" data-plan-field="exerciseId">${catalogOptions(item.exerciseId)}</select><div class="prescription-fields"><label>Working sets<input type="number" min="1" max="10" step="1" required value="${item.setCount}" data-entry="${item.entryId}" data-plan-field="setCount" aria-label="Exercise ${index + 1} planned working sets"></label><label>Min reps<input type="number" min="1" max="50" step="1" required value="${item.minReps}" data-entry="${item.entryId}" data-plan-field="minReps" aria-label="Exercise ${index + 1} minimum target reps"></label><label>Max reps<input type="number" min="1" max="50" step="1" required value="${item.maxReps}" data-entry="${item.entryId}" data-plan-field="maxReps" aria-label="Exercise ${index + 1} maximum target reps"></label></div><label class="select-label" for="planned-recovery-${item.entryId}">Recovery (s)</label><input id="planned-recovery-${item.entryId}" class="plan-input" type="number" min="1" max="3600" step="1" required value="${item.recoverySeconds ?? 90}" data-entry="${item.entryId}" data-plan-field="recoverySeconds" aria-label="Exercise ${index + 1} planned recovery seconds"><div class="prescription-actions"><button class="md-icon-button" type="button" data-remove-entry="${item.entryId}" aria-label="Remove exercise ${index + 1}">${buttonIcon('trash')}</button></div></details></div>`).join('') : '<p class="field-help">Add an exercise to this session.</p>';
+  byId('plannedExercises').innerHTML = template.exercises.length ? template.exercises.map((item, index) => `<div class="planned-exercise-row" data-sort-item="${escapeHtml(item.entryId)}">${sortHandle(GymData.catalog.find(machine => machine.id === item.exerciseId)?.name ?? 'exercise')}<details class="prescription-card" ${(expanded ? expanded.has(item.entryId) : planEditing && index === 0) ? 'open' : ''}><summary><strong class="prescription-summary">${prescriptionSummary(item, index)}</strong><span class="disclosure-icon" aria-hidden="true">${buttonIcon('expand')}</span></summary><label class="select-label" for="planned-machine-${item.entryId}">Exercise</label><select id="planned-machine-${item.entryId}" data-entry="${item.entryId}" data-plan-field="exerciseId">${catalogOptions(item.exerciseId)}</select><div class="prescription-fields"><label>Working sets<input type="number" min="1" max="10" step="1" required value="${item.setCount}" data-entry="${item.entryId}" data-plan-field="setCount" aria-label="Exercise ${index + 1} planned working sets"></label><label>Min reps<input type="number" min="1" max="50" step="1" required value="${item.minReps}" data-entry="${item.entryId}" data-plan-field="minReps" aria-label="Exercise ${index + 1} minimum target reps"></label><label>Max reps<input type="number" min="1" max="50" step="1" required value="${item.maxReps}" data-entry="${item.entryId}" data-plan-field="maxReps" aria-label="Exercise ${index + 1} maximum target reps"></label></div><label class="select-label" for="planned-recovery-${item.entryId}">Recovery (s)</label><input id="planned-recovery-${item.entryId}" class="plan-input" type="number" min="1" max="3600" step="1" required value="${item.recoverySeconds ?? 90}" data-entry="${item.entryId}" data-plan-field="recoverySeconds" aria-label="Exercise ${index + 1} planned recovery seconds"><div class="prescription-actions"><button class="md-button md-text" type="button" data-remove-entry="${item.entryId}" aria-label="Remove exercise ${index + 1}">Remove exercise</button></div></details></div>`).join('') : '<p class="field-help">Add an exercise to this session.</p>';
   byId('exerciseToAdd').innerHTML = catalogOptions();
   byId('templateFeedback').textContent = planMessage;
   applyPlanMode();
@@ -832,6 +859,23 @@ function refreshProgressCatalog() {
 }
 refreshProgressCatalog();
 byId('progressExercise').addEventListener('change', renderProgress);
+byId('progressSetup').addEventListener('change', () => {
+  progressSetup = byId('progressSetup').value;
+  progressDate = null;
+  progressView = { zoom: 1, scrollLeft: 0 };
+  renderProgress();
+});
+byId('progressReference').addEventListener('change', () => {
+  if (byId('progressReference').value !== '') {
+    const selected = GymData.catalog[Number(byId('progressExercise').value)];
+    const weight = Number(byId('progressReference').value);
+    const context = { ...GymData.context(selected), setup: progressSetup };
+    if (GymMetrics.referenceWeights(GymData.history, context).includes(weight)) {
+      progressReferences.set(JSON.stringify([selected.id, progressSetup]), weight);
+    }
+  }
+  renderProgress();
+});
 // GYM-010, GYM-015: reuse the same selector as timer modes; callbacks own domain state.
 const metricSegments = GymSegments.mount(byId('progressMetrics'), {
   label: 'Progress metric', value: metric,
@@ -839,12 +883,12 @@ const metricSegments = GymSegments.mount(byId('progressMetrics'), {
   onChange(value) { metric = value; renderProgress(); }
 });
 // GYM-003
-byId('seatInput').addEventListener('input', event => { if (session().state !== 'finished') { exercise().seat = event.target.value; session().hasEntries = true; } });
+byId('seatInput').addEventListener('input', event => { if (canEditSession()) { exercise().seat = event.target.value; session().hasEntries = true; } });
 // GYM-004, GYM-005, GYM-014
 ['sets'].forEach(id => {
   byId(id).addEventListener('change', event => { if (event.target.matches('input')) updateSet(event.target); });
   byId(id).addEventListener('click', event => {
-    if (session().state === 'finished') return;
+    if (!canEditSession()) return;
     const button = event.target.closest('[data-toggle]');
     if (button) toggleSet(Number(button.dataset.toggle), button.dataset.kind);
     const remove = event.target.closest('[data-remove]');
@@ -852,7 +896,7 @@ byId('seatInput').addEventListener('input', event => { if (session().state !== '
   });
 });
 byId('addWarmup').addEventListener('click', () => {
-  if (session().state === 'finished') return;
+  if (!canEditSession()) return;
   exercise().warmups.push({ reps: 0, weight: 0, done: false });
   session().hasEntries = true;
   renderSets();
@@ -865,14 +909,14 @@ const timerSegments = GymSegments.mount(byId('timerModes'), {
   onChange(value) { exercise().timers.mode = value; renderTimer(); }
 });
 byId('timerToggle').addEventListener('click', () => {
-  if (['paused', 'finished'].includes(session().state)) return;
+  if (!canEditSession() || session().state === 'paused') return;
   session().hasEntries = true;
   const state = exercise().timers;
   if (state[state.mode].startedAt === null) GymTimers.start(state, state.mode, Date.now());
   else GymTimers.pause(state, state.mode, Date.now());
   renderTimer();
 });
-byId('timerReset').addEventListener('click', () => { if (session().state === 'finished') return; session().hasEntries = true; GymTimers.reset(exercise().timers, exercise().timers.mode); renderTimer(); });
+byId('timerReset').addEventListener('click', () => { if (!canEditSession()) return; session().hasEntries = true; GymTimers.reset(exercise().timers, exercise().timers.mode); renderTimer(); });
 
 setInterval(() => {
   sessionInstances.forEach(item => item.exercises.forEach(entry => GymTimers.read(entry.timers, 'recovery', Date.now())));

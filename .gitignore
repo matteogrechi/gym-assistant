@@ -1,6 +1,9 @@
 # Prototype dependencies
 node_modules/
 
+# Private production signing backup; never publish keys or passwords.
+/.signing/
+
 # Android local configuration and generated build files
 /android/.gradle/
 /android/.kotlin/

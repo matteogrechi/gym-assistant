@@ -1,0 +1,6 @@
+<resources>
+    <!-- GYM-007/013/022: native launch colors match the Compose surface. -->
+    <color name="gym_launch_surface">#FFFAF2</color>
+    <color name="gym_launch_text">#143F46</color>
+    <bool name="gym_launch_light_bars">true</bool>
+</resources>

@@ -22,6 +22,7 @@ import kotlinx.coroutines.withContext
 // GYM-001/018/023/027: screens issue domain events; only committed Room state reaches UI.
 class GymViewModel(application: Application, private val savedState: SavedStateHandle) : AndroidViewModel(application) {
     private val container = application as GymApplication
+    val launchTheme get() = container.appearance.theme.name.lowercase()
     val dataset = container.repository.state
     private val mutableError = MutableStateFlow(false)
     val error = mutableError.asStateFlow()

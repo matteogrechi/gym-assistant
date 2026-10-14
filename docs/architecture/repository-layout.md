@@ -10,6 +10,7 @@ gym-assistant/
 ├── CONTRIBUTING.md               # workflow, validation and Conventional Commits
 ├── AGENTS.md                     # repository instructions and skill routing
 ├── .gitignore
+├── .github/workflows/            # signed main-push Android distribution
 ├── .agents/
 │   └── skills/                   # versioned project workflow skills
 ├── android/
@@ -51,4 +52,4 @@ Root [CONTRIBUTING.md](../../CONTRIBUTING.md) defines contributor workflow and C
 
 ## Local files and build products
 
-Ignore Node dependency installations, Android Gradle/build caches, IDE workspace files, and local SDK configuration. Commit source, specifications, tests, lockfiles, and the Gradle wrapper/build configuration. The root does not carry a Node package; native tooling stays in `android/`.
+Ignore Node dependency installations, Android Gradle/build caches, IDE workspace files, local SDK configuration and the private `/.signing/` production-key backup. The main-push workflow lives in `.github/workflows/`; its contract is documented in [Android distribution](android-distribution.md). Commit source, specifications, tests, lockfiles, and the Gradle wrapper/build configuration. The root does not carry a Node package; native tooling stays in `android/`.

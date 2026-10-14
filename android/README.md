@@ -17,7 +17,7 @@ Install JDK17 and an Android SDK with `platforms;android-36`, `build-tools;35.0.
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-The wrapper pins Gradle8.13 with its official SHA-256; the [version catalog](gradle/libs.versions.toml) pins compatible AGP8.13.2/Kotlin2.2.20/Compose/Room/Media3 versions. Build dependency acquisition uses connectivity during development; the installed app requires none. Subsequent Gradle builds can use `--offline` after all required dependencies are cached. Debug signing is for local installation; public release signing/publication is a separate decision.
+The wrapper pins Gradle8.13 with its official SHA-256; the [version catalog](gradle/libs.versions.toml) pins compatible AGP8.13.2/Kotlin2.2.20/Compose/Room/Media3 versions. Build dependency acquisition uses connectivity during development; the installed app requires none. Subsequent Gradle builds can use `--offline` after all required dependencies are cached. Main pushes publish signed APK/AAB releases after JVM checks and release lint; see [Android distribution](../docs/architecture/android-distribution.md) for signing inputs, downloads, hosting limits and manual Play submission. A debug installation cannot update to the production signature. Protect exports/media before uninstalling; there is no restore UI, so the release app starts fresh after that switch.
 
 Run device checks with an emulator or connected Android device:
 

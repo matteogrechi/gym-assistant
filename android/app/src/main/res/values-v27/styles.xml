@@ -1,0 +1,5 @@
+<resources>
+    <style name="Theme.Gym" parent="Theme.Gym.Base">
+        <item name="android:windowLightNavigationBar">@bool/gym_launch_light_bars</item>
+    </style>
+</resources>

@@ -1,0 +1,8 @@
+<resources>
+    <style name="Theme.Gym" parent="Theme.Gym.Base">
+        <item name="android:windowLightNavigationBar">@bool/gym_launch_light_bars</item>
+        <item name="android:windowSplashScreenBackground">@color/gym_launch_surface</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/gym_launch_brand</item>
+        <item name="android:windowSplashScreenAnimationDuration">0</item>
+    </style>
+</resources>

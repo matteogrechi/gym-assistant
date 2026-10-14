@@ -106,6 +106,7 @@ class OfflineWorkflowTest {
         edit.join()
         val stored = decodeDataset(app.repository.stored().json)
         assertEquals(Theme.DARK, stored.settings.theme)
+        assertEquals(Theme.DARK, app.appearance.theme)
         assertEquals(stored, app.repository.state.value)
     }
 

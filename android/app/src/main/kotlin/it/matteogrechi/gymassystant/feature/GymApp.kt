@@ -41,11 +41,12 @@ fun GymApp(vm: GymViewModel) {
     fun navigate(next: String) { leaveInput(); history = ArrayList(history + next) }
     fun back() { if (history.size > 1) { leaveInput(); history = ArrayList(history.dropLast(1)) } }
     BackHandler(history.size > 1) { back() }
-    GymTheme(dataset?.settings?.theme?.name?.lowercase() ?: "system") {
+    val theme = dataset?.settings?.theme?.name?.lowercase() ?: vm.launchTheme
+    GymTheme(theme) {
         val colors = GymColors
         val activity = LocalActivity.current
         val view = LocalView.current
-        val dark = when (dataset?.settings?.theme?.name?.lowercase()) {
+        val dark = when (theme) {
             "dark" -> true
             "light" -> false
             else -> isSystemInDarkTheme()
@@ -58,7 +59,7 @@ fun GymApp(vm: GymViewModel) {
         }
         val side = if (LocalConfiguration.current.screenWidthDp < 350) 16.dp else 24.dp
         Surface(Modifier.fillMaxSize(), color = colors.surface) {
-            Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).imePadding()) {
+            if (dataset == null) LoadingScreen() else Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).imePadding()) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = side).heightIn(min = 48.dp),
                     verticalAlignment = Alignment.CenterVertically) {
                     Text("gym assystant", style = MaterialTheme.typography.headlineSmall,
@@ -79,20 +80,18 @@ fun GymApp(vm: GymViewModel) {
                     }
                 }
                 Box(Modifier.weight(1f).fillMaxWidth().padding(start = side, end = side, top = 8.dp)) {
-                    val data = dataset
-                    if (data == null) Text(stringResource(R.string.loading)) else {
-                        holder.SaveableStateProvider(route) {
-                            when (route.substringBefore(':')) {
-                                "train" -> TrainFeature(data, vm, ::navigate)
-                                "session" -> SessionFeature(route.substringAfter(':'), data, vm, ::navigate, ::back)
-                                "exercise" -> {
-                                    val parts = route.split(':')
-                                    ExerciseFeature(parts[1], parts[2], data, vm, ::back)
-                                }
-                                "plan", "template", "definition" -> PlanningFeature(route, data, vm, ::navigate, ::back)
-                                "progress" -> ProgressFeature(data, vm)
-                                "settings" -> SettingsFeature(data, vm, ::back)
+                    val data = requireNotNull(dataset)
+                    holder.SaveableStateProvider(route) {
+                        when (route.substringBefore(':')) {
+                            "train" -> TrainFeature(data, vm, ::navigate)
+                            "session" -> SessionFeature(route.substringAfter(':'), data, vm, ::navigate, ::back)
+                            "exercise" -> {
+                                val parts = route.split(':')
+                                ExerciseFeature(parts[1], parts[2], data, vm, ::back)
                             }
+                            "plan", "template", "definition" -> PlanningFeature(route, data, vm, ::navigate, ::back)
+                            "progress" -> ProgressFeature(data, vm)
+                            "settings" -> SettingsFeature(data, vm, ::back)
                         }
                     }
                 }

@@ -19,6 +19,7 @@ class DatasetRepository(
     private val context: Context,
     private val database: GymDatabase,
     private val clock: AndroidClock,
+    private val appearance: LaunchAppearance,
 ) {
     private val mutex = Mutex()
     private val mutableState = MutableStateFlow<Dataset?>(null)
@@ -29,7 +30,11 @@ class DatasetRepository(
             val row = database.datasets().read()
             val dataset = row?.let { decodeDataset(it.json) } ?: initialDataset(clock.read())
             if (row == null) database.datasets().write(StoredDataset(revision = dataset.revision, json = encodeDataset(dataset)))
-            withContext(Dispatchers.Main) { mutableState.value = dataset }
+            appearance.cache(dataset.settings.theme)
+            withContext(Dispatchers.Main) {
+                mutableState.value = dataset
+                appearance.apply(dataset.settings.theme)
+            }
             dataset
         }
     }
@@ -48,7 +53,11 @@ class DatasetRepository(
                     val row = requireNotNull(database.datasets().read())
                     database.datasets().write(row.copy(revision = committed.revision, json = json))
                 }
-                withContext(Dispatchers.Main) { mutableState.value = committed }
+                appearance.cache(committed.settings.theme)
+                withContext(Dispatchers.Main) {
+                    mutableState.value = committed
+                    if (previous.settings.theme != committed.settings.theme) appearance.apply(committed.settings.theme)
+                }
                 BackupWorker.enqueue(context)
                 committed
             }

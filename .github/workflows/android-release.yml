@@ -28,7 +28,7 @@ jobs:
           java-version: '17'
       - name: Install pinned Android SDK packages
         run: |
-          sdkmanager 'platforms;android-36' 'build-tools;35.0.0' 'platform-tools'
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;35.0.0' 'platform-tools'
           echo "RELEASE_CODE=$((1000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
       - name: JVM checks and release lint
         run: ./gradlew --no-daemon :domain:test :app:testReleaseUnitTest :app:lintRelease -PreleaseVersionCode="$RELEASE_CODE"

@@ -1,6 +1,6 @@
 # gym assystant repository instructions
 
-Read the relevant sections of [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository. Keep the exact app name **gym assystant**. The current product artifact is a disposable browser mockup; native Android implementation is not started and begins only when the user authorizes that phase.
+Read the relevant sections of [CONTRIBUTING.md](CONTRIBUTING.md) before changing this repository. Keep the exact app name **gym assystant**. Native Android implementation is authorized and lives under `android/`; the disposable browser mockup remains its visual reference. Preserve the entirely offline runtime and close visual fidelity to the approved mockup.
 
 ## Focused context and subagents
 
@@ -29,6 +29,6 @@ Ponytail is vendored from [DietrichGebert/ponytail](https://github.com/DietrichG
 ## Shared rules
 
 - Update the product specification before feature code; maintain requirement-to-source coverage and the reverse inventory. Research suggestions do not authorize extra features.
-- Keep the prototype in `prototypes/web/`, future native work in `android/`, and shared evidence in `docs/`. Do not create Android scaffolding during the mockup phase.
+- Keep the prototype in `prototypes/web/`, native work in `android/`, and shared evidence in `docs/`. Use shared native controls and pure domain rules; do not copy browser code into the app.
 - Use Conventional Commits for all new commits, as defined in CONTRIBUTING. Preserve already-published history and unrelated user changes.
 - Validate the changed artifact with meaningful checks and report what actually ran. Never claim that mockup coverage proves native Android delivery.

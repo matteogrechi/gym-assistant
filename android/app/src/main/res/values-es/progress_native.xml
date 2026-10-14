@@ -1,0 +1,22 @@
+<resources>
+    <string name="progress_unit_reps">rep.</string>
+    <string name="progress_unit_kg">kg</string>
+    <string name="progress_unit_volume">kg·rep.</string>
+    <string name="progress_reps_reference">Repeticiones al peso de referencia</string>
+    <string name="progress_no_setup">Configuración sin registrar</string>
+    <string name="progress_choose_weight">Elige kg registrados</string>
+    <string name="progress_reference_needed">Elige un peso de referencia registrado para comparar repeticiones.</string>
+    <string name="progress_history_period">Historial: %1$s – %2$s</string>
+    <string name="progress_unlogged_date">Prevista %1$s · ninguna serie efectiva comparable</string>
+    <string name="progress_logged_through">Última serie %1$s</string>
+    <string name="progress_unfinished">Sesión sin terminar</string>
+    <string name="progress_attendance_empty">No hay sesiones previstas en este período. Asistencia no disponible.</string>
+    <string name="progress_attendance_count">%1$d / %2$d</string>
+    <string name="progress_sessions_logged">sesiones registradas</string>
+    <string name="progress_late">tarde</string>
+    <string name="progress_attendance_unlogged">Sin registrar</string>
+    <string name="progress_inspect">Explora las observaciones. Izquierda y Derecha seleccionan; Inicio y Fin seleccionan los extremos.</string>
+    <string name="progress_timeline">Desplaza las fechas de observación</string>
+    <string name="progress_same_day">Las ocurrencias del mismo día se separan para facilitar el toque; las fechas no cambian.</string>
+    <string name="progress_same_day_position">Mismo día: ocurrencia %1$d de %2$d</string>
+</resources>

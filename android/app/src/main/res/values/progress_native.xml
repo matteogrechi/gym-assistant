@@ -1,0 +1,22 @@
+<resources>
+    <string name="progress_unit_reps">reps</string>
+    <string name="progress_unit_kg">kg</string>
+    <string name="progress_unit_volume">kg·reps</string>
+    <string name="progress_reps_reference">Reps at reference weight</string>
+    <string name="progress_no_setup">No setup recorded</string>
+    <string name="progress_choose_weight">Choose recorded kg</string>
+    <string name="progress_reference_needed">Choose a recorded reference weight to compare reps.</string>
+    <string name="progress_history_period">History: %1$s – %2$s</string>
+    <string name="progress_unlogged_date">Planned %1$s · no comparable working set</string>
+    <string name="progress_logged_through">Last set %1$s</string>
+    <string name="progress_unfinished">Session unfinished</string>
+    <string name="progress_attendance_empty">No planned sessions in this period. Attendance unavailable.</string>
+    <string name="progress_attendance_count">%1$d / %2$d</string>
+    <string name="progress_sessions_logged">sessions logged</string>
+    <string name="progress_late">late</string>
+    <string name="progress_attendance_unlogged">Not logged</string>
+    <string name="progress_inspect">Inspect observations. Left and Right select; Home and End select endpoints.</string>
+    <string name="progress_timeline">Pan observation dates</string>
+    <string name="progress_same_day">Same-day occurrences are separated for touch access; date labels stay unchanged.</string>
+    <string name="progress_same_day_position">Same day: occurrence %1$d of %2$d</string>
+</resources>

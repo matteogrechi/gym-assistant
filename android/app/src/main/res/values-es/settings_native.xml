@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_english">English</string>
+    <string name="settings_italian">Italiano</string>
+    <string name="settings_spanish">Español</string>
+    <string name="settings_local_folder">Carpeta local</string>
+    <string name="settings_folder_error">Elige una carpeta local accesible. La ubicación anterior se mantiene.</string>
+    <string name="settings_export_error">No se pudo verificar el archivo. El registro del dispositivo está guardado.</string>
+    <string name="settings_preparing_file">Preparando archivo…</string>
+    <string name="settings_saving_file">Guardando archivo…</string>
+</resources>

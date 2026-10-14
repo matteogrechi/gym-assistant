@@ -1,0 +1,7 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="48" android:viewportHeight="48">
+    <!-- GYM-007/013: reuse the training-program navigation glyph and warm brand accent. -->
+    <path android:pathData="M18,12h12q2,0 2,2v20q0,2 -2,2H18q-2,0 -2,-2V14q0,-2 2,-2Z M20,19h8 M20,24h8 M20,29h5"
+        android:fillColor="#00000000" android:strokeColor="#ffbf69" android:strokeWidth="2"
+        android:strokeLineCap="round" android:strokeLineJoin="round" />
+</vector>

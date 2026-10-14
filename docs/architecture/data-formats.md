@@ -1,6 +1,6 @@
 # Durable data files — version 2
 
-GYM-023, GYM-024, GYM-026 and GYM-028 define these files. Android implementation is not started. The web prototype downloads real files containing fictional history and this visit's demo edits; it does not save to its preview folder, persist across reloads, or import backups.
+GYM-023, GYM-024, GYM-026 and GYM-028 define these files. This is the browser version-2 contract; the authorized native implementation uses the separately documented [version-3 contract](native-data-v3.md) and [file layout](native-file-layout.md). The web prototype downloads real files containing fictional history and this visit's demo edits; it does not save to its preview folder, persist across reloads, or import backups.
 
 ## Principles
 

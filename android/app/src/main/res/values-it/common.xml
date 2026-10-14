@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_back">Indietro</string>
+    <string name="common_invalid_value">Valore non valido</string>
+    <string name="common_plans">Piani</string>
+    <string name="common_exercises">Esercizi</string>
+    <string name="common_expanded">Espanso</string>
+    <string name="common_collapsed">Compresso</string>
+    <string name="common_expand">Espandi</string>
+    <string name="common_collapse">Comprimi</string>
+</resources>

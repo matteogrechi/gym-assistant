@@ -1,8 +1,8 @@
 # Repository layout
 
-Status: repository organization only. Android implementation is not started. Product behavior and requirement IDs remain unchanged.
+Status: native Android implementation is authorized under specification revision 34. Browser and Android projects remain independent.
 
-This repository keeps the future Android project independent from the disposable browser prototype. Each project owns its source, tests, and tool configuration. Shared specifications and evidence stay under `docs/`.
+This repository keeps the native Android project independent from the disposable browser prototype. Each project owns its source, tests, and tool configuration. Shared specifications and evidence stay under `docs/`.
 
 ```text
 gym-assistant/
@@ -13,7 +13,9 @@ gym-assistant/
 ├── .agents/
 │   └── skills/                   # versioned project workflow skills
 ├── android/
-│   └── README.md                 # reserved project location, no implementation
+│   ├── app/                      # Android UI, resources, adapters, native tests
+│   ├── domain/                   # pure Kotlin rules and JVM tests
+│   └── gradle/                   # pinned catalog and verified wrapper
 ├── prototypes/
 │   └── web/
 │       ├── README.md             # prototype usage and verification
@@ -31,24 +33,22 @@ gym-assistant/
     └── architecture/             # repository organization decisions
 ```
 
-## Future Android project
+## Android project
 
-`android/` will be the Android Studio/Gradle project root when implementation is authorized. The standard app module will live at `android/app/`, with production sources/resources in `src/main/`, local tests in `src/test/`, and device tests in `src/androidTest/`. Android documents these module and source-set conventions. [Android project structure](https://developer.android.com/studio/projects)
+`android/` is the Android Studio/Gradle project root. `android/app/` owns production Kotlin/resources in `src/main/`, JVM checks in `src/test/`, installed-device checks in `src/androidTest/`, and the exported Room schema in `schemas/`. `android/domain/` is a pure Kotlin JVM module containing immutable models, training/schedule/timer/metric rules and their tests. [Android project structure](https://developer.android.com/studio/projects)
 
-Project-level Gradle settings, build configuration, and the Gradle wrapper will belong under `android/`; module build configuration will belong under `android/app/`. Those files are intentionally not generated in this change. [Android build configuration](https://developer.android.com/build)
-
-The choice to place the Android project in its own repository subdirectory is a repository convention, not a requirement imposed by Android. The [Android implementation plan](android-implementation-plan.md) now proposes Kotlin/Compose, the API26/36 baseline, application identity, Room/local media/open-file recovery and a pure Kotlin `domain/` module alongside `app/`. These are planning choices; no modules or Gradle files have been generated. Additional modules require actual responsibilities, not one module for every screen. [Android module patterns](https://developer.android.com/topic/modularization/patterns)
+Project Gradle settings, build configuration, version catalog and wrapper belong under `android/`; module build files belong in their modules. The pinned API26/36 Kotlin/Compose build and manual dependency container implement the [design plan](android-implementation-plan.md). There is no module per screen, DI framework or browser wrapper. [Android build configuration](https://developer.android.com/build)
 
 Browser JavaScript, HTML/CSS, fictional fixtures, Node packages, and mockup tests remain exclusively in `prototypes/web/`. They are design/reference artifacts, not Android source, app resources, or production tests. Review screenshots remain documentation artifacts rather than packaged assets.
 
 ## Documentation and traceability
 
-`docs/product/spec.md` remains the feature source of truth. `docs/product/traceability.md` maps requirement IDs to the browser prototype and its checks; Android delivery remains marked not started. New Android mappings must be added only when actual implementation exists.
+`docs/product/spec.md` remains the feature source of truth. `docs/product/traceability.md` maps requirement IDs separately to mockup and native sources/checks. Android evidence must come from actual native implementation and validation.
 
 Research recommendations are evidence, not automatically authorized features. Design guidance and interface reviews are kept separate from requirements. Relative documentation links and source references must resolve after moves.
 
-Root [CONTRIBUTING.md](../../CONTRIBUTING.md) defines contributor workflow and Conventional Commits for new changes. Root [AGENTS.md](../../AGENTS.md) routes agents to the versioned skills in `.agents/skills/`: specification/traceability, mockup review and repository delivery. Each skill contains `SKILL.md` and UI metadata in `agents/openai.yaml`. These files are process guidance, not product requirements or Android source.
+Root [CONTRIBUTING.md](../../CONTRIBUTING.md) defines contributor workflow and Conventional Commits for new changes. Root [AGENTS.md](../../AGENTS.md) routes agents to the versioned skills in `.agents/skills/`: specification/traceability, mockup review, repository delivery and the vendored Ponytail coding philosophy. Skills contain `SKILL.md` and optional UI metadata; Ponytail also retains its upstream MIT license. These files are process guidance, not product requirements or Android source.
 
 ## Local files and build products
 
-Ignore Node dependency installations, Android Gradle/build caches, IDE workspace files, and local SDK configuration. Commit source, specifications, tests, lockfiles, and the future Gradle wrapper/build configuration. The root does not carry a Node package or Android build scaffold at this stage.
+Ignore Node dependency installations, Android Gradle/build caches, IDE workspace files, and local SDK configuration. Commit source, specifications, tests, lockfiles, and the Gradle wrapper/build configuration. The root does not carry a Node package; native tooling stays in `android/`.

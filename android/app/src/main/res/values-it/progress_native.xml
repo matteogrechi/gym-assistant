@@ -1,0 +1,22 @@
+<resources>
+    <string name="progress_unit_reps">rip.</string>
+    <string name="progress_unit_kg">kg</string>
+    <string name="progress_unit_volume">kg·rip.</string>
+    <string name="progress_reps_reference">Ripetizioni al peso di riferimento</string>
+    <string name="progress_no_setup">Configurazione non registrata</string>
+    <string name="progress_choose_weight">Scegli kg registrati</string>
+    <string name="progress_reference_needed">Scegli un peso di riferimento registrato per confrontare le ripetizioni.</string>
+    <string name="progress_history_period">Cronologia: %1$s – %2$s</string>
+    <string name="progress_unlogged_date">Previsto %1$s · nessuna serie allenante confrontabile</string>
+    <string name="progress_logged_through">Ultima serie %1$s</string>
+    <string name="progress_unfinished">Sessione non terminata</string>
+    <string name="progress_attendance_empty">Nessuna sessione prevista nel periodo. Frequenza non disponibile.</string>
+    <string name="progress_attendance_count">%1$d / %2$d</string>
+    <string name="progress_sessions_logged">sessioni registrate</string>
+    <string name="progress_late">in ritardo</string>
+    <string name="progress_attendance_unlogged">Non registrata</string>
+    <string name="progress_inspect">Esplora le osservazioni. Sinistra e Destra selezionano; Inizio e Fine selezionano gli estremi.</string>
+    <string name="progress_timeline">Scorri le date delle osservazioni</string>
+    <string name="progress_same_day">Le occorrenze dello stesso giorno sono separate per il tocco; le date restano invariate.</string>
+    <string name="progress_same_day_position">Stesso giorno: occorrenza %1$d di %2$d</string>
+</resources>

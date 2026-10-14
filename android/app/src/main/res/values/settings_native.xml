@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_english">English</string>
+    <string name="settings_italian">Italiano</string>
+    <string name="settings_spanish">Español</string>
+    <string name="settings_local_folder">Local folder</string>
+    <string name="settings_folder_error">Choose an accessible local folder. Your previous location is unchanged.</string>
+    <string name="settings_export_error">Could not verify the file. Your device log is saved.</string>
+    <string name="settings_preparing_file">Preparing file…</string>
+    <string name="settings_saving_file">Saving file…</string>
+</resources>

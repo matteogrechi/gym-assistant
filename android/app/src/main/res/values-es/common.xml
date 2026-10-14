@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_back">Atrás</string>
+    <string name="common_invalid_value">Valor no válido</string>
+    <string name="common_plans">Planes</string>
+    <string name="common_exercises">Ejercicios</string>
+    <string name="common_expanded">Expandido</string>
+    <string name="common_collapsed">Contraído</string>
+    <string name="common_expand">Expandir</string>
+    <string name="common_collapse">Contraer</string>
+</resources>

@@ -1,12 +1,12 @@
-# Native portable data contract — draft version 3
+# Native portable data contract — version 3
 
-Status: pre-implementation proposal linked to [the Android plan](android-implementation-plan.md), specification revision 33. No native serializer, importer, migration or database is implemented. The browser keeps emitting the existing [version-2 contract](data-formats.md). Format version 3, if finalized, is independent of app and Room schema versions.
+Status: native writer/private storage implemented under specification revision 34. [The exact file layout](native-file-layout.md) records actual serializer fields, limits and recovery instructions. Restore UI and legacy import/migration remain unimplemented proposals. The browser keeps emitting the existing [version-2 contract](data-formats.md). Format version 3 is independent of app and Room schema versions.
 
 ## Why a new version
 
 Version 2 describes fictional prototype histories, reload-reset executions, example media/setup and a recent obligation snapshot. Native records require genuine provenance, durable set observation timestamps, effective schedule intervals, local media references and dataset/backup revisions. Reinterpreting a fictional sample as a real gym visit would be incompatible. Use a new format and explicit migration rather than silently changing version-2 meaning.
 
-## Proposed JSON fields
+## Native JSON fields
 
 Keep `format: gym-assystant-status`, UTF-8, explicit dictionary/units, ISO civil dates, UTC ISO timestamps and decimal-point numbers. Use `formatVersion: 3`, `dataKind: user_data`, dataset UUID and monotonically increasing dataset revision. Top-level metadata includes export timestamp/time zone, application version for diagnosis and the dictionary; source/provenance also accompanies imported legacy records. App version never determines how a file is parsed.
 
@@ -23,11 +23,11 @@ Keep `format: gym-assystant-status`, UTF-8, explicit dictionary/units, ISO civil
 | Portable timers | Mode, original recovery target, settled elapsed values, paused timer state and captured-running metadata. Do not import monotonic/device boot anchors as runnable clocks. |
 | Extensions/provenance | Preserve unknown additive fields and original legacy source labels without interpreting them as genuine training. |
 
-Local exercise creation is approved under GYM-028; definition editing and deletion remain excluded. The history-inclusion branch and restore extension remain product choices. No shape above claims native implementation coverage. First native actual history is empty; sample/demo input stays distinguishable and does not inflate genuine attendance/performance.
+Local exercise creation is approved under GYM-028; definition editing and deletion remain excluded. The user selected immediate qualifying completed-working-set history; undo removes performance without erasing the first recorded visit. Restore remains a proposed extension. Unknown additive-field preservation and legacy migrations remain future reader requirements; the initial native verifier rejects unsupported dataset fields instead of silently dropping them. First native actual history is empty; sample/demo input stays distinguishable and does not inflate genuine attendance/performance.
 
 ## CSV and TXT
 
-Version-3 CSV keeps a documented, fixed quoted UTF-8 header, comma delimiter, CRLF records, English identifiers, decimal points, units and planned/actual dates. Add explicit genuine/demo source, observation identity/grain and relevant actual time/date/context fields; finalize the exact header alongside the chosen history policy before writing the exporter. Preserve per-occurrence measurements and distinguish same-day observations; never silently average records or rewrite their dates. Null/unavailable values stay blank with a reason.
+Version-3 CSV keeps a documented, fixed quoted UTF-8 header, comma delimiter, CRLF records, English identifiers, decimal points, units and planned/actual dates. Add explicit genuine/demo source, observation identity/grain and relevant actual time/date/context fields; the exact implemented header is recorded in [native-file-layout.md](native-file-layout.md). Preserve per-occurrence measurements and distinguish same-day observations; never silently average records or rewrite their dates. Null/unavailable values stay blank with a reason.
 
 The UTF-8 TXT recovery guide describes JSON fields, media layout and standard JSON/CSV reading. Statistics are derived and cannot replace full raw-state JSON. No proprietary binary-only recovery, app account, network service or mandatory password is introduced.
 
@@ -43,4 +43,4 @@ Validate bounded size/depth/counts, supported format, identities/references, enu
 
 Version 1 first uses the existing v1→v2 mapping. Version 2 retains its sample/visit-demo provenance and original IDs/notes/working/warm-up data. Do not invent missing timestamps, schedule intervals, effort or folder permission; preserve uncertainty. Optional restore presents the resulting counts/source and obtains explicit replacement confirmation after preserving the current dataset. No merge import is proposed. Imported timers are paused and folder grants must be obtained again.
 
-The Room schema has its own exported version history and migration tests; no destructive fallback. Room is the runtime authority, JSON is the portable recovery contract. External manual edits are not auto-ingested. A failed folder write/restore leaves device data and prior verified generations available. The eventual tests must recover files with standard JSON/CSV readers as well as the native reader.
+The Room schema has its own exported version history and migration tests; no destructive fallback. Room is the runtime authority, JSON is the portable recovery contract. External manual edits are not auto-ingested. A failed folder write/restore leaves device data and prior verified generations available. File checks use standard JSON/CSV readers as well as the native verifier; actual provider evidence is recorded in the native implementation review.

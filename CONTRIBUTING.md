@@ -1,13 +1,13 @@
 # Contributing to gym assystant
 
-The user has requested native Android implementation with entirely offline operation. The [implementation plan](docs/architecture/android-implementation-plan.md) is presented before code; explicitly pending product extensions remain proposals. The disposable web mockup stays a design reference. Native code has not started in this planning revision. [The specification](docs/product/spec.md) is the feature source of truth; [traceability](docs/product/traceability.md) records actual coverage and the reverse source inventory. Write or refine acceptance criteria before feature code and keep both directions current. Research is evidence, not automatic permission to add features.
+Native Android implementation is authorized, follows the [design presented before code](docs/architecture/android-implementation-plan.md), and works entirely offline. Explicitly pending extensions remain proposals. The disposable web mockup is the visual reference; keep the native interface closely aligned with it. [The specification](docs/product/spec.md) is the feature source of truth; [traceability](docs/product/traceability.md) records actual coverage and the reverse source inventory. Write or refine acceptance criteria before feature code and keep both directions current. Research is evidence, not automatic permission to add features.
 
 ## Repository conventions
 
 | Location | Owns |
 | --- | --- |
 | `prototypes/web/` | Vanilla browser source, fictional fixtures, Node tooling, tests and its lockfile. |
-| `android/` | Future native project; documentation only until implementation is authorized. |
+| `android/` | Native app/domain modules, Gradle build, resources, Room schema and checks. |
 | `docs/product/` | Requirements, acceptance criteria and bidirectional traceability. |
 | `docs/research/`, `docs/design/`, `docs/reviews/` | Research evidence, Android UI guidance and measured interface reviews. |
 | `docs/architecture/` | Repository boundaries and the durable data contract. |

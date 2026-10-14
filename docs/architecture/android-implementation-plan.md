@@ -1,6 +1,6 @@
 # Android implementation plan — gym assystant
 
-Status: design presented before native coding, 13 October 2026; specification revision 33. The user has requested implementation and entirely offline operation. No Android sources, manifest, Gradle scaffold, database, player or APK exists yet. Two isolated planning reviewers examined data durability and native runtime/UI; the coordinator owns these recommendations and their scope decisions.
+Status: design presented before native coding, 13 October 2026; specification revision 33. The user has requested implementation and entirely offline operation. This document records the design presented before code; native implementation is now authorized and underway in revision 34. Actual source/check evidence lives in traceability and the native review. Two isolated planning reviewers examined data durability and native runtime/UI; the coordinator owns these recommendations and their scope decisions.
 
 The [specification](../product/spec.md) remains the product source of truth. [Traceability](../product/traceability.md) distinguishes implemented browser evidence from planned Android work. The reviewed mockup supplies interaction/layout references, not production code. No WebView conversion is planned.
 
@@ -134,8 +134,8 @@ The [draft native v3 contract](native-data-v3.md) distinguishes genuine data, se
 | Choice | Recommended default | Scope status |
 | --- | --- | --- |
 | Video content | Local import first; bundled library only with supplied/cleared clips. | User preference requested; basic offline playback follows GYM-002/027, catalogue content is unresolved. |
-| Real-history inclusion | Qualifying completed working sets appear immediately, including unfinished/partial workouts; Finish locks them. | User preference requested; alternative Finished-only documented. |
-| Local exercise creation | Plan → Exercises shared list/read-only details and the same creator available independently or from a session (GYM-028). Create name, stable machine/movement identity and optional default setup. No new tab, definition editing/deletion or implied video import. | Creation approved in revision 30; library placement in revision 31. Working mockup, native source not started. |
+| Real-history inclusion | Qualifying completed working sets appear immediately, including unfinished/partial workouts; Finish locks them. | User selected immediate qualifying-set inclusion on 13 October 2026; implemented under revision 34. |
+| Local exercise creation | Plan → Exercises shared list/read-only details and the same creator available independently or from a session (GYM-028). Create name, stable machine/movement identity and optional default setup. No new tab, definition editing/deletion or implied video import. | Creation approved in revision 30; library placement in revision 31. Approved native library/creation implemented under revision 34; actual verification is recorded separately. |
 | Restore UI | Local whole-dataset restore with preview and replacement confirmation, to make backups useful after reinstall. | Proposed native scope extension; explicit preference requested. |
 | Device range | Android 8/API26 and later. | Proposed technical baseline; change if the user's device is older. |
 | Reboot clocks | Pause at last durable checkpoint and explain recovery; do not claim exact powered-off timing. | Recommended implementation policy, presented for review. |
@@ -160,6 +160,6 @@ Use focused fresh-context workers for independent domain/storage/UI slices once 
 
 ## 11. Build readiness and remaining exclusions
 
-Read-only environment check: java, javac, adb, sdkmanager, emulator and gradle are not on PATH; ANDROID_HOME and ANDROID_SDK_ROOT are unset. An existing installation elsewhere has not been ruled out. M1 must locate or provision the required JDK/SDK in an authorized location before claiming a build; SDK installation outside writable roots requires tool approval. No toolchain install was attempted during this planning delivery.
+Read-only environment check: java, javac, adb, sdkmanager, emulator and gradle are not on PATH; ANDROID_HOME and ANDROID_SDK_ROOT are unset. This was the planning-time result. Implementation provisioned verified JDK17/Gradle8.13/SDK36 build tools and an isolated emulator under `/tmp`; no machine configuration or toolchain paths are committed. The repository wrapper was exercised successfully.
 
 No accounts/cloud, subscriptions/social, exercise prescription/coaching, RIR entry, e1RM, unit preferences beyond kg, history editing/reopening, plan duplication/deletion, automatic missed-session rescheduling, timer alerts, background video or per-set timer analytics are included. Local exercise creation is approved under GYM-028. Restore remains a proposed exception to prior mockup exclusions. Discarding only never-saved new drafts and confirming incomplete Finish are approved GYM-026/017 refinements; saved-plan deletion, definition editing and Finished reopening remain excluded. Installed font/media licenses and real device/toolchain evidence remain implementation work.

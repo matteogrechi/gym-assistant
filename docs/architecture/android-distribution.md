@@ -2,6 +2,20 @@
 
 GYM-029: `.github/workflows/android-release.yml` runs on every push to `main`, without path filters or cancellation. Manual dispatch is accepted only on `main`. It checks out the triggering SHA, runs `:domain:test`, `:app:testReleaseUnitTest` and `:app:lintRelease`, then builds and verifies signed release APK/AAB files. The installed app remains entirely offline; CI needs network access for build tools and dependencies.
 
+## Validate locally before a workflow push
+
+Use the same workflow with `act` and rootless Podman before pushing workflow changes. The shared `.github/scripts/publish-release.py` is used locally and in CI; its seven standard-library regressions include fresh release creation, real CLI-style draft discovery, partial uploads, retry preservation, conflicting commits, bad checksums and the read-only dry-run boundary.
+
+Install `act` (the checked execution used version 0.2.89) and start a rootless Podman API socket. Set `DOCKER_HOST` to its Unix socket, `ANDROID_HOME` to an installed SDK with platform36/build-tools35.0.0, and `GRADLE_USER_HOME` to a writable cache. Supply a private file outside the repository with `GITHUB_TOKEN`, `ANDROID_SIGNING_KEYSTORE_BASE64` and `ANDROID_SIGNING_KEYSTORE_PASSWORD`; directory mode700/file mode600. Use a token authorized for this repository. Never print or commit its values. The launcher builds `.github/local/Containerfile` if its image is absent, then runs:
+
+```sh
+.github/scripts/check-local-release.sh /private/secrets.env 4
+```
+
+The numeric argument is the simulated workflow run number; choose an unused number to exercise fresh-tag handling. It sets the matching release code, runs native tests/lint and actual signed APK/AAB builds, verifies their signatures, and executes real GitHub reads with publication forced to dry-run. It creates no remote release or tag. The SDK/cache are mounted into the local container; the private key directory and host GitHub configuration are not mounted. The local image makes `/var/run` a real directory because Podman's archive API rejects `act` copies through Ubuntu's default symlink.
+
+Locally, `act` optimizes the standard checkout step by copying the current working tree, retaining unpublished fixes. Hosted checkout uses its documented default: the ref/SHA that triggered the workflow. The pinned checkout action already succeeded in hosted runs and the earlier unoptimized local attempt, which correctly restored older remote source. Local containers differ from GitHub VMs and use the supplied token rather than a job-scoped token; a successful hosted run remains the final verification of runner and token-policy behavior. Retain that limitation rather than claiming local validation guarantees all GitHub behavior.
+
 ## Version and signing contract
 
 CI uses Ubuntu 24.04, Temurin JDK 17, the checked-in Gradle 8.13 wrapper, SDK platform 36 and build tools 35.0.0. Only official checkout/setup-java actions are used, pinned to the verified release commits of [checkout v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1) and [setup-java v6.0.1](https://github.com/actions/setup-java/releases/tag/v6.0.1). There are no dependency cache or Actions artifact uploads.

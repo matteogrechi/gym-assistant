@@ -1,0 +1,11 @@
+FROM docker.io/library/node:24-bookworm-slim AS node
+FROM docker.io/library/ubuntu:24.04
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl git gh python3 unzip zip xz-utils openjdk-17-jdk-headless lib32stdc++6 && rm -rf /var/lib/apt/lists/*
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+# Podman's archive API rejects act's copy destination through /var/run -> /run.
+RUN test -L /var/run && rm /var/run && mkdir /var/run
+ENV ANDROID_HOME=/opt/android-sdk ANDROID_SDK_ROOT=/opt/android-sdk JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PATH=/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH
+RUN mkdir -p /opt/android-sdk /opt/hostedtoolcache /root/.gradle
+ENV RUNNER_TOOL_CACHE=/opt/hostedtoolcache AGENT_TOOLSDIRECTORY=/opt/hostedtoolcache

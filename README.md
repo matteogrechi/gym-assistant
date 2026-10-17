@@ -13,6 +13,10 @@ A native, entirely offline Android gym-session assistant, implemented from its i
 | [docs/architecture/](docs/architecture/repository-layout.md) | Repository boundaries, offline architecture and portable data contracts. |
 | [.agents/skills/](AGENTS.md) | Project workflow skills for specification, mockup review and delivery. |
 
+## Download
+
+[GitHub Releases](https://github.com/matteogrechi/gym-assistant/releases/latest) provides signed APK downloads and Play submission bundles. Every successful main-push workflow publishes a versioned build. See [distribution and signing](docs/architecture/android-distribution.md) before switching from a debug installation; its signature differs and uninstalling removes private data.
+
 ## Build the Android app
 
 Follow [Android setup and installation](android/README.md). With JDK17 and the documented Android SDK installed:

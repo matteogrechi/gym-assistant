@@ -82,6 +82,8 @@ CHROMIUM_PATH=/usr/bin/chromium npm run test:browser
 
 Install dependencies only when needed. Alternative browser setup and temporary screenshot output are documented in the [prototype README](prototypes/web/README.md). Add tests for meaningful changed behavior when necessary; do not add tests that merely duplicate implementation or rerun unrelated app suites for documentation-only work.
 
+For release-workflow changes, run the shared publisher regressions and the [Podman/act local check](docs/architecture/android-distribution.md#validate-locally-before-a-workflow-push) before pushing. Exercise real GitHub read responses and the publication dry-run; verify one hosted run after those pass.
+
 Before committing, inspect the actual worktree, branch and remote, review the diff, run `git diff --check` and stage explicit files. Preserve unrelated user changes and protected metadata. Push within existing user authorization to the verified `matteogrechi/gym-assistant` remote; use ordinary pushes and integrate remote advances without dropping work. Report the commit, delivery result, actual checks and any material gaps.
 
 ## Task context and delegation
